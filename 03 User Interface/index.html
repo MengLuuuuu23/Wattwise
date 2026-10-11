@@ -17,7 +17,7 @@
   body {
     background: var(--bg); color: var(--text);
     font-family: Calibri, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    display: flex; flex-direction: column; overflow: hidden; font-size: 14px;
+    display: flex; flex-direction: column; overflow: hidden; font-size: 15px;
   }
 
   /* ---------- header (excel ribbon vibe) ---------- */
@@ -75,7 +75,7 @@
     padding: 8px 14px; border-bottom: 1px solid var(--border2);
     font-size: 11px; font-weight: 700; letter-spacing: .8px; color: var(--muted); text-transform: uppercase;
   }
-  #sitemap { flex: 1; width: 100%; display: block; }
+  #sitemap { flex: 1; width: 100%; height: 100%; display: block; min-height: 0; }
   .map-legend {
     display: flex; gap: 13px; align-items: center; padding: 8px 14px;
     border-top: 1px solid var(--border2); font-size: 11.5px; color: var(--muted); flex-wrap: wrap;
@@ -136,32 +136,32 @@
   .solar-head .big.done { color: var(--good); }
   .solar-head .lab { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
   .solar-cols {
-    display: grid; grid-template-columns: 58px 1fr 64px 64px; gap: 0 12px;
-    padding: 6px 16px; font-size: 10.5px; font-weight: 700; letter-spacing: .8px;
+    display: grid; grid-template-columns: 64px 1fr 74px 74px; gap: 0 14px;
+    padding: 7px 16px; font-size: 12px; font-weight: 700; letter-spacing: .8px;
     color: var(--faint); text-transform: uppercase; border-bottom: 1px solid var(--border2);
   }
   .solar-cols .r { text-align: right; }
-  .solar-rows { max-height: 430px; overflow-y: auto; }
+  .solar-rows { max-height: 520px; overflow-y: auto; }
   .srow {
-    display: grid; grid-template-columns: 58px 1fr 64px 64px; gap: 0 12px;
-    align-items: center; padding: 4px 16px; border-radius: 6px; margin: 0 6px;
+    display: grid; grid-template-columns: 64px 1fr 74px 74px; gap: 0 14px;
+    align-items: center; padding: 5px 16px; border-radius: 6px; margin: 0 6px;
   }
   .srow.sel { background: #fdf3e7; box-shadow: inset 3px 0 0 var(--accent); }
-  .srow .t { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .srow .t { font-size: 14.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .srow.sel .t { color: #9a5a14; font-weight: 700; }
-  .bar-zone { padding: 2px 0 3px; }
+  .bar-zone { padding: 3px 0 4px; }
   .bar-fcst {
-    height: 12px; border-radius: 6px;
+    display: block; height: 14px; border-radius: 7px;
     background: linear-gradient(90deg, #f0a824, #ffd45e);
   }
-  .bar-act { height: 4px; border-radius: 2px; margin-top: 2px; background: #4fbf7a; }
+  .bar-act { display: block; height: 5px; border-radius: 2.5px; margin-top: 3px; background: #4fbf7a; }
   .bar-act.under { background: #e2636e; }
-  .srow .v { font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+  .srow .v { font-size: 15px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
   .srow .v.peak { font-weight: 700; color: #b07a10; }
   .srow .v.na { color: var(--faint); }
   .srow .v.act { color: var(--muted); }
   .srow .v.act.over { color: var(--good); font-weight: 700; }
-  .srow .v.act.under { color: #c25058; }
+  .srow .v.act.under { color: #c25058; font-weight: 600; }
 
   /* ---------- footer ---------- */
   footer {
