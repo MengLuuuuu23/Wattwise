@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 3200px; height: 1800px; }
+  body { font-family: 'Segoe UI', 'Arial', sans-serif; background: #14171d; color: #e8eaf0; display: flex; flex-direction: column; }
+  .nav { height: 96px; background: #1b1f27; border-bottom: 2px solid #262b36; display: flex; align-items: center; padding: 0 44px; gap: 34px; }
+  .logo { font-size: 34px; font-weight: 800; } .logo b { color: #E88B33; }
+  .site { background: #232833; border: 1.5px solid #333a48; border-radius: 10px; padding: 12px 22px; font-size: 24px; color: #cdd3e0; }
+  .tabs { display: flex; gap: 8px; margin-left: 10px; }
+  .tab { padding: 12px 26px; border-radius: 10px; font-size: 23px; color: #9aa3b5; font-weight: 600; }
+  .tab.active { background: #E88B33; color: #17181c; }
+  .viewtoggle { margin-left: auto; display: flex; gap: 8px; }
+  .vt { padding: 10px 22px; border-radius: 9px; font-size: 20px; font-weight: 700; background: #232833; color: #9aa3b5; border: 1.5px solid #333a48; }
+  .vt.active { background: #E88B33; color: #17181c; border-color: #E88B33; }
+  .kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 22px; padding: 24px 44px 18px 44px; }
+  .kpi { background: #1b1f27; border: 1.5px solid #262b36; border-radius: 14px; padding: 22px 28px; }
+  .kpi .k { font-size: 20px; color: #8b94a7; font-weight: 600; margin-bottom: 10px; }
+  .kpi .v { font-size: 46px; font-weight: 800; line-height: 1; }
+  .kpi .s { font-size: 19px; margin-top: 10px; color: #8b94a7; }
+  .kpi .s b { color: #7fd18a; }
+  .main { display: grid; grid-template-columns: 2.35fr 1fr; gap: 22px; padding: 4px 44px; flex: 1; min-height: 0; }
+  .panel { background: #1b1f27; border: 1.5px solid #262b36; border-radius: 14px; padding: 26px 30px; display: flex; flex-direction: column; }
+  .ptitle { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .psub { font-size: 19px; color: #8b94a7; margin-bottom: 18px; }
+  .rail { display: flex; flex-direction: column; gap: 22px; }
+  .rrow { display: flex; gap: 18px; padding: 16px 0; border-bottom: 1.5px solid #262b36; align-items: center; }
+  .rrow:last-child { border-bottom: none; }
+  .sw2 { width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; }
+  .rtxt .r1 { font-size: 21px; font-weight: 700; }
+  .rtxt .r2 { font-size: 18px; color: #8b94a7; margin-top: 3px; line-height: 1.35; }
+</style>
+</head>
+<body>
+  <div class="nav">
+    <div class="logo">WATT<b>WISE</b></div>
+    <div class="site">Elmina Innovation Park</div>
+    <div class="tabs">
+      <div class="tab active">Operations</div><div class="tab">Forecast</div>
+      <div class="tab">Schedule</div><div class="tab">Compliance</div>
+      <div class="tab">Billing</div><div class="tab">Portfolio</div>
+    </div>
+    <div class="viewtoggle">
+      <div class="vt">Day</div>
+      <div class="vt active">Month</div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="k">MONTH PEAK (THE BILL)</div><div class="v">565 kW</div><div class="s">Wed 8 Oct &middot; 09:30 &middot; cap 600 kW held</div></div>
+    <div class="kpi"><div class="k">DAYS UNDER CAP</div><div class="v">30 / 30</div><div class="s">est. unmanaged breaches: <b>22 days</b></div></div>
+    <div class="kpi"><div class="k">MORNING RIDGE (08:30&ndash;10:30)</div><div class="v">412 kW</div><div class="s">mean draw in billed window &middot; <b>&#9660; 38%</b> vs unmanaged</div></div>
+    <div class="kpi"><div class="k">SOLAR TROUGH (11:00&ndash;14:30)</div><div class="v">186 kW</div><div class="s">grid draw while soaking &middot; surplus absorbed</div></div>
+  </div>
+
+  <div class="main">
+    <div class="panel">
+      <div class="ptitle">Grid draw &mdash; October (each cell = one half hour)</div>
+      <div class="psub">weekday morning ridges = the billed window &middot; midday trough = solar SOAK &middot; ringed cell = month peak, the half hour that sets the demand charge</div>
+      <svg id="hm" viewBox="0 0 2130 1330" preserveAspectRatio="none" style="flex:1"></svg>
+    </div>
+    <div class="rail">
+      <div class="panel" style="flex:1;">
+        <div class="ptitle">Reading the map</div>
+        <div class="psub">what the colours are telling you</div>
+        <div class="rrow">
+          <div class="sw2" style="background:#e05c5c;"></div>
+          <div class="rtxt"><div class="r1">Hot cells</div><div class="r2">high grid draw. Pre-WattWise, weekday mornings were solid red &mdash; that ridge set the bill every single week.</div></div>
+        </div>
+        <div class="rrow">
+          <div class="sw2" style="background:#E8B233;"></div>
+          <div class="rtxt"><div class="r1">Amber cells</div><div class="r2">moderate draw: the COAST strategy holding mornings down without breaking comfort.</div></div>
+        </div>
+        <div class="rrow">
+          <div class="sw2" style="background:#1e2a38;"></div>
+          <div class="rtxt"><div class="r1">Dark troughs</div><div class="r2">midday solar SOAK and weekend lows. Free power doing stored work.</div></div>
+        </div>
+        <div class="rrow">
+          <div class="sw2" style="background:transparent; border:3px solid #ffffff; box-sizing:border-box;"></div>
+          <div class="rtxt"><div class="r1">The ring</div><div class="r2">the month's single worst half hour. One cell out of 1,440 &mdash; and it priced the whole month at RM54,862.</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ptitle">Audit export</div>
+        <div class="psub">same data, ST format</div>
+        <div class="rrow"><div class="rtxt"><div class="r1">7-day load profile</div><div class="r2">30-min interval, EECA energy-audit format &mdash; generated from this grid in one click</div></div></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var svg=document.getElementById("hm"),NS="http://www.w3.org/2000/svg";
+  function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  var DAYS=30, SLOTS=48, X0=150, Y0=40, CW=(2060-X0)/SLOTS, CH=(1290-Y0)/DAYS;
+  function X(t){return X0+t*CW;} function Y(d){return Y0+d*CH;}
+  // seeded month of grid draw
+  var rngState=42; function rnd(){rngState=(rngState*1664525+1013904223)>>>0;return rngState/4294967296;}
+  function solar(t){var h=t/2,x=(h-12.8)/3.6,v=600*Math.exp(-x*x);return v<8?0:v;}
+  function baseLoad(t){var h=t/2,v=260;
+    if(h>=6&&h<8)v=260+(h-6)/2*420;
+    if(h>=8&&h<11)v=680+270*Math.sin((h-8)/3*Math.PI);
+    if(h>=11&&h<14)v=780;
+    if(h>=14&&h<18)v=720-(h-14)*30;
+    if(h>=18&&h<22)v=620-(h-18)*55;
+    if(h>=22)v=300; return v;}
+  function sched(t,so){var h=t/2;
+    if(h>=5&&h<7.5)return 140;
+    if(h>=8&&h<11)return -190;
+    if(h>=11&&h<14.5&&so>400)return 150;
+    if(h>=15&&h<17)return -80; return 0;}
+  // colour scale: 0 dark -> 300 navy -> 550 amber -> 750 orange -> 950+ red
+  function col(k){
+    var stops=[[0,20,32,44],[260,46,74,110],[480,205,150,50],[650,232,139,51],[820,224,92,92],[980,255,120,120]];
+    if(k<=stops[0][0])return "rgb("+stops[0].slice(1).join(",")+")";
+    for(var i=1;i<stops.length;i++){
+      if(k<=stops[i][0]){
+        var a=stops[i-1],b=stops[i],f=(k-a[0])/(b[0]-a[0]);
+        var c=[1,2,3].map(function(j){return Math.round(a[j]+(b[j]-a[j])*f);});
+        return "rgb("+c.join(",")+")";
+      }
+    }
+    return "rgb(255,120,120)";
+  }
+  var month=[],peak={v:-1,d:0,t:0};
+  for(var d=0;d<DAYS;d++){
+    var dow=d%7; // 5,6 = weekend
+    var weekend=(dow===5||dow===6);
+    var day=[];
+    for(var t=0;t<SLOTS;t++){
+      var s=solar(t);
+      if(weekend){ s*=rnd()<0.25?0.55:1.05; }      // some cloudy weekends
+      else if(rnd()<0.10) s*=0.55+rnd()*0.2;        // occasional weekday cloud
+      var load=baseLoad(t);
+      if(weekend) load=Math.max(200,load*0.55);
+      load*= 0.97+rnd()*0.06;
+      var v=Math.max(0,Math.max(180,load+sched(t,s))-s);
+      day.push(v);
+      if(v>peak.v){peak.v=v;peak.d=d;peak.t=t;}
+    }
+    month.push(day);
+  }
+  // draw cells
+  for(var d2=0;d2<DAYS;d2++)for(var t2=0;t2<SLOTS;t2++){
+    svg.appendChild(el("rect",{x:X(t2),y:Y(d2),width:CW-1.5,height:CH-1.5,fill:col(month[d2][t2]),rx:2}));
+  }
+  // peak ring
+  svg.appendChild(el("rect",{x:X(peak.t)-3,y:Y(peak.d)-3,width:CW+4.5,height:CH+4.5,fill:"none",stroke:"#ffffff","stroke-width":5,rx:5}));
+  var pl=el("text",{x:X(peak.t)+CW+14,y:Y(peak.d)+CH-6,fill:"#ffffff","font-size":24,"font-weight":800});
+  pl.textContent="565 kW \u00B7 the bill"; svg.appendChild(pl);
+  // hour labels
+  for(var hh=0;hh<=24;hh+=3){
+    var tx=el("text",{x:X(hh*2)+CW/2,y:Y0-12,"text-anchor":"middle",fill:"#5d6577","font-size":22});
+    tx.textContent=(hh<10?"0":"")+hh+":00"; svg.appendChild(tx);
+  }
+  // day labels
+  var names=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  for(var d3=0;d3<DAYS;d3++){
+    var ty=el("text",{x:X0-14,y:Y(d3)+CH/2+8,"text-anchor":"end",fill:(d3%7>=5?"#7a8499":"#8b94a7"),"font-size":22});
+    ty.textContent=(d3+1)+" "+names[d3%7]; svg.appendChild(ty);
+  }
+  // billed window strip on left edge
+  svg.appendChild(el("rect",{x:X0-8,y:Y(0)+ (17/48)*CH*0, width:0, height:0}));
+  svg.appendChild(el("rect",{x:6,y:Y(0)+17*CH,width:10,height:4*CH,fill:"#e05c5c",rx:3}));
+  var bl=el("text",{x:20,y:Y(0)+17*CH+2.2*CH,fill:"#ff8f8f","font-size":21,"font-weight":700,transform:"rotate(-90 20 "+(Y(0)+17*CH+2.2*CH)+")","text-anchor":"middle"});
+  bl.textContent="billed window 08:30\u201310:30"; svg.appendChild(bl);
+})();
+</script>
+</body>
+</html>

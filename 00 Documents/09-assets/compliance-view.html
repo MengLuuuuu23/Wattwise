@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 3200px; height: 1800px; }
+  body { font-family: 'Segoe UI', 'Arial', sans-serif; background: #14171d; color: #e8eaf0; display: flex; flex-direction: column; }
+  .nav { height: 96px; background: #1b1f27; border-bottom: 2px solid #262b36; display: flex; align-items: center; padding: 0 44px; gap: 34px; }
+  .logo { font-size: 34px; font-weight: 800; } .logo b { color: #E88B33; }
+  .site { background: #232833; border: 1.5px solid #333a48; border-radius: 10px; padding: 12px 22px; font-size: 24px; color: #cdd3e0; }
+  .tabs { display: flex; gap: 8px; margin-left: 10px; }
+  .tab { padding: 12px 26px; border-radius: 10px; font-size: 23px; color: #9aa3b5; font-weight: 600; }
+  .tab.active { background: #E88B33; color: #17181c; }
+  .kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 22px; padding: 26px 44px; }
+  .kpi { background: #1b1f27; border: 1.5px solid #262b36; border-radius: 14px; padding: 24px 28px; }
+  .kpi .k { font-size: 20px; color: #8b94a7; font-weight: 600; margin-bottom: 10px; }
+  .kpi .v { font-size: 48px; font-weight: 800; line-height: 1; }
+  .kpi .s { font-size: 19px; margin-top: 10px; color: #8b94a7; }
+  .kpi .s b { color: #7fd18a; }
+  .kpi.warn { border-color: #e05c5c66; } .kpi.warn .v { color: #ff8f8f; }
+  .main { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; padding: 0 44px; flex: 1; }
+  .panel { background: #1b1f27; border: 1.5px solid #262b36; border-radius: 14px; padding: 26px 30px; display: flex; flex-direction: column; }
+  .ptitle { font-size: 23px; font-weight: 700; margin-bottom: 4px; }
+  .psub { font-size: 18px; color: #8b94a7; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { font-size: 20px; padding: 13px 12px; border-bottom: 1px solid #232833; }
+  tr:last-child td { border-bottom: none; }
+  td.k2 { color: #8b94a7; } td.v2 { font-weight: 700; text-align: right; }
+  .ok { color: #7fd18a; font-weight: 800; } .warn2 { color: #ff8f8f; font-weight: 800; }
+  .bar { height: 26px; border-radius: 8px; background: #262b36; overflow: hidden; margin-top: 10px; }
+  .bar > div { height: 100%; background: #E88B33; }
+  .docrow { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1.5px solid #262b36; font-size: 20px; }
+  .docrow:last-child { border-bottom: none; }
+  .dtag { padding: 5px 14px; border-radius: 7px; font-size: 17px; font-weight: 800; background: #262b36; color: #9aa3b5; }
+  .dtag.auto { background: #7fd18a22; color: #9fe8a8; }
+  .dtag.due { background: #e8b23322; color: #ffd57a; }
+  .darrow { margin-left: auto; color: #E88B33; font-weight: 800; font-size: 22px; }
+</style>
+</head>
+<body>
+  <div class="nav">
+    <div class="logo">WATT<b>WISE</b></div>
+    <div class="site">Elmina Innovation Park</div>
+    <div class="tabs">
+      <div class="tab">Operations</div><div class="tab">Forecast</div>
+      <div class="tab">Schedule</div><div class="tab active">Compliance</div>
+      <div class="tab">Billing</div><div class="tab">Portfolio</div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="k">ROLLING 12-MONTH ENERGY</div><div class="v">4,860 GJ</div><div class="s">EECA threshold 21,600 GJ &middot; <b>not triggered</b></div></div>
+    <div class="kpi warn"><div class="k">THRESHOLD HEADROOM</div><div class="v">77%</div><div class="s">below the statutory trigger &middot; monitored monthly</div></div>
+    <div class="kpi"><div class="k">ENMS STATUS</div><div class="v" style="font-size:34px;padding-top:6px;"><span class="ok">ON TRACK</span></div><div class="s">energy manager: A. Rahman (REM)</div></div>
+    <div class="kpi"><div class="k">NEXT STATUTORY DUTY</div><div class="v" style="font-size:30px;padding-top:8px;">EE&amp;C report</div><div class="s">due 30 Nov &middot; <b>78% drafted</b> from logged data</div></div>
+  </div>
+
+  <div class="main">
+    <div class="panel">
+      <div class="ptitle">Statutory position</div>
+      <div class="psub">auto-derived from the same data the scheduler uses</div>
+      <table>
+        <tr><td class="k2">Registered Energy Manager</td><td class="v2"><span class="ok">Appointed</span></td></tr>
+        <tr><td class="k2">Energy Management System</td><td class="v2"><span class="ok">Active</span></td></tr>
+        <tr><td class="k2">Annual EE&amp;C report</td><td class="v2">30 Nov 2026</td></tr>
+        <tr><td class="k2">Energy audit cycle</td><td class="v2">next: 2029 (5-yr)</td></tr>
+        <tr><td class="k2">Load factor (rolling)</td><td class="v2">0.58 &middot; improving</td></tr>
+        <tr><td class="k2">Audit-trail completeness</td><td class="v2"><span class="ok">100%</span> (14 mo)</td></tr>
+      </table>
+      <div class="bar"><div style="width:78%"></div></div>
+      <div style="font-size:18px;color:#8b94a7;margin-top:8px;">next report drafted from logged interval data &mdash; REM reviews and signs</div>
+    </div>
+    <div class="panel">
+      <div class="ptitle">Documents</div>
+      <div class="psub">generated, not hand-written</div>
+      <div class="docrow"><span class="dtag auto">AUTO</span> EE&amp;C report FY2026 draft <span class="darrow">&darr;</span></div>
+      <div class="docrow"><span class="dtag auto">AUTO</span> Monthly energy statement Oct <span class="darrow">&darr;</span></div>
+      <div class="docrow"><span class="dtag due">DUE 30 NOV</span> REM sign-off checklist <span class="darrow">&rsaquo;</span></div>
+      <div class="docrow"><span class="dtag">5-YR</span> Energy audit pack (2029) <span class="darrow">&rsaquo;</span></div>
+      <div class="docrow"><span class="dtag auto">AUTO</span> 7-day load profile (ST audit format) <span class="darrow">&darr;</span></div>
+      <div class="docrow"><span class="dtag">REF</span> Site tariff register &middot; C1 MV <span class="darrow">&rsaquo;</span></div>
+    </div>
+    <div class="panel">
+      <div class="ptitle">Tenant billing</div>
+      <div class="psub">green sub-metering, auto-invoiced</div>
+      <table>
+        <tr><td class="k2">Invoices generated (Oct)</td><td class="v2">14 / 14</td></tr>
+        <tr><td class="k2">On township solar</td><td class="v2">31% of billed kWh</td></tr>
+        <tr><td class="k2">Avg tenant saving passed on</td><td class="v2">6.2%</td></tr>
+        <tr><td class="k2">Disputes this quarter</td><td class="v2">0</td></tr>
+        <tr><td class="k2">Next billing run</td><td class="v2">1 Nov</td></tr>
+      </table>
+      <div style="font-size:18px;color:#8b94a7;margin-top:14px;line-height:1.5;">Each invoice shows: kWh used, kWh from township solar, peak contribution, and RM saved vs standard service charge &mdash; the transparency slide, operationalised.</div>
+    </div>
+  </div>
+</body>
+</html>
