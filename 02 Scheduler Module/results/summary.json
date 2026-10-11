@@ -1,0 +1,15 @@
+{
+  "dumb": {
+    "peak_kw_mean": 794.6,
+    "peak_kw_max": 844.3,
+    "day_bill_rm_mean": 81728.0
+  },
+  "wattwise": {
+    "peak_kw_mean": 679.6,
+    "peak_kw_max": 701.7,
+    "day_bill_rm_mean": 70659.0
+  },
+  "peak_shave_pct": 14.5,
+  "comfort_violations_wattwise": 0,
+  "comfort_violations_dumb": 5
+}
