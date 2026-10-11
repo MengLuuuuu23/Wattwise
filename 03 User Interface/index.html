@@ -3,470 +3,567 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WattWise — Township Energy Dashboard</title>
+<title>WattWise - Township Energy Dashboard</title>
 <style>
   :root {
-    --bg: #0d1117; --panel: #161b22; --panel2: #1c2330;
-    --line: #2d3646; --text: #e6edf3; --muted: #8b949e;
-    --accent: #e88b33; --accent2: #ffbd59; --good: #3fb950;
-    --bad: #f85149; --solar: #ffd54a; --grid: #58a6ff;
+    --bg: #f3f5f8; --panel: #ffffff; --panel2: #f8fafc;
+    --border: #d5dbe3; --border2: #e4e9f0;
+    --text: #1f2430; --muted: #5a6472; --faint: #8b95a3;
+    --accent: #e88b33; --excel: #217346; --good: #107c41; --bad: #d13438;
+    --blue: #2f6fbf; --solar: #e9a820;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
     background: var(--bg); color: var(--text);
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+    font-family: Calibri, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex; flex-direction: column; overflow: hidden; font-size: 14px;
   }
+
+  /* ---------- header (excel ribbon vibe) ---------- */
   header {
-    display: flex; align-items: center; gap: 14px;
-    padding: 10px 18px; background: var(--panel);
-    border-bottom: 1px solid var(--line); z-index: 10;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; display: flex; flex-direction: column;
   }
-  .logo { font-weight: 800; font-size: 18px; letter-spacing: 1px; }
-  .logo b { color: var(--accent); }
-  .sub { color: var(--muted); font-size: 12px; }
+  .ribbon {
+    display: flex; align-items: center; gap: 14px; padding: 7px 16px;
+  }
+  .brand { font-size: 19px; font-weight: 700; letter-spacing: .5px; }
+  .brand b { color: var(--accent); }
+  .brand-sub { font-size: 11.5px; color: var(--muted); }
   .spacer { flex: 1; }
-  .mode-switch { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-  .mode-switch button {
-    background: var(--panel2); color: var(--muted); border: none;
-    padding: 7px 16px; font-size: 12px; cursor: pointer; font-weight: 600;
+  .toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .toggle button {
+    padding: 6px 16px; font-size: 13px; font-family: inherit;
+    border: none; background: transparent; color: var(--muted); cursor: pointer; font-weight: 600;
   }
-  .mode-switch button.on { background: var(--accent); color: #14100a; }
-  #clock { font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 700; color: var(--accent2); }
-  .play-ctl { display: flex; align-items: center; gap: 8px; }
-  .play-ctl button {
-    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
-    border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px;
+  .toggle button.on { background: var(--excel); color: #fff; }
+  .play-group { display: flex; align-items: center; gap: 10px; }
+  .btn {
+    padding: 6px 14px; font-size: 13px; font-family: inherit; font-weight: 600;
+    border: 1px solid var(--border); background: var(--panel); color: var(--text);
+    border-radius: 6px; cursor: pointer;
   }
-  .play-ctl button:hover { border-color: var(--accent); }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .clock { font-size: 18px; font-weight: 700; min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
+  #scrub { width: 180px; accent-color: var(--excel); }
+
+  /* tabs row */
+  .tabs { display: flex; gap: 2px; padding: 0 12px; border-top: 1px solid var(--border2); }
+  .tab {
+    padding: 7px 22px; font-size: 13.5px; font-weight: 600; color: var(--muted);
+    border: 1px solid transparent; border-bottom: none; cursor: pointer;
+    border-radius: 6px 6px 0 0; margin-bottom: -1px; user-select: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.on {
+    background: var(--bg); color: var(--excel);
+    border-color: var(--border); border-bottom: 1px solid var(--bg);
+  }
+
+  /* ---------- main split ---------- */
   main { flex: 1; display: flex; min-height: 0; }
-  #canvas-wrap { flex: 1; position: relative; min-width: 0; }
-  canvas { display: block; }
-  #hint {
-    position: absolute; left: 14px; top: 12px; color: var(--muted);
-    font-size: 12px; pointer-events: none; background: rgba(13,17,23,.75);
-    padding: 6px 10px; border-radius: 6px;
+
+  .map-panel {
+    width: 420px; flex-shrink: 0; background: var(--panel);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    transition: width .25s ease, border .25s ease;
   }
-  aside {
-    width: 340px; background: var(--panel); border-left: 1px solid var(--line);
-    display: flex; flex-direction: column; overflow-y: auto;
+  body.map-collapsed .map-panel { width: 0; border-right: none; overflow: hidden; }
+  .map-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 14px; border-bottom: 1px solid var(--border2);
+    font-size: 11px; font-weight: 700; letter-spacing: .8px; color: var(--muted); text-transform: uppercase;
   }
-  .aside-head { padding: 14px 16px; border-bottom: 1px solid var(--line); }
-  .aside-head h2 { font-size: 15px; }
-  .aside-head .tag { color: var(--muted); font-size: 11px; margin-top: 2px; }
-  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 16px; }
-  .kpi { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; }
-  .kpi .v { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .kpi .l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-  .kpi .d { font-size: 11px; margin-top: 2px; }
-  .up { color: var(--good); } .down { color: var(--bad); }
-  .chart-box { padding: 8px 16px 4px; }
-  .chart-box h3 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-  canvas.mini { width: 100%; border-radius: 8px; background: var(--panel2); border: 1px solid var(--line); }
-  .action-strip { display: flex; gap: 4px; padding: 8px 16px; flex-wrap: wrap; }
-  .act { font-size: 10px; padding: 3px 8px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); color: var(--muted); }
-  .act.now { border-color: var(--accent); color: var(--accent2); font-weight: 700; }
+  #sitemap { flex: 1; width: 100%; display: block; }
+  .map-legend {
+    display: flex; gap: 13px; align-items: center; padding: 8px 14px;
+    border-top: 1px solid var(--border2); font-size: 11.5px; color: var(--muted); flex-wrap: wrap;
+  }
+  .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: -1px; border: 1px solid var(--border); }
+
+  /* ---------- content area ---------- */
+  .content { flex: 1; min-width: 0; overflow-y: auto; padding: 14px 18px 20px; }
+  .page { display: none; }
+  .page.on { display: block; }
+
+  /* buildings page */
+  .bld-head { display: flex; align-items: center; gap: 10px; }
+  .bld-nav {
+    width: 28px; height: 28px; border: 1px solid var(--border); background: var(--panel);
+    border-radius: 6px; cursor: pointer; font-size: 15px; color: var(--muted); line-height: 1;
+  }
+  .bld-nav:hover { border-color: var(--accent); color: var(--accent); }
+  .bld-title h1 { font-size: 20px; font-weight: 700; }
+  .bld-title .sub { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+  .headline {
+    margin-top: 10px; padding: 9px 13px; border-radius: 6px;
+    background: #eaf5ee; border: 1px solid #bfe0cc; color: #0b5d31; font-size: 13.5px; font-weight: 600;
+  }
+  .headline.flat { background: #f2f4f7; border-color: var(--border); color: var(--muted); }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .kpi .lbl {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--muted); padding: 5px 10px 3px; background: var(--panel2); border-bottom: 1px solid var(--border2);
+  }
+  .kpi .val { font-size: 21px; font-weight: 700; padding: 3px 10px 2px; font-variant-numeric: tabular-nums; }
+  .kpi .unit { font-size: 11px; color: var(--faint); font-weight: 600; }
+  .kpi .dlt { font-size: 11.5px; padding: 0 10px 6px; color: var(--muted); }
+  .kpi .dlt.good { color: var(--good); font-weight: 600; }
+  .chart-card { margin-top: 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; }
+  .chart-card .ttl {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--muted); padding: 7px 12px; border-bottom: 1px solid var(--border2);
+  }
+  .chart-card canvas { width: 100%; display: block; }
+  .action-strip { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .act { font-size: 11px; padding: 3px 10px; border-radius: 10px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); }
+  .act.now { border-color: var(--accent); color: #9a5a14; background: #fdf3e7; font-weight: 700; }
+
+  /* forecast page */
+  .fc-intro { color: var(--muted); font-size: 13px; max-width: 760px; margin-bottom: 12px; }
+  .fc-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .fc-note { margin-top: 12px; font-size: 12px; color: var(--faint); }
+
+  /* ---------- footer ---------- */
   footer {
-    display: flex; gap: 18px; align-items: center;
-    padding: 8px 18px; background: var(--panel); border-top: 1px solid var(--line);
-    font-size: 12px; color: var(--muted); z-index: 10;
+    display: flex; align-items: center; gap: 22px;
+    background: var(--panel); border-top: 1px solid var(--border);
+    padding: 6px 16px; font-size: 12.5px; color: var(--muted); flex-shrink: 0;
   }
-  .town-kpi { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
-  .town-kpi b { color: var(--accent2); }
-  .legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  footer b { color: var(--text); font-variant-numeric: tabular-nums; }
+  footer .save b { color: var(--good); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
 </style>
 </head>
 <body>
+
 <header>
-  <div>
-    <div class="logo">WATT<b>WISE</b></div>
-    <div class="sub">township energy dashboard — simulated demo day</div>
+  <div class="ribbon">
+    <div>
+      <div class="brand">WATT<b>WISE</b></div>
+      <div class="brand-sub">township energy dashboard &middot; demo day</div>
+    </div>
+    <button class="btn" id="btn-map" title="show / hide the map">&#9664; Map</button>
+    <div class="spacer"></div>
+    <div class="toggle">
+      <button id="btn-dumb" class="on">Baseline &mdash; no WattWise</button>
+      <button id="btn-wise">With WattWise</button>
+    </div>
+    <div class="play-group">
+      <button class="btn" id="btn-play">&#9654; Play day</button>
+      <input type="range" id="scrub" min="0" max="47" value="0">
+      <span class="clock" id="clock">00:00</span>
+    </div>
   </div>
-  <div class="spacer"></div>
-  <div class="mode-switch">
-    <button id="btn-dumb" class="on">BASELINE (no WattWise)</button>
-    <button id="btn-wise">WITH WATTWISE</button>
-  </div>
-  <div class="play-ctl">
-    <button id="btn-play">▶ play day</button>
-    <span id="clock">00:00</span>
+  <div class="tabs">
+    <div class="tab on" data-page="page-buildings">Buildings</div>
+    <div class="tab" data-page="page-forecast">Solar &amp; Demand Forecast</div>
   </div>
 </header>
 
 <main>
-  <div id="canvas-wrap">
-    <div id="hint">drag to orbit · scroll to zoom · click a building</div>
-    <canvas id="scene"></canvas>
-  </div>
-  <aside id="panel">
-    <div class="aside-head">
-      <h2 id="sel-name">Click a building</h2>
-      <div class="tag" id="sel-sub">each site runs the WATTWISE-2 scheduler simulation</div>
+  <section class="map-panel" id="map-panel">
+    <div class="map-head"><span>Site map &mdash; click a building</span></div>
+    <svg id="sitemap" viewBox="0 0 660 500" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="map-legend">
+      <span><span class="sw" style="background:#d9efe0"></span>light</span>
+      <span><span class="sw" style="background:#fdecc8"></span>moderate</span>
+      <span><span class="sw" style="background:#f6cdcb"></span>near peak</span>
+      <span><span class="sw" style="background:#fff;border-style:dashed"></span>selected</span>
     </div>
-    <div class="kpi-grid" id="kpis"></div>
-    <div class="chart-box">
-      <h3>net grid draw — full day</h3>
-      <canvas id="chart-day" class="mini" height="150"></canvas>
+  </section>
+
+  <section class="content">
+    <!-- ============ page 1: buildings ============ -->
+    <div class="page on" id="page-buildings">
+      <div class="bld-head">
+        <button class="bld-nav" id="bld-prev">&#8249;</button>
+        <div class="bld-title">
+          <h1 id="sel-name">Loading&hellip;</h1>
+          <div class="sub" id="sel-sub"></div>
+        </div>
+        <button class="bld-nav" id="bld-next">&#8250;</button>
+      </div>
+      <div class="headline" id="headline"></div>
+      <div class="kpi-row" id="kpis"></div>
+      <div class="chart-card">
+        <div class="ttl">Net grid draw &mdash; full day (blue = current mode, grey = other)</div>
+        <canvas id="chart-day" height="190"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="ttl">Zone temperature vs comfort band 24&ndash;26&deg;C</div>
+        <canvas id="chart-zone" height="120"></canvas>
+      </div>
+      <div class="action-strip" id="actions"></div>
     </div>
-    <div class="chart-box">
-      <h3>zone temperature vs comfort band</h3>
-      <canvas id="chart-zone" class="mini" height="110"></canvas>
+
+    <!-- ============ page 2: forecast ============ -->
+    <div class="page" id="page-forecast">
+      <div class="fc-intro">
+        <b>WATTWISE-1 live forecasts</b> &mdash; solar output and building demand,
+        30 minutes ahead, on the 30-minute billing grid. Predictions come from the
+        trained models in <b>01 Prediction Module</b> (gradient boosting on weather +
+        calendar + recent history). This is the signal the scheduler acts on.
+      </div>
+      <div class="fc-stats kpi-row" id="fc-kpis"></div>
+      <div class="chart-card">
+        <div class="ttl">Solar output &mdash; forecast vs actual (600 kWp reference site)</div>
+        <canvas id="chart-solar-fc" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="ttl">Building demand &mdash; forecast vs actual</div>
+        <canvas id="chart-demand-fc" height="200"></canvas>
+      </div>
+      <div class="fc-note">
+        Model walk-forward test metrics (held-out final 60 days, never shuffled):
+        solar nRMSE 7.35% / R&sup2; 0.996 &middot; demand MAE 10.2 kW.
+        Published Malaysian rooftop-LSTM benchmark for comparison: nRMSE 6.75%, R&sup2; 0.957.
+        Demo runs on calibrated synthetic data; swap in TNB interval data at pilot.
+      </div>
     </div>
-    <div class="action-strip" id="actions"></div>
-  </aside>
+  </section>
 </main>
 
 <footer>
-  <span class="town-kpi">township peak: <b id="t-peak">—</b></span>
-  <span class="town-kpi">combined MD bill: <b id="t-bill">—</b>/mo</span>
-  <span class="town-kpi">saved: <b id="t-save">—</b></span>
+  <span>Township peak now: <b id="t-peak">&mdash;</b></span>
+  <span>Combined MD bill: <b id="t-bill">&mdash;</b>/mo</span>
+  <span class="save">WattWise saves: <b id="t-save">&mdash;</b>/mo</span>
   <span class="spacer"></span>
-  <span><span class="legend-dot" style="background:var(--grid)"></span>grid draw</span>
-  <span><span class="legend-dot" style="background:var(--solar)"></span>solar</span>
-  <span><span class="legend-dot" style="background:var(--bad)"></span>billed peak window 8:30–10:30</span>
+  <span><span class="dot" style="background:var(--blue)"></span>grid draw</span>
+  <span><span class="dot" style="background:var(--solar)"></span>solar</span>
+  <span><span class="dot" style="background:#d13438;opacity:.35"></span>billed window 8:30&ndash;10:30</span>
 </footer>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+<script>
+(function () {
+"use strict";
 
-const T = await fetch('./data/township.json').then(r => r.json());
-const TIMES = T.buildings.office_tower.dumb.times;
-const N = TIMES.length;
+var T = null, TIMES = null, N = 48;
+var mode = "dumb", step = 0, playing = false, selected = null;
+var ORDER = ["mall", "office_tower", "innovation_park", "data_centre", "warehouse"];
 
-// --- layout: positions on the ground for each building --------------
-const LAYOUT = {
-  mall:            { x: -14, z: -6,  w: 11, d: 9  },
-  office_tower:    { x: 2,   z: -12, w: 6,  d: 6  },
-  innovation_park: { x: 12,  z: -4,  w: 9,  d: 7  },
-  data_centre:     { x: 6,   z: 8,   w: 8,  d: 6  },
-  warehouse:       { x: -10, z: 10,  w: 9,  d: 6  },
+var PLAN = {
+  mall:            { x: 40,  y: 60,  w: 170, h: 130 },
+  office_tower:    { x: 300, y: 50,  w: 80,  h: 80  },
+  innovation_park: { x: 440, y: 70,  w: 150, h: 110 },
+  data_centre:     { x: 340, y: 270, w: 130, h: 100 },
+  warehouse:       { x: 60,  y: 280, w: 160, h: 100 }
 };
+var FLOORS = { mall: "2F", office_tower: "17F", innovation_park: "3F", data_centre: "1F", warehouse: "1F" };
 
-// --- three.js scene --------------------------------------------------
-const canvas = document.getElementById('scene');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d1117);
-scene.fog = new THREE.Fog(0x0d1117, 60, 140);
-const camera = new THREE.PerspectiveCamera(45, 2, .1, 500);
-camera.position.set(0, 26, 34);
-const controls = new OrbitControls(camera, canvas);
-controls.enableDamping = true; controls.dampingFactor = .08;
-controls.maxPolarAngle = Math.PI / 2.15;
-controls.target.set(0, 2, 0);
+var svg = document.getElementById("sitemap");
+var NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent) {
+  var e = document.createElementNS(NS, tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  (parent || svg).appendChild(e);
+  return e;
+}
+var rectEls = {}, kWTexts = {};
 
-scene.add(new THREE.AmbientLight(0x8899bb, .55));
-const sun = new THREE.DirectionalLight(0xffeedd, 1.1);
-sun.position.set(20, 40, 15); scene.add(sun);
-const rim = new THREE.DirectionalLight(0x4488ff, .25);
-rim.position.set(-20, 20, -25); scene.add(rim);
-
-// ground
-const ground = new THREE.Mesh(
-  new THREE.BoxGeometry(70, .5, 55),
-  new THREE.MeshStandardMaterial({ color: 0x1a2433, roughness: .95 }));
-ground.position.y = -.25; scene.add(ground);
-// road cross
-const roadMat = new THREE.MeshStandardMaterial({ color: 0x2a3547, roughness: .9 });
-const roadH = new THREE.Mesh(new THREE.BoxGeometry(66, .06, 3), roadMat);
-roadH.position.set(0, .03, 1.5); scene.add(roadH);
-const roadV = new THREE.Mesh(new THREE.BoxGeometry(3, .06, 51), roadMat);
-roadV.position.set(-3, .03, 0); scene.add(roadV);
-
-// trees (simple cones)
-const treeMat = new THREE.MeshStandardMaterial({ color: 0x2ea043, roughness: .9 });
-const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4a2f });
-const rng = (s => () => (s = s * 16807 % 2147483647) / 2147483647)(42);
-for (let i = 0; i < 26; i++) {
-  const x = (rng() - .5) * 60, z = (rng() - .5) * 46;
-  if (Math.abs(x + 3) < 4 || Math.abs(z - 1.5) < 5) continue;
-  const t = new THREE.Mesh(new THREE.ConeGeometry(.9, 2.4, 6), treeMat);
-  t.position.set(x, 1.4, z); scene.add(t);
-  const tr = new THREE.Mesh(new THREE.CylinderGeometry(.15, .15, .7), trunkMat);
-  tr.position.set(x, .35, z); scene.add(tr);
+function buildMap() {
+  el("rect", { x: 0, y: 0, width: 660, height: 500, fill: "#eef2ea" });
+  el("rect", { x: 0, y: 218, width: 660, height: 26, fill: "#d8dde4" });
+  el("rect", { x: 268, y: 0, width: 24, height: 500, fill: "#d8dde4" });
+  el("line", { x1: 0, y1: 231, x2: 660, y2: 231, stroke: "#fff", "stroke-width": 1.5, "stroke-dasharray": "10 8" });
+  el("line", { x1: 280, y1: 0, x2: 280, y2: 500, stroke: "#fff", "stroke-width": 1.5, "stroke-dasharray": "10 8" });
+  var treeXY = [[20,30],[220,40],[240,150],[420,30],[620,40],[630,180],[410,200],[30,200],[620,300],[420,420],[240,420],[100,430],[560,440],[30,430],[640,220]];
+  treeXY.forEach(function (p) {
+    el("circle", { cx: p[0], cy: p[1], r: 9, fill: "#c5deb6" });
+    el("circle", { cx: p[0], cy: p[1], r: 4.5, fill: "#a8c997" });
+  });
+  ORDER.forEach(function (key) {
+    var P = PLAN[key];
+    var g = el("g", { cursor: "pointer" });
+    var r = el("rect", { x: P.x, y: P.y, width: P.w, height: P.h, rx: 4,
+      fill: "#d9efe0", stroke: "#b9c6d2", "stroke-width": 1.5 }, g);
+    var nm = el("text", { x: P.x + P.w / 2, y: P.y + P.h / 2 - 10, "text-anchor": "middle",
+      "font-size": 12.5, "font-weight": 700, fill: "#2a3342",
+      "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
+    var kw = el("text", { x: P.x + P.w / 2, y: P.y + P.h / 2 + 12, "text-anchor": "middle",
+      "font-size": 14, "font-weight": 700, fill: "#1f2430",
+      "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
+    var badge = el("text", { x: P.x + P.w / 2, y: P.y + P.h - 9, "text-anchor": "middle",
+      "font-size": 10, fill: "#5a6472", "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
+    g.addEventListener("click", function () { select(key); showPage("page-buildings"); });
+    rectEls[key] = r; kWTexts[key] = kw;
+    badge.textContent = FLOORS[key] + (T.buildings[key].has_solar ? "  \u2600 PV" : "");
+    nm.textContent = T.buildings[key].label.replace("Elmina ", "").replace("SDP ", "");
+  });
 }
 
-// --- buildings + solar panels + peak markers -------------------------
-const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
-const clickables = [];
-const bodyMats = {}, glowMats = {}, barMeshes = {}, roofPanels = {};
+function heat(s) { return s >= 0.8 ? "#f6cdcb" : s >= 0.5 ? "#fdecc8" : "#d9efe0"; }
 
-const BODY_COLORS = {
-  mall: 0x8f3d2e, office_tower: 0x3d4a5c, innovation_park: 0x2f5e4a,
-  data_centre: 0x54416b, warehouse: 0x66552e,
-};
-
-for (const [key, L] of Object.entries(LAYOUT)) {
-  const meta = T.buildings[key];
-  const h = 1.2 + meta.height;
-  const mat = new THREE.MeshStandardMaterial({
-    color: BODY_COLORS[key], roughness: .6, metalness: .15 });
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(L.w, h, L.d), mat);
-  mesh.position.set(L.x, h / 2, L.z);
-  mesh.userData.key = key;
-  scene.add(mesh); clickables.push(mesh); bodyMats[key] = mat;
-
-  // windows: emissive strip near top (lit at night — later)
-  // roof solar panels
-  if (meta.has_solar) {
-    const pg = new THREE.MeshStandardMaterial({ color: 0x1f3a5f, roughness: .35, metalness: .6 });
-    const panels = new THREE.Group();
-    const pw = L.w * .7, pd = L.d * .7;
-    for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) {
-      const p = new THREE.Mesh(new THREE.BoxGeometry(pw / 3 - .3, .1, pd / 2 - .3), pg);
-      p.position.set(-pw / 2 + pw / 6 + i * pw / 3, h + .08, -pd / 2 + pd / 4 + j * pd / 2);
-      panels.add(p);
-    }
-    panels.position.set(L.x, 0, L.z); scene.add(panels);
-    roofPanels[key] = panels;
+/* ---------- generic chart helper ---------- */
+function mkChart(canvasId, drawFn) {
+  var c = document.getElementById(canvasId);
+  var W = c.width = c.clientWidth * 2;
+  var H = c.height = parseInt(c.getAttribute("height")) * 2;
+  var x = c.getContext("2d");
+  x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
+  drawFn(x, W, H);
+}
+function axes(x, W, H, maxV, unit) {
+  x.strokeStyle = "#eef1f5"; x.lineWidth = 1;
+  for (var g = 0; g <= 4; g++) {
+    var gy = 30 + (H - 76) * g / 4;
+    x.beginPath(); x.moveTo(52, gy); x.lineTo(W - 20, gy); x.stroke();
   }
-
-  // selection glow (hidden by default)
-  const glow = new THREE.Mesh(
-    new THREE.BoxGeometry(L.w + .5, h + .5, L.d + .5),
-    new THREE.MeshBasicMaterial({ color: 0xe88b33, transparent: true, opacity: .0 }));
-  glow.position.set(L.x, h / 2, L.z); scene.add(glow);
-  glowMats[key] = glow.material;
-
-  // live load bar (a thin glowing pillar above the roof)
-  const barMat = new THREE.MeshBasicMaterial({ color: 0x58a6ff, transparent: true, opacity: .85 });
-  const bar = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1, 1.2), barMat);
-  bar.position.set(L.x + L.w / 2 - 1, h + 1, L.z - L.d / 2 + 1);
-  scene.add(bar); barMeshes[key] = bar;
+  x.fillStyle = "#5a6472"; x.font = "600 15px Calibri"; x.textAlign = "right";
+  x.fillText(Math.round(maxV) + " " + unit, 46, 44);
+  x.fillText(Math.round(maxV / 2) + "", 46, 30 + (H - 76) * 2 / 4 + 5);
+  x.fillText("0", 46, H - 46);
+  x.textAlign = "left";
+  var px = function (i) { return 52 + (W - 72) * i / (N - 1); };
+  x.fillText("00:00", 52, H - 18); x.fillText("06:00", px(12) - 18, H - 18);
+  x.fillText("12:00", px(24) - 18, H - 18); x.fillText("18:00", px(36) - 18, H - 18);
+  x.fillText("24:00", W - 70, H - 18);
+  return px;
 }
 
-// --- labels (floating divs) -------------------------------------------
-const labelDivs = {};
-for (const [key, L] of Object.entries(LAYOUT)) {
-  const el = document.createElement('div');
-  el.textContent = T.buildings[key].label;
-  el.style.cssText = `position:absolute;transform:translate(-50%,-130%);
-    background:rgba(22,27,34,.92);border:1px solid #2d3646;color:#e6edf3;
-    padding:3px 9px;border-radius:6px;font-size:11px;pointer-events:none;
-    white-space:nowrap;display:none;z-index:5`;
-  document.getElementById('canvas-wrap').appendChild(el);
-  labelDivs[key] = el;
+function dayChart(key) {
+  mkChart("chart-day", function (x, W, H) {
+    var b = T.buildings[key];
+    var maxKw = Math.max.apply(null, b.dumb.net_kw.concat(b.wattwise.net_kw)) * 1.06;
+    var px = axes(x, W, H, maxKw, "kW");
+    function py(v) { return H - 46 - (H - 76) * v / maxKw; }
+    var t0 = TIMES.indexOf("08:30"), t1 = TIMES.indexOf("10:30");
+    x.fillStyle = "rgba(209,52,56,.09)"; x.fillRect(px(t0), 26, px(t1) - px(t0), H - 72);
+    x.fillStyle = "rgba(233,168,32,.22)";
+    x.beginPath(); x.moveTo(px(0), py(0));
+    b.wattwise.solar_kw.forEach(function (v, i) { x.lineTo(px(i), py(v)); });
+    x.lineTo(px(N - 1), py(0)); x.closePath(); x.fill();
+    x.strokeStyle = "#c3cbd6"; x.lineWidth = 2.5; x.beginPath();
+    (mode === "dumb" ? b.wattwise : b.dumb).net_kw.forEach(function (v, i) {
+      i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
+    }); x.stroke();
+    x.strokeStyle = "#2f6fbf"; x.lineWidth = 3.5; x.beginPath();
+    (mode === "dumb" ? b.dumb : b.wattwise).net_kw.forEach(function (v, i) {
+      i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
+    }); x.stroke();
+    x.strokeStyle = "#e88b33"; x.lineWidth = 2;
+    x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 46); x.stroke();
+  });
 }
 
-// --- state -------------------------------------------------------------
-let mode = 'dumb';           // or 'wattwise'
-let step = 0;
-let playing = false;
-let selected = null;
-
-// --- UI wiring ---------------------------------------------------------
-const btnDumb = document.getElementById('btn-dumb');
-const btnWise = document.getElementById('btn-wise');
-btnDumb.onclick = () => setMode('dumb');
-btnWise.onclick = () => setMode('wattwise');
-function setMode(m) {
-  mode = m;
-  btnDumb.classList.toggle('on', m === 'dumb');
-  btnWise.classList.toggle('on', m === 'wattwise');
-  refresh();
-}
-document.getElementById('btn-play').onclick = () => { playing = !playing; };
-
-canvas.addEventListener('click', e => {
-  const r = canvas.getBoundingClientRect();
-  pointer.x = ((e.clientX - r.left) / r.width) * 2 - 1;
-  pointer.y = -((e.clientY - r.top) / r.height) * 2 + 1;
-  raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(clickables);
-  if (hits.length) select(hits[0].object.userData.key);
-});
-
-function select(key) {
-  selected = key;
-  document.getElementById('sel-name').textContent = T.buildings[key].label;
-  document.getElementById('sel-sub').textContent =
-    `peak ${T.buildings[key].peak_dumb_kw} → ${T.buildings[key].peak_wattwise_kw} kW · shave ${T.buildings[key].shave_pct}%`;
-  for (const [k, m] of Object.entries(glowMats))
-    m.opacity = (k === key) ? .22 : 0;
-  refresh();
+function zoneChart(key) {
+  var c = document.getElementById("chart-zone");
+  mkChart("chart-zone", function (x, W, H) {
+    var b = T.buildings[key];
+    var lo = 23.4, hi = 26.6;
+    var px = function (i) { return 52 + (W - 72) * i / (N - 1); };
+    var py = function (v) { return H - 40 - (H - 64) * (v - lo) / (hi - lo); };
+    x.fillStyle = "rgba(16,124,65,.08)"; x.fillRect(52, py(26), W - 72, py(24) - py(26));
+    x.strokeStyle = "#9fc3aa"; x.setLineDash([7, 7]); x.lineWidth = 1.5;
+    [24, 26].forEach(function (t) { x.beginPath(); x.moveTo(52, py(t)); x.lineTo(W - 20, py(t)); x.stroke(); });
+    x.setLineDash([]);
+    x.strokeStyle = "#e88b33"; x.lineWidth = 3; x.beginPath();
+    b.wattwise.zone_c.forEach(function (v, i) { i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)); });
+    x.stroke();
+    x.strokeStyle = "#e88b3388"; x.lineWidth = 1.5;
+    x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 40); x.stroke();
+    x.fillStyle = "#5a6472"; x.font = "600 14px Calibri"; x.textAlign = "right";
+    x.fillText("26\u00B0", 46, py(26) + 5); x.fillText("24\u00B0", 46, py(24) + 5);
+    x.textAlign = "left";
+    x.fillText("zone stays inside the band \u2014 comfort is never traded away", 60, 24);
+  });
 }
 
-// --- draw helpers ------------------------------------------------------
-function drawDayChart(key) {
-  const c = document.getElementById('chart-day');
-  const W = c.width = c.clientWidth * 2, H = c.height = 300;
-  const x = c.getContext('2d'); x.scale(1, 1);
-  const b = T.buildings[key];
-  const maxKw = Math.max(...b.dumb.net_kw, ...b.wattwise.net_kw) * 1.08;
-  const px = i => 16 + (W - 32) * i / (N - 1);
-  const py = v => H - 24 - (H - 44) * v / maxKw;
-
-  x.fillStyle = '#1c2330'; x.fillRect(0, 0, W, H);
-  // peak window band
-  const t0 = TIMES.indexOf('08:30'), t1 = TIMES.indexOf('10:30');
-  x.fillStyle = 'rgba(248,81,73,.14)';
-  x.fillRect(px(t0), 12, px(t1) - px(t0), H - 36);
-
-  // solar area
-  x.fillStyle = 'rgba(255,213,74,.18)';
-  x.beginPath(); x.moveTo(px(0), py(0));
-  b.wattwise.solar_kw.forEach((v, i) => x.lineTo(px(i), py(v)));
-  x.lineTo(px(N - 1), py(0)); x.closePath(); x.fill();
-
-  const line = (arr, color, dash) => {
-    x.strokeStyle = color; x.lineWidth = 3; x.setLineDash(dash || []);
-    x.beginPath();
-    arr.forEach((v, i) => i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)));
+function forecastChart(canvasId, fcArr, actArr, color, unit) {
+  mkChart(canvasId, function (x, W, H) {
+    var maxV = Math.max.apply(null, actArr.concat(fcArr)) * 1.06;
+    var px = axes(x, W, H, maxV, unit);
+    function py(v) { return H - 46 - (H - 76) * v / maxV; }
+    // actual (area + line)
+    x.fillStyle = "rgba(47,111,191,.10)";
+    x.beginPath(); x.moveTo(px(0), py(0));
+    actArr.forEach(function (v, i) { x.lineTo(px(i), py(v)); });
+    x.lineTo(px(N - 1), py(0)); x.closePath(); x.fill();
+    x.strokeStyle = "#8b95a3"; x.lineWidth = 2; x.beginPath();
+    actArr.forEach(function (v, i) { i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)); });
+    x.stroke();
+    // forecast (dashed)
+    x.strokeStyle = color; x.lineWidth = 3; x.setLineDash([8, 5]); x.beginPath();
+    var started = false;
+    fcArr.forEach(function (v, i) {
+      if (v == null) { started = false; return; }
+      started ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
+      started = true;
+    });
     x.stroke(); x.setLineDash([]);
-  };
-  line(b.dumb.net_kw, '#f8514944');
-  line(mode === 'dumb' ? b.dumb.net_kw : b.wattwise.net_kw, '#58a6ff');
-
-  // now marker
-  x.strokeStyle = '#ffbd59'; x.lineWidth = 2;
-  x.beginPath(); x.moveTo(px(step), 12); x.lineTo(px(step), H - 24); x.stroke();
-
-  // axis labels
-  x.fillStyle = '#8b949e'; x.font = '18px system-ui';
-  x.fillText('00:00', 16, H - 6); x.fillText('12:00', W / 2 - 24, H - 6);
-  x.fillText('24:00', W - 66, H - 6);
-  x.fillText(Math.round(maxKw) + ' kW', 16, 30);
+    // now marker
+    x.strokeStyle = "#e88b33"; x.lineWidth = 2;
+    x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 46); x.stroke();
+    // legend inline
+    x.font = "600 15px Calibri";
+    x.strokeStyle = "#8b95a3"; x.lineWidth = 2;
+    x.beginPath(); x.moveTo(64, 40); x.lineTo(92, 40); x.stroke();
+    x.fillStyle = "#5a6472"; x.fillText("actual", 98, 45);
+    x.strokeStyle = color; x.lineWidth = 3; x.setLineDash([8, 5]);
+    x.beginPath(); x.moveTo(170, 40); x.lineTo(198, 40); x.stroke(); x.setLineDash([]);
+    x.fillStyle = "#5a6472"; x.fillText("WATTWISE-1 forecast (30 min ahead)", 204, 45);
+  });
 }
 
-function drawZoneChart(key) {
-  const c = document.getElementById('chart-zone');
-  const W = c.width = c.clientWidth * 2, H = c.height = 220;
-  const x = c.getContext('2d');
-  const b = T.buildings[key];
-  const lo = 23.4, hi = 26.6;
-  const px = i => 16 + (W - 32) * i / (N - 1);
-  const py = v => H - 24 - (H - 44) * (v - lo) / (hi - lo);
-  x.fillStyle = '#1c2330'; x.fillRect(0, 0, W, H);
-  // band
-  x.fillStyle = 'rgba(63,185,80,.12)';
-  x.fillRect(16, py(26), W - 32, py(24) - py(26));
-  x.strokeStyle = '#3fb95066'; x.setLineDash([6, 6]); x.lineWidth = 2;
-  [24, 26].forEach(t => { x.beginPath(); x.moveTo(16, py(t)); x.lineTo(W - 16, py(t)); x.stroke(); });
-  x.setLineDash([]);
-  // trace
-  x.strokeStyle = '#ffbd59'; x.lineWidth = 3; x.beginPath();
-  b.wattwise.zone_c.forEach((v, i) => i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)));
-  x.stroke();
-  x.strokeStyle = '#ffbd5988'; x.beginPath(); x.moveTo(px(step), 10); x.lineTo(px(step), H - 24); x.stroke();
-  x.fillStyle = '#8b949e'; x.font = '18px system-ui';
-  x.fillText('24°C', 16, py(24) - 6); x.fillText('26°C', 16, py(26) - 6);
-}
-
+/* ---------- panels ---------- */
 function renderKpis(key) {
-  const b = T.buildings[key];
-  const d = b[mode === 'dumb' ? 'dumb' : 'wattwise'];
-  const peak = mode === 'dumb' ? b.peak_dumb_kw : b.peak_wattwise_kw;
-  const now = d.net_kw[step];
-  const grid = document.getElementById('kpis');
-  const bill = mode === 'dumb' ? b.bill_dumb_rm : b.bill_wattwise_rm;
-  const saving = Math.round(b.bill_dumb_rm - b.bill_wattwise_rm);
-  grid.innerHTML = `
-    <div class="kpi"><div class="v">${Math.round(now)} <small style="font-size:11px;color:var(--muted)">kW</small></div><div class="l">grid draw now</div></div>
-    <div class="kpi"><div class="v">${Math.round(d.solar_kw[step])} <small style="font-size:11px;color:var(--muted)">kW</small></div><div class="l">solar now</div></div>
-    <div class="kpi"><div class="v">${Math.round(peak)}</div><div class="l">billed peak kW</div>
-      <div class="d ${b.shave_pct > 0 ? 'up' : ''}">${b.shave_pct > 0 ? '−' + b.shave_pct + '% vs baseline' : 'no flexible load'}</div></div>
-    <div class="kpi"><div class="v">RM ${bill.toLocaleString()}</div><div class="l">MD charge / month</div>
-      <div class="d ${saving > 0 ? 'up' : ''}">${saving > 0 ? 'saves RM ' + saving.toLocaleString() + '/mo' : '—'}</div></div>
-    <div class="kpi"><div class="v">${d.zone_c[step].toFixed(1)}°C</div><div class="l">zone temp</div></div>
-    <div class="kpi"><div class="v">${Math.round(d.stored_kwh[step])} <small style="font-size:11px;color:var(--muted)">kWh</small></div><div class="l">stored cold</div></div>`;
-  // actions strip
-  const acts = d.action;
-  const strip = document.getElementById('actions');
-  const cur = acts[step];
-  const uniq = [...new Set(acts)];
-  strip.innerHTML = uniq.map(a =>
-    `<span class="act ${a === cur ? 'now' : ''}">${a.replace('-', ' ')}</span>`).join('');
+  var b = T.buildings[key];
+  var d = b[mode];
+  var peak = mode === "dumb" ? b.peak_dumb_kw : b.peak_wattwise_kw;
+  var bill = mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm;
+  var saving = Math.round(b.bill_dumb_rm - b.bill_wattwise_rm);
+  document.getElementById("kpis").innerHTML =
+    '<div class="kpi"><div class="lbl">Grid draw now</div><div class="val">' + Math.round(d.net_kw[step]) +
+    ' <span class="unit">kW</span></div><div class="dlt">solar ' + Math.round(d.solar_kw[step]) + ' kW</div></div>' +
+    '<div class="kpi"><div class="lbl">Billed peak</div><div class="val">' + Math.round(peak) +
+    ' <span class="unit">kW</span></div><div class="dlt' + (b.shave_pct > 0 ? " good" : "") + '">' +
+    (b.shave_pct > 0 ? "\u2212" + b.shave_pct + "% vs baseline" : "no flexible load") + '</div></div>' +
+    '<div class="kpi"><div class="lbl">MD charge</div><div class="val">RM ' + bill.toLocaleString() +
+    '</div><div class="dlt' + (saving > 0 ? " good" : "") + '">per month</div></div>' +
+    '<div class="kpi"><div class="lbl">Zone / stored cold</div><div class="val">' + d.zone_c[step].toFixed(1) +
+    '<span class="unit">\u00B0C</span></div><div class="dlt">' + Math.round(d.stored_kwh[step]) + ' kWh banked</div></div>';
+  var strip = document.getElementById("actions");
+  var uniq = []; d.action.forEach(function (a) { if (uniq.indexOf(a) < 0) uniq.push(a); });
+  strip.innerHTML = uniq.map(function (a) {
+    return '<span class="act' + (a === d.action[step] ? " now" : "") + '">' + a.replace(/-/g, " ") + "</span>";
+  }).join("");
+  var head = document.getElementById("headline");
+  if (b.shave_pct > 0) {
+    head.className = "headline";
+    head.textContent = "WattWise cuts this building\u2019s billed peak by " + b.shave_pct +
+      "% \u2014 RM " + saving.toLocaleString() + " a month, with zero new equipment.";
+  } else {
+    head.className = "headline flat";
+    head.textContent = "Flat, inflexible load \u2014 WattWise does not apply here. The honest counter-example.";
+  }
+}
+
+function renderForecastKpis() {
+  var F = T.forecast;
+  var errs = [], ape = [];
+  for (var i = 0; i < N; i++) {
+    var f = F.solar_fc_kw[i];
+    if (f != null && F.solar_actual_kw[i] > 20) {
+      errs.push(f - F.solar_actual_kw[i]);
+      ape.push(Math.abs(f - F.solar_actual_kw[i]) / F.solar_actual_kw[i]);
+    }
+  }
+  var mae = errs.length ? errs.reduce(function (a, b) { return a + Math.abs(b); }, 0) / errs.length : 0;
+  var mape = ape.length ? 100 * ape.reduce(function (a, b) { return a + b; }, 0) / ape.length : 0;
+  var peakSolar = Math.max.apply(null, F.solar_actual_kw);
+  var peakH = F.times[F.solar_actual_kw.indexOf(peakSolar)];
+  document.getElementById("fc-kpis").innerHTML =
+    '<div class="kpi"><div class="lbl">Solar forecast MAE</div><div class="val">' + mae.toFixed(0) +
+    ' <span class="unit">kW</span></div><div class="dlt">30-min ahead, daylight hours</div></div>' +
+    '<div class="kpi"><div class="lbl">Mean abs error</div><div class="val">' + mape.toFixed(1) +
+    '<span class="unit">%</span></div><div class="dlt">on meaningful output (&gt;20 kW)</div></div>' +
+    '<div class="kpi"><div class="lbl">Peak solar today</div><div class="val">' + Math.round(peakSolar) +
+    ' <span class="unit">kW</span></div><div class="dlt">at ' + peakH + '</div></div>' +
+    '<div class="kpi"><div class="lbl">Demand MAE</div><div class="val">10.2 <span class="unit">kW</span></div><div class="dlt">walk-forward, held-out 60 days</div></div>';
 }
 
 function refreshTown() {
-  let peak = 0, billD = 0, billW = 0;
-  for (const b of Object.values(T.buildings)) {
-    const now = (mode === 'dumb' ? b.dumb : b.wattwise).net_kw[step];
-    peak = Math.max(peak, now);
+  var peak = 0, billD = 0, billW = 0;
+  ORDER.forEach(function (k) {
+    var b = T.buildings[k];
+    peak = Math.max(peak, (mode === "dumb" ? b.dumb : b.wattwise).net_kw[step]);
     billD += b.bill_dumb_rm; billW += b.bill_wattwise_rm;
-  }
-  document.getElementById('t-peak').textContent = Math.round(peak) + ' kW @ ' + TIMES[step];
-  document.getElementById('t-bill').textContent = 'RM ' +
-    Math.round(mode === 'dumb' ? billD : billW).toLocaleString();
-  const sv = Math.round(billD - billW);
-  document.getElementById('t-save').textContent = 'RM ' + sv.toLocaleString() + '/mo';
+  });
+  document.getElementById("t-peak").textContent = Math.round(peak) + " kW @ " + TIMES[step];
+  document.getElementById("t-bill").textContent = "RM " + Math.round(mode === "dumb" ? billD : billW).toLocaleString();
+  document.getElementById("t-save").textContent = "RM " + Math.round(billD - billW).toLocaleString();
+}
+
+function refreshMap() {
+  ORDER.forEach(function (key) {
+    var b = T.buildings[key];
+    var maxB = Math.max.apply(null, b.dumb.net_kw.concat(b.wattwise.net_kw));
+    var now = b[mode].net_kw[step];
+    var r = rectEls[key];
+    r.setAttribute("fill", heat(now / maxB));
+    r.setAttribute("stroke", selected === key ? "#e88b33" : "#b9c6d2");
+    r.setAttribute("stroke-width", selected === key ? 3 : 1.5);
+    kWTexts[key].textContent = Math.round(now) + " kW";
+  });
 }
 
 function refresh() {
-  refreshTown();
-  if (selected) { renderKpis(selected); drawDayChart(selected); drawZoneChart(selected); }
+  refreshTown(); refreshMap();
+  if (selected) { renderKpis(selected); dayChart(selected); zoneChart(selected); }
+  renderForecastKpis();
+  forecastChart("chart-solar-fc", T.forecast.solar_fc_kw, T.forecast.solar_actual_kw, "#e9a820", "kW");
+  forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
+  document.getElementById("clock").textContent = TIMES[step];
+  document.getElementById("scrub").value = step;
 }
 
-// --- animation loop -----------------------------------------------------
-let last = 0;
-function animate(t) {
-  requestAnimationFrame(animate);
-  const dt = (t - last) / 1000; last = t;
-  if (playing && dt > .0001) {
-    // advance time every ~0.35s
-    if (!animate.acc) animate.acc = 0;
-    animate.acc += dt;
-    if (animate.acc > .35) {
-      animate.acc = 0;
-      step = (step + 1) % N;
-      document.getElementById('clock').textContent = TIMES[step];
-      refresh();
-    }
-  }
-  // building glows pulse when selected
-  for (const m of Object.values(glowMats))
-    if (m.opacity > 0) m.opacity = .16 + .08 * Math.sin(t / 300);
+function select(key) {
+  selected = key;
+  var b = T.buildings[key];
+  document.getElementById("sel-name").textContent = b.label;
+  document.getElementById("sel-sub").textContent =
+    "peak " + Math.round(b.peak_dumb_kw) + " \u2192 " + Math.round(b.peak_wattwise_kw) +
+    " kW \u00B7 shave " + b.shave_pct + "%";
+  refresh();
+}
+function stepSelect(dir) { select(ORDER[(ORDER.indexOf(selected) + dir + ORDER.length) % ORDER.length]); }
 
-  // update load bars: height by current draw
-  for (const [key, bar] of Object.entries(barMeshes)) {
-    const b = T.buildings[key];
-    const now = (mode === 'dumb' ? b.dumb : b.wattwise).net_kw[step];
-    const maxB = Math.max(...b.dumb.net_kw, ...b.wattwise.net_kw);
-    const h = Math.max(.3, 5 * now / maxB);
-    bar.scale.y = h;
-    bar.position.y = (1.2 + b.height) + h / 2 + .6;
-    const stress = now / maxB;
-    bar.material.color.setHSL(stress > .82 ? .02 : .55 - .25 * stress, .8, .55);
-  }
-
-  // labels follow buildings
-  for (const [key, el] of Object.entries(labelDivs)) {
-    const L = LAYOUT[key];
-    const v = new THREE.Vector3(L.x, 1.2 + T.buildings[key].height + 2.2, L.z);
-    v.project(camera);
-    const r = canvas.getBoundingClientRect();
-    el.style.left = ((v.x + 1) / 2 * r.width) + 'px';
-    el.style.top = ((-v.y + 1) / 2 * r.height) + 'px';
-    el.style.display = (selected === key || r.width > 900) ? 'block' : 'none';
-  }
-
-  controls.update();
-  renderer.render(scene, camera);
+/* ---------- tabs & wiring ---------- */
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(function (p) { p.className = "page" + (p.id === id ? " on" : ""); });
+  document.querySelectorAll(".tab").forEach(function (t) { t.className = "tab" + (t.dataset.page === id ? " on" : ""); });
+  setTimeout(redrawVisible, 50);
+}
+document.querySelectorAll(".tab").forEach(function (t) {
+  t.addEventListener("click", function () { showPage(t.dataset.page); });
+});
+function redrawVisible() {
+  if (selected) { dayChart(selected); zoneChart(selected); }
+  renderForecastKpis();
+  forecastChart("chart-solar-fc", T.forecast.solar_fc_kw, T.forecast.solar_actual_kw, "#e9a820", "kW");
+  forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
 }
 
-function resize() {
-  const wrap = document.getElementById('canvas-wrap');
-  const w = wrap.clientWidth, h = wrap.clientHeight;
-  renderer.setSize(w, h, false);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  camera.aspect = w / h; camera.updateProjectionMatrix();
+document.getElementById("btn-dumb").onclick = function () { setMode("dumb"); };
+document.getElementById("btn-wise").onclick = function () { setMode("wattwise"); };
+function setMode(m) {
+  mode = m;
+  document.getElementById("btn-dumb").className = m === "dumb" ? "on" : "";
+  document.getElementById("btn-wise").className = m === "wattwise" ? "on" : "";
+  refresh();
 }
-window.addEventListener('resize', resize); resize();
+document.getElementById("btn-play").onclick = function () { playing = !playing; };
+document.getElementById("scrub").oninput = function () { playing = false; step = +this.value; refresh(); };
+document.getElementById("btn-map").onclick = function () {
+  document.body.classList.toggle("map-collapsed");
+  var col = document.body.classList.contains("map-collapsed");
+  this.innerHTML = col ? "&#9654; Map" : "&#9664; Map";
+  setTimeout(redrawVisible, 300);
+};
+document.getElementById("bld-prev").onclick = function () { stepSelect(-1); };
+document.getElementById("bld-next").onclick = function () { stepSelect(1); };
+window.addEventListener("resize", redrawVisible);
 
-// auto-select the mall to start
-select('mall');
-document.getElementById('clock').textContent = TIMES[0];
-refresh();
-animate(0);
+var last = 0, acc = 0;
+function loop(t) {
+  requestAnimationFrame(loop);
+  var dt = (t - last) / 1000; last = t;
+  if (playing) { acc += dt; if (acc > 0.35) { acc = 0; step = (step + 1) % N; refresh(); } }
+}
+
+fetch("./data/township.json").then(function (r) { return r.json(); }).then(function (json) {
+  T = json;
+  TIMES = T.buildings.office_tower.dumb.times;
+  buildMap();
+  select("mall");
+  refresh();
+  requestAnimationFrame(loop);
+}).catch(function () {
+  document.getElementById("sel-name").textContent = "Failed to load township.json - run generate_ui_data.py";
+});
+})();
 </script>
 </body>
 </html>

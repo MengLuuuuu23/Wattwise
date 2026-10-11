@@ -67,13 +67,36 @@ def variant_day(df, doy, arch):
     return day
 
 
+def base_forecasts(df):
+    """Run the trained WATTWISE-1 models (30-min ahead) on the demo day.
+    Returns (solar_fc, demand_fc) arrays of 48 values for the base site."""
+    import joblib
+    sys.path.insert(0, str(HERE.parent / "01 Prediction Module"))
+    import train_forecast as TF
+
+    out = {}
+    for target, label in [("solar_pv_kw", "solar"), ("building_kw", "demand")]:
+        X = TF.make_features(df, target)
+        valid = X.dropna().index
+        m = joblib.load(HERE.parent / "01 Prediction Module" /
+                        "models" / f"{label}_h1.joblib")
+        Xd = X.loc[valid]
+        pred = np.clip(m.predict(Xd), 0, None)
+        full = pd.Series(np.nan, index=df.index)
+        full.loc[valid] = pred
+        out[label] = full
+    return out["solar"], out["demand"]
+
+
 def main():
     df = pd.read_csv(DATA, parse_dates=["timestamp"])
     df["weekday"] = df.timestamp.dt.dayofweek < 5
 
-    # demo day: a clear September Tuesday (doy 259 = Mon; use 260 Tue)
+    # demo day: a clear September Tuesday (doy 260)
     doy = 260
-    out = {"day_label": "September (monsoon season) — Tuesday", "buildings": {}}
+    fc_solar, fc_demand = base_forecasts(df)
+
+    out = {"day_label": "September (monsoon season) - Tuesday", "buildings": {}}
 
     for arch, meta in BUILDING_META.items():
         day = variant_day(df, doy, arch)
@@ -108,6 +131,21 @@ def main():
 
     dest = HERE / "data" / "township.json"
     dest.parent.mkdir(parents=True, exist_ok=True)
+
+    # --- township-level forecast payload (WATTWISE-1, base site) --------
+    sl = fc_solar.iloc[doy * 48:(doy + 1) * 48]
+    dm = fc_demand.iloc[doy * 48:(doy + 1) * 48]
+    act_s = df["solar_pv_kw"].iloc[doy * 48:(doy + 1) * 48]
+    act_d = df["building_kw"].iloc[doy * 48:(doy + 1) * 48]
+    times = df["timestamp"].iloc[doy * 48:(doy + 1) * 48].dt.strftime("%H:%M")
+    out["forecast"] = {
+        "solar_fc_kw": [round(v, 1) if np.isfinite(v) else None for v in sl],
+        "demand_fc_kw": [round(v, 1) if np.isfinite(v) else None for v in dm],
+        "solar_actual_kw": [round(v, 1) for v in act_s],
+        "demand_actual_kw": [round(v, 1) for v in act_d],
+        "times": times.tolist(),
+    }
+
     dest.write_text(json.dumps(out))
     size = dest.stat().st_size / 1024
     print(f"wrote {dest} ({size:.0f} KB)")
