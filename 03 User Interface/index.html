@@ -126,6 +126,43 @@
   .fc-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .fc-note { margin-top: 12px; font-size: 12px; color: var(--faint); }
 
+  /* solar bullet table (table-chart hybrid) */
+  .solar-card { margin-top: 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .solar-head {
+    display: flex; align-items: baseline; gap: 26px; padding: 12px 16px 10px;
+    border-bottom: 1px solid var(--border2);
+  }
+  .solar-head .big { font-size: 26px; font-weight: 700; color: #b07a10; font-variant-numeric: tabular-nums; }
+  .solar-head .big.done { color: var(--good); }
+  .solar-head .lab { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+  .solar-cols {
+    display: grid; grid-template-columns: 58px 1fr 64px 64px; gap: 0 12px;
+    padding: 6px 16px; font-size: 10.5px; font-weight: 700; letter-spacing: .8px;
+    color: var(--faint); text-transform: uppercase; border-bottom: 1px solid var(--border2);
+  }
+  .solar-cols .r { text-align: right; }
+  .solar-rows { max-height: 430px; overflow-y: auto; }
+  .srow {
+    display: grid; grid-template-columns: 58px 1fr 64px 64px; gap: 0 12px;
+    align-items: center; padding: 4px 16px; border-radius: 6px; margin: 0 6px;
+  }
+  .srow.sel { background: #fdf3e7; box-shadow: inset 3px 0 0 var(--accent); }
+  .srow .t { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .srow.sel .t { color: #9a5a14; font-weight: 700; }
+  .bar-zone { padding: 2px 0 3px; }
+  .bar-fcst {
+    height: 12px; border-radius: 6px;
+    background: linear-gradient(90deg, #f0a824, #ffd45e);
+  }
+  .bar-act { height: 4px; border-radius: 2px; margin-top: 2px; background: #4fbf7a; }
+  .bar-act.under { background: #e2636e; }
+  .srow .v { font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+  .srow .v.peak { font-weight: 700; color: #b07a10; }
+  .srow .v.na { color: var(--faint); }
+  .srow .v.act { color: var(--muted); }
+  .srow .v.act.over { color: var(--good); font-weight: 700; }
+  .srow .v.act.under { color: #c25058; }
+
   /* ---------- footer ---------- */
   footer {
     display: flex; align-items: center; gap: 22px;
@@ -204,14 +241,21 @@
       <div class="fc-intro">
         <b>WATTWISE-1 live forecasts</b> &mdash; solar output and building demand,
         30 minutes ahead, on the 30-minute billing grid. Predictions come from the
-        trained models in <b>01 Prediction Module</b> (gradient boosting on weather +
-        calendar + recent history). This is the signal the scheduler acts on.
+        trained models in <b>01 Prediction Module</b>. Amber bar = forecast, thin bar
+        underneath = actual so far (green when the sun overdelivers, red when it lags).
       </div>
       <div class="fc-stats kpi-row" id="fc-kpis"></div>
-      <div class="chart-card">
-        <div class="ttl">Solar output &mdash; forecast vs actual (600 kWp reference site)</div>
-        <canvas id="chart-solar-fc" height="200"></canvas>
+
+      <div class="solar-card">
+        <div class="solar-head">
+          <div><div class="big" id="sc-fcst">&mdash;</div><div class="lab">kWh forecast today</div></div>
+          <div><div class="big done" id="sc-act">&mdash;</div><div class="lab">kWh generated so far</div></div>
+          <div><div class="big" id="sc-cov">&mdash;</div><div class="lab">forecast coverage</div></div>
+        </div>
+        <div class="solar-cols"><span>Time</span><span>Power</span><span class="r">Fcst</span><span class="r">Act.</span></div>
+        <div class="solar-rows" id="solar-rows"></div>
       </div>
+
       <div class="chart-card">
         <div class="ttl">Building demand &mdash; forecast vs actual</div>
         <canvas id="chart-demand-fc" height="200"></canvas>
@@ -489,11 +533,70 @@ function refreshMap() {
   });
 }
 
+function renderSolarTable() {
+  var F = T.forecast;
+  var fc = F.solar_fc_kw, ac = F.solar_actual_kw, tm = F.times;
+  // scale: peak forecast value of the day
+  var peakFc = 0;
+  fc.forEach(function (v) { if (v != null && v > peakFc) peakFc = v; });
+  var peakIdx = fc.indexOf(peakFc);
+
+  // headline numbers
+  var fcKwh = 0, actKwh = 0;
+  fc.forEach(function (v, i) { if (v != null && i <= step) fcKwh += v * 0.5; });
+  ac.forEach(function (v, i) { if (i <= step) actKwh += v * 0.5; });
+  document.getElementById("sc-fcst").textContent = fcKwh.toFixed(2);
+  document.getElementById("sc-act").textContent = actKwh.toFixed(2);
+  document.getElementById("sc-cov").textContent =
+    (100 * (step + 1) / N).toFixed(0) + "%";
+
+  var html = "";
+  // show daylight hours only (06:00-19:30)
+  for (var i = 12; i <= 39; i++) {
+    var f = fc[i], a = ac[i];
+    var isSel = i === step;
+    var fTxt = f != null ? f.toFixed(2) : "&mdash;";
+    var fCls = "v" + (i === peakIdx ? " peak" : "");
+    var barF = f != null ? Math.max(1.5, 100 * f / peakFc) : 0;
+    var actHtml = "", actCls = "v act";
+    if (i < step) {
+      // past interval: actual known
+      actHtml = a != null ? a.toFixed(2) : "&mdash;";
+      if (a != null && f != null) {
+        if (a >= f) actCls += " over";
+        else actCls += " under";
+      }
+    } else if (i === step) {
+      actHtml = a != null ? a.toFixed(2) : "&mdash;";
+    } else {
+      actHtml = "&mdash;";
+      actCls = "v na";
+    }
+    var barA = 0, actBarCls = "bar-act";
+    if (i <= step && a != null && f != null) {
+      barA = Math.max(1, 100 * a / peakFc);
+      if (a < f) actBarCls += " under";
+    } else if (i <= step && a != null) {
+      barA = Math.max(1, 100 * a / peakFc);
+    }
+    html += '<div class="srow' + (isSel ? " sel" : "") + '">' +
+      '<span class="t">' + tm[i] + '</span>' +
+      '<span class="bar-zone">' +
+        '<span class="bar-fcst" style="width:' + barF + '%"></span>' +
+        (barA > 0 ? '<span class="' + actBarCls + '" style="width:' + barA + '%"></span>' : '') +
+      '</span>' +
+      '<span class="' + fCls + '">' + fTxt + '</span>' +
+      '<span class="' + actCls + '">' + actHtml + '</span>' +
+      '</div>';
+  }
+  document.getElementById("solar-rows").innerHTML = html;
+}
+
 function refresh() {
   refreshTown(); refreshMap();
   if (selected) { renderKpis(selected); dayChart(selected); zoneChart(selected); }
   renderForecastKpis();
-  forecastChart("chart-solar-fc", T.forecast.solar_fc_kw, T.forecast.solar_actual_kw, "#e9a820", "kW");
+  renderSolarTable();
   forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
   document.getElementById("clock").textContent = TIMES[step];
   document.getElementById("scrub").value = step;
@@ -522,7 +625,7 @@ document.querySelectorAll(".tab").forEach(function (t) {
 function redrawVisible() {
   if (selected) { dayChart(selected); zoneChart(selected); }
   renderForecastKpis();
-  forecastChart("chart-solar-fc", T.forecast.solar_fc_kw, T.forecast.solar_actual_kw, "#e9a820", "kW");
+  renderSolarTable();
   forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
 }
 
