@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WattWise — Township Energy Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --panel2: #1c2330;
+    --line: #2d3646; --text: #e6edf3; --muted: #8b949e;
+    --accent: #e88b33; --accent2: #ffbd59; --good: #3fb950;
+    --bad: #f85149; --solar: #ffd54a; --grid: #58a6ff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+  }
+  header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 18px; background: var(--panel);
+    border-bottom: 1px solid var(--line); z-index: 10;
+  }
+  .logo { font-weight: 800; font-size: 18px; letter-spacing: 1px; }
+  .logo b { color: var(--accent); }
+  .sub { color: var(--muted); font-size: 12px; }
+  .spacer { flex: 1; }
+  .mode-switch { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .mode-switch button {
+    background: var(--panel2); color: var(--muted); border: none;
+    padding: 7px 16px; font-size: 12px; cursor: pointer; font-weight: 600;
+  }
+  .mode-switch button.on { background: var(--accent); color: #14100a; }
+  #clock { font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 700; color: var(--accent2); }
+  .play-ctl { display: flex; align-items: center; gap: 8px; }
+  .play-ctl button {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px;
+  }
+  .play-ctl button:hover { border-color: var(--accent); }
+  main { flex: 1; display: flex; min-height: 0; }
+  #canvas-wrap { flex: 1; position: relative; min-width: 0; }
+  canvas { display: block; }
+  #hint {
+    position: absolute; left: 14px; top: 12px; color: var(--muted);
+    font-size: 12px; pointer-events: none; background: rgba(13,17,23,.75);
+    padding: 6px 10px; border-radius: 6px;
+  }
+  aside {
+    width: 340px; background: var(--panel); border-left: 1px solid var(--line);
+    display: flex; flex-direction: column; overflow-y: auto;
+  }
+  .aside-head { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .aside-head h2 { font-size: 15px; }
+  .aside-head .tag { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 16px; }
+  .kpi { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; }
+  .kpi .v { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .kpi .l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .kpi .d { font-size: 11px; margin-top: 2px; }
+  .up { color: var(--good); } .down { color: var(--bad); }
+  .chart-box { padding: 8px 16px 4px; }
+  .chart-box h3 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  canvas.mini { width: 100%; border-radius: 8px; background: var(--panel2); border: 1px solid var(--line); }
+  .action-strip { display: flex; gap: 4px; padding: 8px 16px; flex-wrap: wrap; }
+  .act { font-size: 10px; padding: 3px 8px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); color: var(--muted); }
+  .act.now { border-color: var(--accent); color: var(--accent2); font-weight: 700; }
+  footer {
+    display: flex; gap: 18px; align-items: center;
+    padding: 8px 18px; background: var(--panel); border-top: 1px solid var(--line);
+    font-size: 12px; color: var(--muted); z-index: 10;
+  }
+  .town-kpi { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .town-kpi b { color: var(--accent2); }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="logo">WATT<b>WISE</b></div>
+    <div class="sub">township energy dashboard — simulated demo day</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="mode-switch">
+    <button id="btn-dumb" class="on">BASELINE (no WattWise)</button>
+    <button id="btn-wise">WITH WATTWISE</button>
+  </div>
+  <div class="play-ctl">
+    <button id="btn-play">▶ play day</button>
+    <span id="clock">00:00</span>
+  </div>
+</header>
+
+<main>
+  <div id="canvas-wrap">
+    <div id="hint">drag to orbit · scroll to zoom · click a building</div>
+    <canvas id="scene"></canvas>
+  </div>
+  <aside id="panel">
+    <div class="aside-head">
+      <h2 id="sel-name">Click a building</h2>
+      <div class="tag" id="sel-sub">each site runs the WATTWISE-2 scheduler simulation</div>
+    </div>
+    <div class="kpi-grid" id="kpis"></div>
+    <div class="chart-box">
+      <h3>net grid draw — full day</h3>
+      <canvas id="chart-day" class="mini" height="150"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>zone temperature vs comfort band</h3>
+      <canvas id="chart-zone" class="mini" height="110"></canvas>
+    </div>
+    <div class="action-strip" id="actions"></div>
+  </aside>
+</main>
+
+<footer>
+  <span class="town-kpi">township peak: <b id="t-peak">—</b></span>
+  <span class="town-kpi">combined MD bill: <b id="t-bill">—</b>/mo</span>
+  <span class="town-kpi">saved: <b id="t-save">—</b></span>
+  <span class="spacer"></span>
+  <span><span class="legend-dot" style="background:var(--grid)"></span>grid draw</span>
+  <span><span class="legend-dot" style="background:var(--solar)"></span>solar</span>
+  <span><span class="legend-dot" style="background:var(--bad)"></span>billed peak window 8:30–10:30</span>
+</footer>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const T = await fetch('./data/township.json').then(r => r.json());
+const TIMES = T.buildings.office_tower.dumb.times;
+const N = TIMES.length;
+
+// --- layout: positions on the ground for each building --------------
+const LAYOUT = {
+  mall:            { x: -14, z: -6,  w: 11, d: 9  },
+  office_tower:    { x: 2,   z: -12, w: 6,  d: 6  },
+  innovation_park: { x: 12,  z: -4,  w: 9,  d: 7  },
+  data_centre:     { x: 6,   z: 8,   w: 8,  d: 6  },
+  warehouse:       { x: -10, z: 10,  w: 9,  d: 6  },
+};
+
+// --- three.js scene --------------------------------------------------
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1117);
+scene.fog = new THREE.Fog(0x0d1117, 60, 140);
+const camera = new THREE.PerspectiveCamera(45, 2, .1, 500);
+camera.position.set(0, 26, 34);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = .08;
+controls.maxPolarAngle = Math.PI / 2.15;
+controls.target.set(0, 2, 0);
+
+scene.add(new THREE.AmbientLight(0x8899bb, .55));
+const sun = new THREE.DirectionalLight(0xffeedd, 1.1);
+sun.position.set(20, 40, 15); scene.add(sun);
+const rim = new THREE.DirectionalLight(0x4488ff, .25);
+rim.position.set(-20, 20, -25); scene.add(rim);
+
+// ground
+const ground = new THREE.Mesh(
+  new THREE.BoxGeometry(70, .5, 55),
+  new THREE.MeshStandardMaterial({ color: 0x1a2433, roughness: .95 }));
+ground.position.y = -.25; scene.add(ground);
+// road cross
+const roadMat = new THREE.MeshStandardMaterial({ color: 0x2a3547, roughness: .9 });
+const roadH = new THREE.Mesh(new THREE.BoxGeometry(66, .06, 3), roadMat);
+roadH.position.set(0, .03, 1.5); scene.add(roadH);
+const roadV = new THREE.Mesh(new THREE.BoxGeometry(3, .06, 51), roadMat);
+roadV.position.set(-3, .03, 0); scene.add(roadV);
+
+// trees (simple cones)
+const treeMat = new THREE.MeshStandardMaterial({ color: 0x2ea043, roughness: .9 });
+const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4a2f });
+const rng = (s => () => (s = s * 16807 % 2147483647) / 2147483647)(42);
+for (let i = 0; i < 26; i++) {
+  const x = (rng() - .5) * 60, z = (rng() - .5) * 46;
+  if (Math.abs(x + 3) < 4 || Math.abs(z - 1.5) < 5) continue;
+  const t = new THREE.Mesh(new THREE.ConeGeometry(.9, 2.4, 6), treeMat);
+  t.position.set(x, 1.4, z); scene.add(t);
+  const tr = new THREE.Mesh(new THREE.CylinderGeometry(.15, .15, .7), trunkMat);
+  tr.position.set(x, .35, z); scene.add(tr);
+}
+
+// --- buildings + solar panels + peak markers -------------------------
+const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
+const clickables = [];
+const bodyMats = {}, glowMats = {}, barMeshes = {}, roofPanels = {};
+
+const BODY_COLORS = {
+  mall: 0x8f3d2e, office_tower: 0x3d4a5c, innovation_park: 0x2f5e4a,
+  data_centre: 0x54416b, warehouse: 0x66552e,
+};
+
+for (const [key, L] of Object.entries(LAYOUT)) {
+  const meta = T.buildings[key];
+  const h = 1.2 + meta.height;
+  const mat = new THREE.MeshStandardMaterial({
+    color: BODY_COLORS[key], roughness: .6, metalness: .15 });
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(L.w, h, L.d), mat);
+  mesh.position.set(L.x, h / 2, L.z);
+  mesh.userData.key = key;
+  scene.add(mesh); clickables.push(mesh); bodyMats[key] = mat;
+
+  // windows: emissive strip near top (lit at night — later)
+  // roof solar panels
+  if (meta.has_solar) {
+    const pg = new THREE.MeshStandardMaterial({ color: 0x1f3a5f, roughness: .35, metalness: .6 });
+    const panels = new THREE.Group();
+    const pw = L.w * .7, pd = L.d * .7;
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) {
+      const p = new THREE.Mesh(new THREE.BoxGeometry(pw / 3 - .3, .1, pd / 2 - .3), pg);
+      p.position.set(-pw / 2 + pw / 6 + i * pw / 3, h + .08, -pd / 2 + pd / 4 + j * pd / 2);
+      panels.add(p);
+    }
+    panels.position.set(L.x, 0, L.z); scene.add(panels);
+    roofPanels[key] = panels;
+  }
+
+  // selection glow (hidden by default)
+  const glow = new THREE.Mesh(
+    new THREE.BoxGeometry(L.w + .5, h + .5, L.d + .5),
+    new THREE.MeshBasicMaterial({ color: 0xe88b33, transparent: true, opacity: .0 }));
+  glow.position.set(L.x, h / 2, L.z); scene.add(glow);
+  glowMats[key] = glow.material;
+
+  // live load bar (a thin glowing pillar above the roof)
+  const barMat = new THREE.MeshBasicMaterial({ color: 0x58a6ff, transparent: true, opacity: .85 });
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1, 1.2), barMat);
+  bar.position.set(L.x + L.w / 2 - 1, h + 1, L.z - L.d / 2 + 1);
+  scene.add(bar); barMeshes[key] = bar;
+}
+
+// --- labels (floating divs) -------------------------------------------
+const labelDivs = {};
+for (const [key, L] of Object.entries(LAYOUT)) {
+  const el = document.createElement('div');
+  el.textContent = T.buildings[key].label;
+  el.style.cssText = `position:absolute;transform:translate(-50%,-130%);
+    background:rgba(22,27,34,.92);border:1px solid #2d3646;color:#e6edf3;
+    padding:3px 9px;border-radius:6px;font-size:11px;pointer-events:none;
+    white-space:nowrap;display:none;z-index:5`;
+  document.getElementById('canvas-wrap').appendChild(el);
+  labelDivs[key] = el;
+}
+
+// --- state -------------------------------------------------------------
+let mode = 'dumb';           // or 'wattwise'
+let step = 0;
+let playing = false;
+let selected = null;
+
+// --- UI wiring ---------------------------------------------------------
+const btnDumb = document.getElementById('btn-dumb');
+const btnWise = document.getElementById('btn-wise');
+btnDumb.onclick = () => setMode('dumb');
+btnWise.onclick = () => setMode('wattwise');
+function setMode(m) {
+  mode = m;
+  btnDumb.classList.toggle('on', m === 'dumb');
+  btnWise.classList.toggle('on', m === 'wattwise');
+  refresh();
+}
+document.getElementById('btn-play').onclick = () => { playing = !playing; };
+
+canvas.addEventListener('click', e => {
+  const r = canvas.getBoundingClientRect();
+  pointer.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+  pointer.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(clickables);
+  if (hits.length) select(hits[0].object.userData.key);
+});
+
+function select(key) {
+  selected = key;
+  document.getElementById('sel-name').textContent = T.buildings[key].label;
+  document.getElementById('sel-sub').textContent =
+    `peak ${T.buildings[key].peak_dumb_kw} → ${T.buildings[key].peak_wattwise_kw} kW · shave ${T.buildings[key].shave_pct}%`;
+  for (const [k, m] of Object.entries(glowMats))
+    m.opacity = (k === key) ? .22 : 0;
+  refresh();
+}
+
+// --- draw helpers ------------------------------------------------------
+function drawDayChart(key) {
+  const c = document.getElementById('chart-day');
+  const W = c.width = c.clientWidth * 2, H = c.height = 300;
+  const x = c.getContext('2d'); x.scale(1, 1);
+  const b = T.buildings[key];
+  const maxKw = Math.max(...b.dumb.net_kw, ...b.wattwise.net_kw) * 1.08;
+  const px = i => 16 + (W - 32) * i / (N - 1);
+  const py = v => H - 24 - (H - 44) * v / maxKw;
+
+  x.fillStyle = '#1c2330'; x.fillRect(0, 0, W, H);
+  // peak window band
+  const t0 = TIMES.indexOf('08:30'), t1 = TIMES.indexOf('10:30');
+  x.fillStyle = 'rgba(248,81,73,.14)';
+  x.fillRect(px(t0), 12, px(t1) - px(t0), H - 36);
+
+  // solar area
+  x.fillStyle = 'rgba(255,213,74,.18)';
+  x.beginPath(); x.moveTo(px(0), py(0));
+  b.wattwise.solar_kw.forEach((v, i) => x.lineTo(px(i), py(v)));
+  x.lineTo(px(N - 1), py(0)); x.closePath(); x.fill();
+
+  const line = (arr, color, dash) => {
+    x.strokeStyle = color; x.lineWidth = 3; x.setLineDash(dash || []);
+    x.beginPath();
+    arr.forEach((v, i) => i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)));
+    x.stroke(); x.setLineDash([]);
+  };
+  line(b.dumb.net_kw, '#f8514944');
+  line(mode === 'dumb' ? b.dumb.net_kw : b.wattwise.net_kw, '#58a6ff');
+
+  // now marker
+  x.strokeStyle = '#ffbd59'; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(px(step), 12); x.lineTo(px(step), H - 24); x.stroke();
+
+  // axis labels
+  x.fillStyle = '#8b949e'; x.font = '18px system-ui';
+  x.fillText('00:00', 16, H - 6); x.fillText('12:00', W / 2 - 24, H - 6);
+  x.fillText('24:00', W - 66, H - 6);
+  x.fillText(Math.round(maxKw) + ' kW', 16, 30);
+}
+
+function drawZoneChart(key) {
+  const c = document.getElementById('chart-zone');
+  const W = c.width = c.clientWidth * 2, H = c.height = 220;
+  const x = c.getContext('2d');
+  const b = T.buildings[key];
+  const lo = 23.4, hi = 26.6;
+  const px = i => 16 + (W - 32) * i / (N - 1);
+  const py = v => H - 24 - (H - 44) * (v - lo) / (hi - lo);
+  x.fillStyle = '#1c2330'; x.fillRect(0, 0, W, H);
+  // band
+  x.fillStyle = 'rgba(63,185,80,.12)';
+  x.fillRect(16, py(26), W - 32, py(24) - py(26));
+  x.strokeStyle = '#3fb95066'; x.setLineDash([6, 6]); x.lineWidth = 2;
+  [24, 26].forEach(t => { x.beginPath(); x.moveTo(16, py(t)); x.lineTo(W - 16, py(t)); x.stroke(); });
+  x.setLineDash([]);
+  // trace
+  x.strokeStyle = '#ffbd59'; x.lineWidth = 3; x.beginPath();
+  b.wattwise.zone_c.forEach((v, i) => i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)));
+  x.stroke();
+  x.strokeStyle = '#ffbd5988'; x.beginPath(); x.moveTo(px(step), 10); x.lineTo(px(step), H - 24); x.stroke();
+  x.fillStyle = '#8b949e'; x.font = '18px system-ui';
+  x.fillText('24°C', 16, py(24) - 6); x.fillText('26°C', 16, py(26) - 6);
+}
+
+function renderKpis(key) {
+  const b = T.buildings[key];
+  const d = b[mode === 'dumb' ? 'dumb' : 'wattwise'];
+  const peak = mode === 'dumb' ? b.peak_dumb_kw : b.peak_wattwise_kw;
+  const now = d.net_kw[step];
+  const grid = document.getElementById('kpis');
+  const bill = mode === 'dumb' ? b.bill_dumb_rm : b.bill_wattwise_rm;
+  const saving = Math.round(b.bill_dumb_rm - b.bill_wattwise_rm);
+  grid.innerHTML = `
+    <div class="kpi"><div class="v">${Math.round(now)} <small style="font-size:11px;color:var(--muted)">kW</small></div><div class="l">grid draw now</div></div>
+    <div class="kpi"><div class="v">${Math.round(d.solar_kw[step])} <small style="font-size:11px;color:var(--muted)">kW</small></div><div class="l">solar now</div></div>
+    <div class="kpi"><div class="v">${Math.round(peak)}</div><div class="l">billed peak kW</div>
+      <div class="d ${b.shave_pct > 0 ? 'up' : ''}">${b.shave_pct > 0 ? '−' + b.shave_pct + '% vs baseline' : 'no flexible load'}</div></div>
+    <div class="kpi"><div class="v">RM ${bill.toLocaleString()}</div><div class="l">MD charge / month</div>
+      <div class="d ${saving > 0 ? 'up' : ''}">${saving > 0 ? 'saves RM ' + saving.toLocaleString() + '/mo' : '—'}</div></div>
+    <div class="kpi"><div class="v">${d.zone_c[step].toFixed(1)}°C</div><div class="l">zone temp</div></div>
+    <div class="kpi"><div class="v">${Math.round(d.stored_kwh[step])} <small style="font-size:11px;color:var(--muted)">kWh</small></div><div class="l">stored cold</div></div>`;
+  // actions strip
+  const acts = d.action;
+  const strip = document.getElementById('actions');
+  const cur = acts[step];
+  const uniq = [...new Set(acts)];
+  strip.innerHTML = uniq.map(a =>
+    `<span class="act ${a === cur ? 'now' : ''}">${a.replace('-', ' ')}</span>`).join('');
+}
+
+function refreshTown() {
+  let peak = 0, billD = 0, billW = 0;
+  for (const b of Object.values(T.buildings)) {
+    const now = (mode === 'dumb' ? b.dumb : b.wattwise).net_kw[step];
+    peak = Math.max(peak, now);
+    billD += b.bill_dumb_rm; billW += b.bill_wattwise_rm;
+  }
+  document.getElementById('t-peak').textContent = Math.round(peak) + ' kW @ ' + TIMES[step];
+  document.getElementById('t-bill').textContent = 'RM ' +
+    Math.round(mode === 'dumb' ? billD : billW).toLocaleString();
+  const sv = Math.round(billD - billW);
+  document.getElementById('t-save').textContent = 'RM ' + sv.toLocaleString() + '/mo';
+}
+
+function refresh() {
+  refreshTown();
+  if (selected) { renderKpis(selected); drawDayChart(selected); drawZoneChart(selected); }
+}
+
+// --- animation loop -----------------------------------------------------
+let last = 0;
+function animate(t) {
+  requestAnimationFrame(animate);
+  const dt = (t - last) / 1000; last = t;
+  if (playing && dt > .0001) {
+    // advance time every ~0.35s
+    if (!animate.acc) animate.acc = 0;
+    animate.acc += dt;
+    if (animate.acc > .35) {
+      animate.acc = 0;
+      step = (step + 1) % N;
+      document.getElementById('clock').textContent = TIMES[step];
+      refresh();
+    }
+  }
+  // building glows pulse when selected
+  for (const m of Object.values(glowMats))
+    if (m.opacity > 0) m.opacity = .16 + .08 * Math.sin(t / 300);
+
+  // update load bars: height by current draw
+  for (const [key, bar] of Object.entries(barMeshes)) {
+    const b = T.buildings[key];
+    const now = (mode === 'dumb' ? b.dumb : b.wattwise).net_kw[step];
+    const maxB = Math.max(...b.dumb.net_kw, ...b.wattwise.net_kw);
+    const h = Math.max(.3, 5 * now / maxB);
+    bar.scale.y = h;
+    bar.position.y = (1.2 + b.height) + h / 2 + .6;
+    const stress = now / maxB;
+    bar.material.color.setHSL(stress > .82 ? .02 : .55 - .25 * stress, .8, .55);
+  }
+
+  // labels follow buildings
+  for (const [key, el] of Object.entries(labelDivs)) {
+    const L = LAYOUT[key];
+    const v = new THREE.Vector3(L.x, 1.2 + T.buildings[key].height + 2.2, L.z);
+    v.project(camera);
+    const r = canvas.getBoundingClientRect();
+    el.style.left = ((v.x + 1) / 2 * r.width) + 'px';
+    el.style.top = ((-v.y + 1) / 2 * r.height) + 'px';
+    el.style.display = (selected === key || r.width > 900) ? 'block' : 'none';
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+function resize() {
+  const wrap = document.getElementById('canvas-wrap');
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  renderer.setSize(w, h, false);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize); resize();
+
+// auto-select the mall to start
+select('mall');
+document.getElementById('clock').textContent = TIMES[0];
+refresh();
+animate(0);
+</script>
+</body>
+</html>
