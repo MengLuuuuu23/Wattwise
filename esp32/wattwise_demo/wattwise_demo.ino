@@ -167,8 +167,9 @@ void driveLcd() {
     // linked: kW granted comes live from the CLI
     snprintf(l1, sizeof(l1), "%-8s %5.0f kW", st.c_str(), grantedKw);
   } else {
-    // standalone: no data source for kW - say so instead of faking 0
-    snprintf(l1, sizeof(l1), "%-8s   no link", st.c_str());
+    // standalone: no data source for kW - say so instead of faking 0.
+    // keep it short: longest state (PRECOOL) + this text must fit 16 cols
+    snprintf(l1, sizeof(l1), "%-8s offline", st.c_str());
   }
   lcdShow(l0, l1);
 }
