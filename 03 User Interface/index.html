@@ -3,283 +3,357 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WattWise - Township Energy Dashboard</title>
+<title>WattWise - Township Energy Workstation</title>
 <style>
   :root {
     --bg: #f3f5f8; --panel: #ffffff; --panel2: #f8fafc;
     --border: #d5dbe3; --border2: #e4e9f0;
     --text: #1f2430; --muted: #5a6472; --faint: #8b95a3;
-    --accent: #e88b33; --excel: #217346; --good: #107c41; --bad: #d13438;
+    --accent: #e88b33; --excel: #217346; --excel2: #1a5c38;
+    --good: #107c41; --bad: #d13438;
     --blue: #2f6fbf; --solar: #e9a820;
+    --ribbon-h: 30px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; }
+  html, body { height: 100%; width: 100%; }
   body {
     background: var(--bg); color: var(--text);
     font-family: Calibri, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    display: flex; flex-direction: column; overflow: hidden; font-size: 15px;
+    display: flex; flex-direction: column; overflow: hidden; font-size: 14px;
   }
 
-  /* ---------- header (excel ribbon vibe) ---------- */
-  header {
-    background: var(--panel); border-bottom: 1px solid var(--border);
-    flex-shrink: 0; display: flex; flex-direction: column;
+  /* ============ 1. RIBBON (header) ============ */
+  header { flex-shrink: 0; background: var(--panel); border-bottom: 1px solid var(--border); }
+  .ribbon-tabs {
+    display: flex; align-items: flex-end; gap: 0;
+    padding: 0 8px; height: var(--ribbon-h);
+    border-bottom: 1px solid var(--border2); background: var(--panel2);
   }
-  .ribbon {
-    display: flex; align-items: center; gap: 14px; padding: 7px 16px;
+  .brand-mini {
+    display: flex; align-items: center; gap: 7px; padding: 0 14px 0 6px;
+    font-size: 13.5px; font-weight: 800; letter-spacing: .5px; align-self: center;
   }
-  .brand { font-size: 19px; font-weight: 700; letter-spacing: .5px; }
-  .brand b { color: var(--accent); }
-  .brand-sub { font-size: 11.5px; color: var(--muted); }
-  .spacer { flex: 1; }
-  .toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-  .toggle button {
-    padding: 6px 16px; font-size: 13px; font-family: inherit;
-    border: none; background: transparent; color: var(--muted); cursor: pointer; font-weight: 600;
+  .brand-mini b { color: var(--accent); }
+  .brand-mini .sq { width: 14px; height: 14px; border-radius: 3px; background: var(--excel); display: inline-block; }
+  .rtab {
+    padding: 4px 16px 5px; font-size: 12px; font-weight: 700; letter-spacing: .6px;
+    color: var(--muted); cursor: pointer; border: 1px solid transparent;
+    border-bottom: none; border-radius: 5px 5px 0 0; margin-bottom: -1px;
+    text-transform: uppercase; user-select: none; align-self: flex-end;
   }
-  .toggle button.on { background: var(--excel); color: #fff; }
-  .play-group { display: flex; align-items: center; gap: 10px; }
-  .btn {
-    padding: 6px 14px; font-size: 13px; font-family: inherit; font-weight: 600;
-    border: 1px solid var(--border); background: var(--panel); color: var(--text);
-    border-radius: 6px; cursor: pointer;
+  .rtab:hover { color: var(--text); background: #eef2f6; }
+  .rtab.on {
+    background: var(--panel); color: var(--excel);
+    border-color: var(--border); border-bottom: 1px solid var(--panel);
+    position: relative; z-index: 2;
   }
-  .btn:hover { border-color: var(--accent); color: var(--accent); }
-  .clock { font-size: 18px; font-weight: 700; min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
-  #scrub { width: 180px; accent-color: var(--excel); }
+  .ribbon-tabs .spacer { flex: 1; }
 
-  /* tabs row */
-  .tabs { display: flex; gap: 2px; padding: 0 12px; border-top: 1px solid var(--border2); }
-  .tab {
-    padding: 7px 22px; font-size: 13.5px; font-weight: 600; color: var(--muted);
-    border: 1px solid transparent; border-bottom: none; cursor: pointer;
-    border-radius: 6px 6px 0 0; margin-bottom: -1px; user-select: none;
+  /* ribbon toolbar (per tab) */
+  .ribbon-toolbar {
+    display: flex; align-items: stretch; gap: 0;
+    padding: 4px 6px; min-height: 64px; background: var(--panel);
   }
-  .tab:hover { color: var(--text); }
-  .tab.on {
-    background: var(--bg); color: var(--excel);
-    border-color: var(--border); border-bottom: 1px solid var(--bg);
+  .rgroup {
+    display: flex; gap: 2px; padding: 2px 10px;
+    border-right: 1px solid var(--border2);
+  }
+  .rgroup:last-child { border-right: none; }
+  .rgroup-label {
+    font-size: 9.5px; font-weight: 700; letter-spacing: .7px; color: var(--faint);
+    text-transform: uppercase; text-align: center; padding-top: 3px;
+    align-self: flex-end; width: 100%; position: absolute; bottom: 1px; left: 0;
+  }
+  .rbtn-wrap { position: relative; }
+  .rbtn {
+    min-width: 54px; padding: 5px 8px 16px; border: 1px solid transparent; border-radius: 5px;
+    background: transparent; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 3px; color: var(--text); font-family: inherit;
+  }
+  .rbtn:hover { border-color: var(--border); background: var(--panel2); }
+  .rbtn:active { background: #e8f0ea; }
+  .rbtn.on { background: #e2efe7; border-color: #b5d4c2; color: var(--excel2); }
+  .rbtn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .rbtn .lbl { font-size: 10px; font-weight: 600; color: var(--muted); line-height: 1.15; text-align: center; }
+  .rbtn.on .lbl { color: var(--excel2); }
+  .ribbon-toolbar select {
+    align-self: center; margin: 0 6px; font-family: inherit; font-size: 12.5px;
+    border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; background: var(--panel); color: var(--text);
   }
 
-  /* ---------- main split ---------- */
+  /* ============ 2. COMMAND / BREADCRUMB BAR (nav) ============ */
+  nav {
+    flex-shrink: 0; display: flex; align-items: center; gap: 12px;
+    background: var(--panel2); border-bottom: 1px solid var(--border);
+    padding: 3px 10px;
+  }
+  .crumbs { font-family: Consolas, "Courier New", monospace; font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .crumbs b { color: var(--text); font-weight: 700; }
+  .crumbs .sep { color: var(--faint); margin: 0 4px; }
+  .cmd-wrap {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    font-family: Consolas, "Courier New", monospace;
+  }
+  .cmd-prompt { color: var(--excel); font-weight: 700; font-size: 13px; }
+  #cmd {
+    flex: 1; max-width: 560px; font-family: inherit; font-size: 12.5px;
+    border: 1px solid var(--border); border-radius: 4px; padding: 3px 9px;
+    background: var(--panel); color: var(--text);
+  }
+  #cmd:focus { outline: none; border-color: var(--excel); }
+  .cmd-out { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ============ 3. WORKSPACE SPLIT ============ */
   main { flex: 1; display: flex; min-height: 0; }
 
-  .map-panel {
-    width: 420px; flex-shrink: 0; background: var(--panel);
+  /* activity bar */
+  .activity {
+    width: 44px; flex-shrink: 0; background: var(--panel2);
     border-right: 1px solid var(--border); display: flex; flex-direction: column;
-    transition: width .25s ease, border .25s ease;
+    align-items: center; padding-top: 4px; gap: 2px;
   }
-  body.map-collapsed .map-panel { width: 0; border-right: none; overflow: hidden; }
-  .map-head {
+  .act-btn {
+    width: 38px; height: 38px; border: none; border-radius: 6px; background: transparent;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); position: relative;
+  }
+  .act-btn:hover { color: var(--text); background: #e8edf2; }
+  .act-btn.on { color: var(--excel); background: #e2efe7; }
+  .act-btn.on::before {
+    content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+    background: var(--excel); border-radius: 0 2px 2px 0;
+  }
+  .act-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .activity .spacer { flex: 1; }
+
+  /* side panel (dockable) */
+  .side {
+    width: 0; flex-shrink: 0; background: var(--panel);
+    border-right: 1px solid var(--border); overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: width .22s ease;
+  }
+  body.panel-map .side { width: 400px; }
+  body.panel-layers .side,
+  body.panel-analytics .side,
+  body.panel-settings .side { width: 280px; }
+  .side-head {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 14px; border-bottom: 1px solid var(--border2);
-    font-size: 11px; font-weight: 700; letter-spacing: .8px; color: var(--muted); text-transform: uppercase;
+    padding: 5px 12px; border-bottom: 1px solid var(--border2);
+    font-size: 10.5px; font-weight: 700; letter-spacing: .8px; color: var(--muted); text-transform: uppercase;
+    flex-shrink: 0; white-space: nowrap;
   }
-  #sitemap { flex: 1; width: 100%; height: 100%; display: block; min-height: 0; }
-  .map-legend {
-    display: flex; gap: 13px; align-items: center; padding: 8px 14px;
-    border-top: 1px solid var(--border2); font-size: 11.5px; color: var(--muted); flex-wrap: wrap;
-  }
+  .side-body { flex: 1; min-height: 0; overflow-y: auto; }
+  #sitemap { width: 100%; height: 100%; display: block; min-height: 0; }
+  .side-pad { padding: 10px 12px; }
+  .side-pad h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--faint); margin: 10px 0 5px; }
+  .side-pad h4:first-child { margin-top: 0; }
+  .chk { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 3px 0; cursor: pointer; }
+  .chk input { accent-color: var(--excel); }
+  .side-kpi { font-size: 12.5px; padding: 3px 0; display: flex; justify-content: space-between; }
+  .side-kpi b { font-family: Consolas, "Courier New", monospace; }
+  .about-txt { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .map-legend { display: flex; gap: 10px; padding: 6px 12px; border-top: 1px solid var(--border2); font-size: 11px; color: var(--muted); flex-wrap: wrap; flex-shrink: 0; }
   .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: -1px; border: 1px solid var(--border); }
 
-  /* ---------- content area ---------- */
-  .content { flex: 1; min-width: 0; overflow-y: auto; padding: 14px 18px 20px; }
+  /* central canvas */
+  .content { flex: 1; min-width: 0; overflow-y: auto; padding: 12px 16px 16px; }
   .page { display: none; }
   .page.on { display: block; }
 
   /* buildings page */
   .bld-head { display: flex; align-items: center; gap: 10px; }
-  .bld-nav {
-    width: 28px; height: 28px; border: 1px solid var(--border); background: var(--panel);
-    border-radius: 6px; cursor: pointer; font-size: 15px; color: var(--muted); line-height: 1;
-  }
+  .bld-nav { width: 26px; height: 26px; border: 1px solid var(--border); background: var(--panel); border-radius: 5px; cursor: pointer; font-size: 14px; color: var(--muted); line-height: 1; }
   .bld-nav:hover { border-color: var(--accent); color: var(--accent); }
-  .bld-title h1 { font-size: 20px; font-weight: 700; }
-  .bld-title .sub { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
-  .headline {
-    margin-top: 10px; padding: 9px 13px; border-radius: 6px;
-    background: #eaf5ee; border: 1px solid #bfe0cc; color: #0b5d31; font-size: 13.5px; font-weight: 600;
-  }
+  .bld-title h1 { font-size: 19px; font-weight: 700; }
+  .bld-title .sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .headline { margin-top: 9px; padding: 8px 12px; border-radius: 5px; background: #eaf5ee; border: 1px solid #bfe0cc; color: #0b5d31; font-size: 13px; font-weight: 600; }
   .headline.flat { background: #f2f4f7; border-color: var(--border); color: var(--muted); }
-  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
-  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-  .kpi .lbl {
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
-    color: var(--muted); padding: 5px 10px 3px; background: var(--panel2); border-bottom: 1px solid var(--border2);
-  }
-  .kpi .val { font-size: 21px; font-weight: 700; padding: 3px 10px 2px; font-variant-numeric: tabular-nums; }
-  .kpi .unit { font-size: 11px; color: var(--faint); font-weight: 600; }
-  .kpi .dlt { font-size: 11.5px; padding: 0 10px 6px; color: var(--muted); }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-top: 11px; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+  .kpi .lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); padding: 4px 10px 2px; background: var(--panel2); border-bottom: 1px solid var(--border2); }
+  .kpi .val { font-size: 20px; font-weight: 700; padding: 2px 10px 1px; font-family: Consolas, "Courier New", monospace; }
+  .kpi .unit { font-size: 11px; color: var(--faint); font-weight: 600; font-family: Calibri, sans-serif; }
+  .kpi .dlt { font-size: 11.5px; padding: 0 10px 5px; color: var(--muted); }
   .kpi .dlt.good { color: var(--good); font-weight: 600; }
-  .chart-card { margin-top: 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; }
-  .chart-card .ttl {
-    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
-    color: var(--muted); padding: 7px 12px; border-bottom: 1px solid var(--border2);
-  }
+  .chart-card { margin-top: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 5px; }
+  .chart-card .ttl { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); padding: 6px 12px; border-bottom: 1px solid var(--border2); }
   .chart-card canvas { width: 100%; display: block; }
-  .action-strip { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-  .act { font-size: 11px; padding: 3px 10px; border-radius: 10px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); }
+  .action-strip { display: flex; gap: 5px; margin-top: 9px; flex-wrap: wrap; }
+  .act { font-size: 10.5px; padding: 3px 9px; border-radius: 9px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); }
   .act.now { border-color: var(--accent); color: #9a5a14; background: #fdf3e7; font-weight: 700; }
 
   /* forecast page */
-  .fc-intro { color: var(--muted); font-size: 13px; max-width: 760px; margin-bottom: 12px; }
-  .fc-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  .fc-note { margin-top: 12px; font-size: 12px; color: var(--faint); }
-
-  /* solar bullet table (table-chart hybrid) */
-  .solar-card { margin-top: 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-  .solar-head {
-    display: flex; align-items: baseline; gap: 26px; padding: 12px 16px 10px;
-    border-bottom: 1px solid var(--border2);
-  }
-  .solar-head .big { font-size: 26px; font-weight: 700; color: #b07a10; font-variant-numeric: tabular-nums; }
+  .fc-intro { color: var(--muted); font-size: 12.5px; max-width: 760px; margin-bottom: 10px; }
+  .fc-note { margin-top: 10px; font-size: 11.5px; color: var(--faint); }
+  .solar-card { margin-top: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+  .solar-head { display: flex; align-items: baseline; gap: 24px; padding: 10px 14px 8px; border-bottom: 1px solid var(--border2); }
+  .solar-head .big { font-size: 24px; font-weight: 700; color: #b07a10; font-family: Consolas, "Courier New", monospace; }
   .solar-head .big.done { color: var(--good); }
-  .solar-head .lab { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
-  .solar-cols {
-    display: grid; grid-template-columns: 64px 1fr 74px 74px; gap: 0 14px;
-    padding: 7px 16px; font-size: 12px; font-weight: 700; letter-spacing: .8px;
-    color: var(--faint); text-transform: uppercase; border-bottom: 1px solid var(--border2);
-  }
+  .solar-head .lab { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+  .solar-cols { display: grid; grid-template-columns: 64px 1fr 74px 74px; gap: 0 14px; padding: 6px 14px; font-size: 11.5px; font-weight: 700; letter-spacing: .8px; color: var(--faint); text-transform: uppercase; border-bottom: 1px solid var(--border2); }
   .solar-cols .r { text-align: right; }
-  .solar-rows { max-height: 520px; overflow-y: auto; }
-  .srow {
-    display: grid; grid-template-columns: 64px 1fr 74px 74px; gap: 0 14px;
-    align-items: center; padding: 5px 16px; border-radius: 6px; margin: 0 6px;
-  }
+  .solar-rows { max-height: 480px; overflow-y: auto; }
+  .srow { display: grid; grid-template-columns: 64px 1fr 74px 74px; gap: 0 14px; align-items: center; padding: 4px 14px; border-radius: 5px; margin: 0 5px; }
   .srow.sel { background: #fdf3e7; box-shadow: inset 3px 0 0 var(--accent); }
-  .srow .t { font-size: 14.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .srow .t { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .srow.sel .t { color: #9a5a14; font-weight: 700; }
   .bar-zone { padding: 3px 0 4px; }
-  .bar-fcst {
-    display: block; height: 14px; border-radius: 7px;
-    background: linear-gradient(90deg, #f0a824, #ffd45e);
-  }
+  .bar-fcst { display: block; height: 14px; border-radius: 7px; background: linear-gradient(90deg, #f0a824, #ffd45e); }
   .bar-act { display: block; height: 5px; border-radius: 2.5px; margin-top: 3px; background: #4fbf7a; }
   .bar-act.under { background: #e2636e; }
-  .srow .v { font-size: 15px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+  .srow .v { font-size: 14.5px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); font-family: Consolas, "Courier New", monospace; }
   .srow .v.peak { font-weight: 700; color: #b07a10; }
   .srow .v.na { color: var(--faint); }
   .srow .v.act { color: var(--muted); }
   .srow .v.act.over { color: var(--good); font-weight: 700; }
   .srow .v.act.under { color: #c25058; font-weight: 600; }
 
-  /* ---------- footer ---------- */
-  footer {
-    display: flex; align-items: center; gap: 22px;
-    background: var(--panel); border-top: 1px solid var(--border);
-    padding: 6px 16px; font-size: 12.5px; color: var(--muted); flex-shrink: 0;
-  }
-  footer b { color: var(--text); font-variant-numeric: tabular-nums; }
-  footer .save b { color: var(--good); }
-  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
-
-  /* ---------- command bar ---------- */
-  .cmdbar {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--panel2); border-top: 1px solid var(--border2);
-    padding: 5px 16px; font-family: Consolas, "Courier New", monospace;
-  }
-  .cmd-prompt { color: var(--excel); font-weight: 700; font-size: 14px; }
-  #cmd {
-    flex: 0 0 420px; font-family: inherit; font-size: 13.5px;
-    border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px;
-    background: var(--panel); color: var(--text);
-  }
-  #cmd:focus { outline: none; border-color: var(--excel); }
-  .cmd-out { font-size: 12.5px; color: var(--muted); }
-
-  /* ---------- overview ---------- */
-  .ov-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
-  .ov-table th {
-    text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .7px; color: var(--muted); background: var(--panel2);
-    padding: 7px 12px; border-bottom: 1px solid var(--border2);
-  }
-  .ov-table td { padding: 7px 12px; border-bottom: 1px solid var(--border2); font-variant-numeric: tabular-nums; }
+  /* overview + shared tables */
+  .ov-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .ov-table th { text-align: left; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); background: var(--panel2); padding: 6px 12px; border-bottom: 1px solid var(--border2); }
+  .ov-table td { padding: 6px 12px; border-bottom: 1px solid var(--border2); font-variant-numeric: tabular-nums; }
   .ov-table td.num { font-family: Consolas, "Courier New", monospace; text-align: right; }
   .ov-table th.num { text-align: right; }
   .ov-table tr.clickable { cursor: pointer; }
   .ov-table tr.clickable:hover { background: #fdf3e7; }
   .ov-table tr.sel { background: #fdf3e7; }
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11.5px; font-weight: 700; }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 9px; font-size: 11px; font-weight: 700; }
   .badge.ok { background: #e2f1e8; color: #0b5d31; }
   .badge.warn { background: #fdf3e7; color: #9a5a14; }
   .badge.alarm { background: #fbe3e4; color: #9c2226; }
-  .alarms { max-height: 200px; overflow-y: auto; font-family: Consolas, "Courier New", monospace; font-size: 13px; }
-  .alarms div { padding: 4px 12px; border-bottom: 1px solid var(--border2); color: var(--muted); }
+  .alarms { max-height: 190px; overflow-y: auto; font-family: Consolas, "Courier New", monospace; font-size: 12.5px; }
+  .alarms div { padding: 3px 12px; border-bottom: 1px solid var(--border2); color: var(--muted); }
   .alarms .warn { color: #9a5a14; }
   .alarms .alarm { color: #9c2226; font-weight: 600; }
 
-  /* ---------- scheduler tab ---------- */
-  .sch-intro { color: var(--muted); font-size: 13.5px; max-width: 780px; margin-bottom: 12px; }
-  .gauges { display: flex; gap: 18px; padding: 14px 16px; flex-wrap: wrap; }
-  .gauge { width: 150px; }
-  .gauge .g-label { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .gauge .g-tube { height: 16px; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  /* scheduler */
+  .sch-intro { color: var(--muted); font-size: 12.5px; max-width: 780px; margin-bottom: 10px; }
+  .gauges { display: flex; gap: 16px; padding: 12px 14px; flex-wrap: wrap; }
+  .gauge { width: 145px; }
+  .gauge .g-label { font-size: 11.5px; font-weight: 700; color: var(--muted); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gauge .g-tube { height: 15px; background: var(--panel2); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
   .gauge .g-fill { height: 100%; background: linear-gradient(90deg, #58a6ff, #7cc4ff); transition: width .3s; }
-  .gauge .g-val { font-family: Consolas, "Courier New", monospace; font-size: 12.5px; color: var(--text); margin-top: 3px; }
-  .lamp { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
-  .lamp .pip { width: 10px; height: 10px; border-radius: 50%; background: #c3cbd6; }
+  .gauge .g-val { font-family: Consolas, "Courier New", monospace; font-size: 12px; color: var(--text); margin-top: 2px; }
+  .lamp { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+  .lamp .pip { width: 9px; height: 9px; border-radius: 50%; background: #c3cbd6; }
   .lamp.precool .pip { background: #58a6ff; }
   .lamp.coast .pip { background: #2ea043; }
   .lamp.soak .pip { background: #e9a820; }
   .lamp.comfort .pip { background: #a371f7; }
   .lamp.safety .pip { background: #d13438; }
   .lamp.night .pip { background: #8b95a3; }
+  .lamp.hold .pip { background: #9fc3aa; }
 
-  /* ---------- reports tab ---------- */
-  .rep-note { padding: 8px 14px; font-size: 13px; color: var(--muted); }
-  .rep-actions { margin-top: 12px; }
+  /* reports */
+  .rep-note { padding: 7px 12px; font-size: 12.5px; color: var(--muted); }
+  .rep-actions { margin-top: 10px; display: flex; gap: 8px; }
+
+  /* ============ 4. STATUS BAR (footer) ============ */
+  footer {
+    flex-shrink: 0; display: flex; align-items: center; gap: 18px;
+    background: var(--excel2); color: #e8f2ec;
+    padding: 3px 12px; font-size: 11.5px;
+  }
+  footer b { color: #ffffff; font-variant-numeric: tabular-nums; font-family: Consolas, "Courier New", monospace; }
+  .st-word { font-weight: 800; letter-spacing: 1px; color: #a7e3c0; }
+  .st-word.run { color: #7ee0a3; }
+  .st-sep { opacity: .35; }
+  .transport { display: flex; align-items: center; gap: 8px; }
+  .tbtn {
+    background: transparent; border: 1px solid #ffffff40; border-radius: 4px;
+    color: #fff; width: 24px; height: 20px; cursor: pointer; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tbtn:hover { background: #ffffff22; }
+  #scrub { width: 150px; accent-color: #ffffff; height: 14px; }
+  .st-clock { font-family: Consolas, "Courier New", monospace; font-weight: 700; font-size: 13px; color: #fff; }
 </style>
 </head>
 <body>
 
+<!-- ============ RIBBON ============ -->
 <header>
-  <div class="ribbon">
-    <div>
-      <div class="brand">WATT<b>WISE</b></div>
-      <div class="brand-sub">township energy dashboard &middot; demo day</div>
-    </div>
-    <button class="btn" id="btn-map" title="show / hide the map">&#9664; Map</button>
+  <div class="ribbon-tabs" id="ribbon-tabs">
+    <div class="brand-mini"><span class="sq"></span>WATT<b>WISE</b></div>
+    <div class="rtab" data-page="page-overview">Home</div>
+    <div class="rtab on" data-page="page-buildings">Buildings</div>
+    <div class="rtab" data-page="page-forecast">Solar &amp; Forecast</div>
+    <div class="rtab" data-page="page-scheduler">Scheduler</div>
+    <div class="rtab" data-page="page-reports">Reports</div>
     <div class="spacer"></div>
-    <div class="toggle">
-      <button id="btn-dumb" class="on">Baseline &mdash; no WattWise</button>
-      <button id="btn-wise">With WattWise</button>
-    </div>
-    <div class="play-group">
-      <button class="btn" id="btn-play">&#9654; Play day</button>
-      <input type="range" id="scrub" min="0" max="47" value="0">
-      <span class="clock" id="clock">00:00</span>
-    </div>
   </div>
-  <div class="tabs">
-    <div class="tab" data-page="page-overview">Overview</div>
-    <div class="tab on" data-page="page-buildings">Buildings</div>
-    <div class="tab" data-page="page-forecast">Solar &amp; Demand Forecast</div>
-    <div class="tab" data-page="page-scheduler">Scheduler</div>
-    <div class="tab" data-page="page-reports">Reports</div>
-  </div>
-  <div class="cmdbar">
+  <div class="ribbon-toolbar" id="ribbon-toolbar"></div>
+</header>
+
+<!-- ============ COMMAND BAR ============ -->
+<nav>
+  <div class="crumbs" id="crumbs"><b>WattWise</b><span class="sep">&rsaquo;</span>Buildings<span class="sep">&rsaquo;</span><b id="crumb-bld">—</b></div>
+  <div class="cmd-wrap">
     <span class="cmd-prompt">&gt;</span>
     <input type="text" id="cmd" placeholder="type a command: select mall | set time 14:00 | mode wattwise | play | help" spellcheck="false">
     <span class="cmd-out" id="cmd-out"></span>
   </div>
-</header>
+</nav>
 
+<!-- ============ WORKSPACE ============ -->
 <main>
-  <section class="map-panel" id="map-panel">
-    <div class="map-head"><span>Site map &mdash; click a building</span></div>
-    <svg id="sitemap" viewBox="0 0 660 500" preserveAspectRatio="xMidYMid meet"></svg>
-    <div class="map-legend">
+  <!-- activity bar -->
+  <div class="activity">
+    <button class="act-btn on" data-panel="map" title="Site Map">
+      <svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+    </button>
+    <button class="act-btn" data-panel="layers" title="Layers">
+      <svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+    </button>
+    <button class="act-btn" data-panel="analytics" title="Analytics">
+      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+    </button>
+    <button class="act-btn" data-panel="settings" title="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
+    </button>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- dockable side panel -->
+  <section class="side" id="side">
+    <div class="side-head"><span id="side-title">Site Map</span></div>
+    <div class="side-body" id="side-body">
+      <svg id="sitemap" viewBox="0 0 660 500" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="side-pad" id="panel-layers" style="display:none">
+        <h4>Chart overlays</h4>
+        <label class="chk"><input type="checkbox" checked data-flag="peak"> Billed window 8:30–10:30</label>
+        <label class="chk"><input type="checkbox" checked data-flag="solar"> Solar generation area</label>
+        <label class="chk"><input type="checkbox" checked data-flag="other"> Other-mode ghost line</label>
+        <h4>Building register</h4>
+        <div id="layers-blds"></div>
+      </div>
+      <div class="side-pad" id="panel-analytics" style="display:none">
+        <h4>Live township totals</h4>
+        <div id="analytics-body"></div>
+      </div>
+      <div class="side-pad" id="panel-settings" style="display:none">
+        <h4>Playback speed</h4>
+        <label class="chk"><input type="radio" name="spd" value="0.6" checked> Normal (0.6 s / step)</label>
+        <label class="chk"><input type="radio" name="spd" value="0.25"> Fast (0.25 s / step)</label>
+        <label class="chk"><input type="radio" name="spd" value="1.2"> Slow (1.2 s / step)</label>
+        <h4>About</h4>
+        <div class="about-txt">
+          WattWise demo workstation.<br>
+          Data: calibrated synthetic township (5 archetypes), WATTWISE-1 forecasts,
+          WATTWISE-2 rule scheduler. See <b>01 Prediction Module</b> / <b>02 Scheduler Module</b>.
+        </div>
+      </div>
+    </div>
+    <div class="map-legend" id="map-legend">
       <span><span class="sw" style="background:#d9efe0"></span>light</span>
       <span><span class="sw" style="background:#fdecc8"></span>moderate</span>
       <span><span class="sw" style="background:#f6cdcb"></span>near peak</span>
-      <span><span class="sw" style="background:#fff;border-style:dashed"></span>selected</span>
     </div>
   </section>
 
+  <!-- central canvas -->
   <section class="content">
-    <!-- ============ page 0: overview ============ -->
     <div class="page" id="page-overview">
       <div class="ov-totals kpi-row" id="ov-totals"></div>
       <div class="chart-card">
@@ -292,7 +366,6 @@
       </div>
     </div>
 
-    <!-- ============ page 1: buildings ============ -->
     <div class="page on" id="page-buildings">
       <div class="bld-head">
         <button class="bld-nav" id="bld-prev">&#8249;</button>
@@ -306,25 +379,22 @@
       <div class="kpi-row" id="kpis"></div>
       <div class="chart-card">
         <div class="ttl">Net grid draw &mdash; full day (blue = current mode, grey = other)</div>
-        <canvas id="chart-day" height="190"></canvas>
+        <canvas id="chart-day" height="180"></canvas>
       </div>
       <div class="chart-card">
         <div class="ttl">Zone temperature vs comfort band 24&ndash;26&deg;C</div>
-        <canvas id="chart-zone" height="120"></canvas>
+        <canvas id="chart-zone" height="115"></canvas>
       </div>
       <div class="action-strip" id="actions"></div>
     </div>
 
-    <!-- ============ page 2: forecast ============ -->
     <div class="page" id="page-forecast">
       <div class="fc-intro">
-        <b>WATTWISE-1 live forecasts</b> &mdash; solar output and building demand,
-        30 minutes ahead, on the 30-minute billing grid. Predictions come from the
-        trained models in <b>01 Prediction Module</b>. Amber bar = forecast, thin bar
-        underneath = actual so far (green when the sun overdelivers, red when it lags).
+        <b>WATTWISE-1 live forecasts</b> &mdash; solar output and building demand, 30 minutes ahead,
+        on the 30-minute billing grid. Amber bar = forecast, thin bar underneath = actual so far
+        (green when the sun overdelivers, red when it lags).
       </div>
       <div class="fc-stats kpi-row" id="fc-kpis"></div>
-
       <div class="solar-card">
         <div class="solar-head">
           <div><div class="big" id="sc-fcst">&mdash;</div><div class="lab">kWh forecast today</div></div>
@@ -334,25 +404,23 @@
         <div class="solar-cols"><span>Time</span><span>Power</span><span class="r">Fcst</span><span class="r">Act.</span></div>
         <div class="solar-rows" id="solar-rows"></div>
       </div>
-
       <div class="chart-card">
         <div class="ttl">Building demand &mdash; forecast vs actual</div>
-        <canvas id="chart-demand-fc" height="200"></canvas>
+        <canvas id="chart-demand-fc" height="190"></canvas>
       </div>
       <div class="fc-note">
         Model walk-forward test metrics (held-out final 60 days, never shuffled):
         solar nRMSE 7.35% / R&sup2; 0.996 &middot; demand MAE 10.2 kW.
-        Published Malaysian rooftop-LSTM benchmark for comparison: nRMSE 6.75%, R&sup2; 0.957.
+        Published Malaysian rooftop-LSTM benchmark: nRMSE 6.75%, R&sup2; 0.957.
         Demo runs on calibrated synthetic data; swap in TNB interval data at pilot.
       </div>
     </div>
 
-    <!-- ============ page 3: scheduler ============ -->
     <div class="page" id="page-scheduler">
       <div class="sch-intro">
-        <b>WATTWISE-2 control room</b> &mdash; what the scheduler is doing to every
-        building, right now. Rules: precool before the 08:30&ndash;10:30 billed window,
-        coast through it on banked cold, soak midday solar, comfort always wins.
+        <b>WATTWISE-2 control room</b> &mdash; what the scheduler is doing to every building, right now.
+        Rules: precool before the 08:30&ndash;10:30 billed window, coast through it on banked cold,
+        soak midday solar, comfort always wins. <i>(Scheduler runs only in WattWise mode.)</i>
       </div>
       <div class="chart-card">
         <div class="ttl">Rule state &mdash; current action per building</div>
@@ -364,7 +432,7 @@
       </div>
       <div class="chart-card">
         <div class="ttl">Comfort monitor &mdash; all buildings vs the 24&ndash;26&deg;C band</div>
-        <canvas id="sch-comfort" height="170"></canvas>
+        <canvas id="sch-comfort" height="165"></canvas>
       </div>
       <div class="chart-card">
         <div class="ttl">Intervention log</div>
@@ -372,15 +440,14 @@
       </div>
     </div>
 
-    <!-- ============ page 4: reports ============ -->
     <div class="page" id="page-reports">
       <div class="sch-intro">
-        <b>Reports</b> &mdash; the compliance and billing outputs the same data
-        generates. EECA status, demand-charge breakdown, export.
+        <b>Reports</b> &mdash; the compliance and billing outputs the same data generates.
+        EECA status, demand-charge breakdown, export.
       </div>
       <div class="chart-card">
         <div class="ttl">EECA 2024 threshold check &mdash; annual consumption vs 21,600 GJ</div>
-        <canvas id="rep-eeca" height="150"></canvas>
+        <canvas id="rep-eeca" height="145"></canvas>
         <div class="rep-note" id="rep-eeca-note"></div>
       </div>
       <div class="chart-card">
@@ -388,20 +455,28 @@
         <table class="ov-table" id="rep-md"></table>
       </div>
       <div class="rep-actions">
-        <button class="btn" id="rep-csv">&#8681; Export township data (CSV)</button>
+        <button class="btn rbtn" style="padding:6px 14px" id="rep-csv">&#8681; Export township data (CSV)</button>
       </div>
     </div>
   </section>
 </main>
 
+<!-- ============ STATUS BAR ============ -->
 <footer>
-  <span>Township peak now: <b id="t-peak">&mdash;</b></span>
-  <span>Combined MD bill: <b id="t-bill">&mdash;</b>/mo</span>
-  <span class="save">WattWise saves: <b id="t-save">&mdash;</b>/mo</span>
-  <span class="spacer"></span>
-  <span><span class="dot" style="background:var(--blue)"></span>grid draw</span>
-  <span><span class="dot" style="background:var(--solar)"></span>solar</span>
-  <span><span class="dot" style="background:#d13438;opacity:.35"></span>billed window 8:30&ndash;10:30</span>
+  <span class="st-word" id="st-word">READY</span>
+  <span class="st-sep">|</span>
+  <span>Peak <b id="t-peak">&mdash;</b></span>
+  <span>MD bill <b id="t-bill">&mdash;</b>/mo</span>
+  <span>Saves <b id="t-save">&mdash;</b>/mo</span>
+  <span>Mode <b id="st-mode">BASELINE</b></span>
+  <span style="margin-left:auto">Synthetic demo data &middot; WATTWISE-1/2</span>
+  <span class="st-sep">|</span>
+  <div class="transport">
+    <button class="tbtn" id="btn-play" title="play / pause">&#9654;</button>
+    <button class="tbtn" id="btn-reset" title="reset to 00:00">&#8634;</button>
+    <input type="range" id="scrub" min="0" max="47" value="0">
+    <span class="st-clock" id="clock">00:00</span>
+  </div>
 </footer>
 
 <script>
@@ -410,6 +485,8 @@
 
 var T = null, TIMES = null, N = 48;
 var mode = "dumb", step = 0, playing = false, selected = null;
+var speed = 0.6;
+var FLAGS = { peak: true, solar: true, other: true };
 var ORDER = ["mall", "office_tower", "innovation_park", "data_centre", "warehouse"];
 
 var PLAN = {
@@ -421,6 +498,177 @@ var PLAN = {
 };
 var FLOORS = { mall: "2F", office_tower: "17F", innovation_park: "3F", data_centre: "1F", warehouse: "1F" };
 
+/* ================= ribbon ================= */
+var ICONS = {
+  play: '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24"><path d="M7 4h3v16H7zM14 4h3v16h-3z"/></svg>',
+  reset: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
+  zap: '<svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>',
+  leaf: '<svg viewBox="0 0 24 24"><path d="M4 20c0-9 6-14 16-15 1 11-5 16-13 16"/><path d="M4 20c4-6 8-9 12-11"/></svg>',
+  download: '<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>',
+  prev: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  next: '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
+  bld: '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>',
+  sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>',
+  clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  gauge: '<svg viewBox="0 0 24 24"><path d="M4 14a8 8 0 1 1 16 0"/><path d="M12 14l4-4"/></svg>',
+  grid: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>'
+};
+
+var RIBBON = {
+  "page-overview": [
+    { name: "Simulation", btns: [
+      { act: "play", icon: "play", label: "Play" },
+      { act: "pause", icon: "pause", label: "Pause" },
+      { act: "reset", icon: "reset", label: "Reset" } ] },
+    { name: "Scenario", btns: [
+      { act: "mode-dumb", icon: "grid", label: "Baseline", toggle: "dumb" },
+      { act: "mode-wise", icon: "zap", label: "WattWise", toggle: "wise" } ] },
+    { name: "Workspace", btns: [
+      { act: "panel-map", icon: "bld", label: "Site Map" },
+      { act: "panel-analytics", icon: "gauge", label: "Analytics" } ] },
+    { name: "Export", btns: [
+      { act: "csv", icon: "download", label: "CSV" } ] }
+  ],
+  "page-buildings": [
+    { name: "Simulation", btns: [
+      { act: "play", icon: "play", label: "Play" },
+      { act: "reset", icon: "reset", label: "Reset" } ] },
+    { name: "Scenario", btns: [
+      { act: "mode-dumb", icon: "grid", label: "Baseline", toggle: "dumb" },
+      { act: "mode-wise", icon: "zap", label: "WattWise", toggle: "wise" } ] },
+    { name: "Navigate", btns: [
+      { act: "bld-prev", icon: "prev", label: "Prev" },
+      { act: "bld-next", icon: "next", label: "Next" } ], extra: "bld-select" },
+    { name: "Workspace", btns: [
+      { act: "panel-map", icon: "bld", label: "Site Map" } ] }
+  ],
+  "page-forecast": [
+    { name: "Model", btns: [
+      { act: "tab-forecast", icon: "sun", label: "Solar" },
+      { act: "tab-forecast", icon: "clock", label: "Demand" } ] },
+    { name: "Overlays", btns: [
+      { act: "panel-layers", icon: "grid", label: "Layers" } ] },
+    { name: "Simulation", btns: [
+      { act: "play", icon: "play", label: "Play" },
+      { act: "reset", icon: "reset", label: "Reset" } ] }
+  ],
+  "page-scheduler": [
+    { name: "Scenario", btns: [
+      { act: "mode-wise", icon: "zap", label: "Run WattWise", toggle: "wise" } ] },
+    { name: "Monitor", btns: [
+      { act: "panel-analytics", icon: "gauge", label: "Analytics" },
+      { act: "panel-map", icon: "bld", label: "Site Map" } ] },
+    { name: "Simulation", btns: [
+      { act: "play", icon: "play", label: "Play" },
+      { act: "reset", icon: "reset", label: "Reset" } ] }
+  ],
+  "page-reports": [
+    { name: "Export", btns: [
+      { act: "csv", icon: "download", label: "CSV" } ] },
+    { name: "Scenario", btns: [
+      { act: "mode-dumb", icon: "grid", label: "Baseline", toggle: "dumb" },
+      { act: "mode-wise", icon: "zap", label: "WattWise", toggle: "wise" } ] },
+    { name: "Simulation", btns: [
+      { act: "reset", icon: "reset", label: "Reset" } ] }
+  ]
+};
+
+var ribbonPage = "page-buildings";
+function renderRibbon() {
+  var groups = RIBBON[ribbonPage] || [];
+  var html = "";
+  groups.forEach(function (g) {
+    html += '<div class="rgroup">';
+    g.btns.forEach(function (b) {
+      var on = b.toggle && ((b.toggle === "wise" && mode === "wattwise") || (b.toggle === "dumb" && mode === "dumb"));
+      html += '<div class="rbtn-wrap"><button class="rbtn' + (on ? " on" : "") + '" data-act="' + b.act + '">' +
+        ICONS[b.icon] + '<span class="lbl">' + b.label + '</span></button>' +
+        '<div class="rgroup-label" style="width:auto;position:static;text-align:center"></div></div>';
+    });
+    if (g.extra === "bld-select") {
+      html += '<select id="bld-select" title="jump to building"><option value="">Building&hellip;</option>' +
+        ORDER.map(function (k) { return '<option value="' + k + '">' + T.buildings[k].label + "</option>"; }).join("") +
+        "</select>";
+    }
+    html += '<div class="rgroup-label-wrap" style="align-self:flex-end;font-size:9.5px;font-weight:700;letter-spacing:.7px;color:var(--faint);text-transform:uppercase;padding:2px 4px 1px">' + g.name + "</div>";
+    html += "</div>";
+  });
+  document.getElementById("ribbon-toolbar").innerHTML = html;
+  var sel = document.getElementById("bld-select");
+  if (sel) sel.onchange = function () { if (this.value) { select(this.value); this.value = ""; } };
+}
+
+function ribbonAction(act) {
+  switch (act) {
+    case "play": playing = true; break;
+    case "pause": playing = false; break;
+    case "reset": playing = false; step = 0; refresh(); break;
+    case "mode-dumb": setMode("dumb"); break;
+    case "mode-wise": setMode("wattwise"); break;
+    case "bld-prev": stepSelect(-1); break;
+    case "bld-next": stepSelect(1); break;
+    case "csv": exportCsv(); break;
+    case "panel-map": togglePanel("map"); break;
+    case "panel-layers": togglePanel("layers"); break;
+    case "panel-analytics": togglePanel("analytics"); break;
+    case "panel-settings": togglePanel("settings"); break;
+    case "tab-forecast": showPage("page-forecast"); break;
+  }
+  updateStatusWord();
+}
+document.getElementById("ribbon-toolbar").addEventListener("click", function (e) {
+  var btn = e.target.closest("[data-act]");
+  if (btn) ribbonAction(btn.dataset.act);
+});
+
+/* ================= tabs / pages ================= */
+function showPage(id) {
+  ribbonPage = id;
+  document.querySelectorAll(".rtab").forEach(function (t) { t.classList.toggle("on", t.dataset.page === id); });
+  document.querySelectorAll(".page").forEach(function (p) { p.classList.toggle("on", p.id === id); });
+  renderRibbon();
+  updateCrumbs();
+  setTimeout(redrawVisible, 60);
+}
+document.getElementById("ribbon-tabs").addEventListener("click", function (e) {
+  var tab = e.target.closest(".rtab");
+  if (tab) showPage(tab.dataset.page);
+});
+
+function updateCrumbs() {
+  var names = { "page-overview": "Home", "page-buildings": "Buildings", "page-forecast": "Solar & Forecast", "page-scheduler": "Scheduler", "page-reports": "Reports" };
+  document.getElementById("crumbs").innerHTML = "<b>WattWise</b><span class=\"sep\">&rsaquo;</span>" + names[ribbonPage] +
+    (selected ? "<span class=\"sep\">&rsaquo;</span><b id=\"crumb-bld\">" + T.buildings[selected].label + "</b>" : "");
+}
+
+/* ================= activity bar / panels ================= */
+var activePanel = "map";
+function togglePanel(name) {
+  if (activePanel === name) { document.body.className = document.body.className.replace(/panel-\w+/g, "").trim(); activePanel = null; }
+  else { activePanel = name; document.body.className = "panel-" + name; }
+  document.querySelectorAll(".act-btn").forEach(function (b) { b.classList.toggle("on", b.dataset.panel === activePanel); });
+  var titles = { map: "Site Map", layers: "Layers", analytics: "Analytics", settings: "Settings" };
+  document.getElementById("side-title").textContent = titles[name] || "";
+  document.getElementById("sitemap").style.display = name === "map" ? "block" : "none";
+  document.getElementById("map-legend").style.display = name === "map" ? "flex" : "none";
+  document.getElementById("panel-layers").style.display = name === "layers" ? "block" : "none";
+  document.getElementById("panel-analytics").style.display = name === "analytics" ? "block" : "none";
+  document.getElementById("panel-settings").style.display = name === "settings" ? "block" : "none";
+  setTimeout(redrawVisible, 280);
+}
+document.querySelector(".activity").addEventListener("click", function (e) {
+  var b = e.target.closest(".act-btn");
+  if (b) togglePanel(b.dataset.panel);
+});
+document.querySelectorAll("[data-flag]").forEach(function (chk) {
+  chk.addEventListener("change", function () { FLAGS[this.dataset.flag] = this.checked; redrawVisible(); });
+});
+document.querySelectorAll("input[name=spd]").forEach(function (r) {
+  r.addEventListener("change", function () { speed = +this.value; });
+});
+
+/* ================= map ================= */
 var svg = document.getElementById("sitemap");
 var NS = "http://www.w3.org/2000/svg";
 function el(tag, attrs, parent) {
@@ -430,7 +678,6 @@ function el(tag, attrs, parent) {
   return e;
 }
 var rectEls = {}, kWTexts = {};
-
 function buildMap() {
   el("rect", { x: 0, y: 0, width: 660, height: 500, fill: "#eef2ea" });
   el("rect", { x: 0, y: 218, width: 660, height: 26, fill: "#d8dde4" });
@@ -445,28 +692,34 @@ function buildMap() {
   ORDER.forEach(function (key) {
     var P = PLAN[key];
     var g = el("g", { cursor: "pointer" });
-    var r = el("rect", { x: P.x, y: P.y, width: P.w, height: P.h, rx: 4,
-      fill: "#d9efe0", stroke: "#b9c6d2", "stroke-width": 1.5 }, g);
-    var nm = el("text", { x: P.x + P.w / 2, y: P.y + P.h / 2 - 10, "text-anchor": "middle",
-      "font-size": 12.5, "font-weight": 700, fill: "#2a3342",
-      "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
-    var kw = el("text", { x: P.x + P.w / 2, y: P.y + P.h / 2 + 12, "text-anchor": "middle",
-      "font-size": 14, "font-weight": 700, fill: "#1f2430",
-      "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
-    var badge = el("text", { x: P.x + P.w / 2, y: P.y + P.h - 9, "text-anchor": "middle",
-      "font-size": 10, fill: "#5a6472", "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
+    var r = el("rect", { x: P.x, y: P.y, width: P.w, height: P.h, rx: 4, fill: "#d9efe0", stroke: "#b9c6d2", "stroke-width": 1.5 }, g);
+    var nm = el("text", { x: P.x + P.w / 2, y: P.y + P.h / 2 - 10, "text-anchor": "middle", "font-size": 12.5, "font-weight": 700, fill: "#2a3342", "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
+    var kw = el("text", { x: P.x + P.w / 2, y: P.y + P.h / 2 + 12, "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: "#1f2430", "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
+    var badge = el("text", { x: P.x + P.w / 2, y: P.y + P.h - 9, "text-anchor": "middle", "font-size": 10, fill: "#5a6472", "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
     g.addEventListener("click", function () { select(key); showPage("page-buildings"); });
     rectEls[key] = r; kWTexts[key] = kw;
     badge.textContent = FLOORS[key] + (T.buildings[key].has_solar ? "  \u2600 PV" : "");
     nm.textContent = T.buildings[key].label.replace("Elmina ", "").replace("SDP ", "");
   });
 }
-
 function heat(s) { return s >= 0.8 ? "#f6cdcb" : s >= 0.5 ? "#fdecc8" : "#d9efe0"; }
+function refreshMap() {
+  ORDER.forEach(function (key) {
+    var b = T.buildings[key];
+    var maxB = Math.max.apply(null, b.dumb.net_kw.concat(b.wattwise.net_kw));
+    var now = b[mode].net_kw[step];
+    var r = rectEls[key];
+    r.setAttribute("fill", heat(now / maxB));
+    r.setAttribute("stroke", selected === key ? "#e88b33" : "#b9c6d2");
+    r.setAttribute("stroke-width", selected === key ? 3 : 1.5);
+    kWTexts[key].textContent = Math.round(now) + " kW";
+  });
+}
 
-/* ---------- generic chart helper ---------- */
+/* ================= charts ================= */
 function mkChart(canvasId, drawFn) {
   var c = document.getElementById(canvasId);
+  if (!c || !c.clientWidth) return;
   var W = c.width = c.clientWidth * 2;
   var H = c.height = parseInt(c.getAttribute("height")) * 2;
   var x = c.getContext("2d");
@@ -490,23 +743,28 @@ function axes(x, W, H, maxV, unit) {
   x.fillText("24:00", W - 70, H - 18);
   return px;
 }
-
 function dayChart(key) {
   mkChart("chart-day", function (x, W, H) {
     var b = T.buildings[key];
     var maxKw = Math.max.apply(null, b.dumb.net_kw.concat(b.wattwise.net_kw)) * 1.06;
     var px = axes(x, W, H, maxKw, "kW");
     function py(v) { return H - 46 - (H - 76) * v / maxKw; }
-    var t0 = TIMES.indexOf("08:30"), t1 = TIMES.indexOf("10:30");
-    x.fillStyle = "rgba(209,52,56,.09)"; x.fillRect(px(t0), 26, px(t1) - px(t0), H - 72);
-    x.fillStyle = "rgba(233,168,32,.22)";
-    x.beginPath(); x.moveTo(px(0), py(0));
-    b.wattwise.solar_kw.forEach(function (v, i) { x.lineTo(px(i), py(v)); });
-    x.lineTo(px(N - 1), py(0)); x.closePath(); x.fill();
-    x.strokeStyle = "#c3cbd6"; x.lineWidth = 2.5; x.beginPath();
-    (mode === "dumb" ? b.wattwise : b.dumb).net_kw.forEach(function (v, i) {
-      i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
-    }); x.stroke();
+    if (FLAGS.peak) {
+      var t0 = TIMES.indexOf("08:30"), t1 = TIMES.indexOf("10:30");
+      x.fillStyle = "rgba(209,52,56,.09)"; x.fillRect(px(t0), 26, px(t1) - px(t0), H - 72);
+    }
+    if (FLAGS.solar) {
+      x.fillStyle = "rgba(233,168,32,.22)";
+      x.beginPath(); x.moveTo(px(0), py(0));
+      b.wattwise.solar_kw.forEach(function (v, i) { x.lineTo(px(i), py(v)); });
+      x.lineTo(px(N - 1), py(0)); x.closePath(); x.fill();
+    }
+    if (FLAGS.other) {
+      x.strokeStyle = "#c3cbd6"; x.lineWidth = 2.5; x.beginPath();
+      (mode === "dumb" ? b.wattwise : b.dumb).net_kw.forEach(function (v, i) {
+        i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
+      }); x.stroke();
+    }
     x.strokeStyle = "#2f6fbf"; x.lineWidth = 3.5; x.beginPath();
     (mode === "dumb" ? b.dumb : b.wattwise).net_kw.forEach(function (v, i) {
       i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
@@ -515,9 +773,7 @@ function dayChart(key) {
     x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 46); x.stroke();
   });
 }
-
 function zoneChart(key) {
-  var c = document.getElementById("chart-zone");
   mkChart("chart-zone", function (x, W, H) {
     var b = T.buildings[key];
     var lo = 23.4, hi = 26.6;
@@ -538,13 +794,11 @@ function zoneChart(key) {
     x.fillText("zone stays inside the band \u2014 comfort is never traded away", 60, 24);
   });
 }
-
 function forecastChart(canvasId, fcArr, actArr, color, unit) {
   mkChart(canvasId, function (x, W, H) {
     var maxV = Math.max.apply(null, actArr.concat(fcArr)) * 1.06;
     var px = axes(x, W, H, maxV, unit);
     function py(v) { return H - 46 - (H - 76) * v / maxV; }
-    // actual (area + line)
     x.fillStyle = "rgba(47,111,191,.10)";
     x.beginPath(); x.moveTo(px(0), py(0));
     actArr.forEach(function (v, i) { x.lineTo(px(i), py(v)); });
@@ -552,7 +806,6 @@ function forecastChart(canvasId, fcArr, actArr, color, unit) {
     x.strokeStyle = "#8b95a3"; x.lineWidth = 2; x.beginPath();
     actArr.forEach(function (v, i) { i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)); });
     x.stroke();
-    // forecast (dashed)
     x.strokeStyle = color; x.lineWidth = 3; x.setLineDash([8, 5]); x.beginPath();
     var started = false;
     fcArr.forEach(function (v, i) {
@@ -561,10 +814,8 @@ function forecastChart(canvasId, fcArr, actArr, color, unit) {
       started = true;
     });
     x.stroke(); x.setLineDash([]);
-    // now marker
     x.strokeStyle = "#e88b33"; x.lineWidth = 2;
     x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 46); x.stroke();
-    // legend inline
     x.font = "600 15px Calibri";
     x.strokeStyle = "#8b95a3"; x.lineWidth = 2;
     x.beginPath(); x.moveTo(64, 40); x.lineTo(92, 40); x.stroke();
@@ -575,7 +826,48 @@ function forecastChart(canvasId, fcArr, actArr, color, unit) {
   });
 }
 
-/* ---------- panels ---------- */
+/* ================= solar bullet table ================= */
+function renderSolarTable() {
+  var F = T.forecast;
+  var fc = F.solar_fc_kw, ac = F.solar_actual_kw, tm = F.times;
+  var peakFc = 0;
+  fc.forEach(function (v) { if (v != null && v > peakFc) peakFc = v; });
+  var peakIdx = fc.indexOf(peakFc);
+  var fcKwh = 0, actKwh = 0;
+  fc.forEach(function (v, i) { if (v != null && i <= step) fcKwh += v * 0.5; });
+  ac.forEach(function (v, i) { if (i <= step) actKwh += v * 0.5; });
+  document.getElementById("sc-fcst").textContent = fcKwh.toFixed(2);
+  document.getElementById("sc-act").textContent = actKwh.toFixed(2);
+  document.getElementById("sc-cov").textContent = (100 * (step + 1) / N).toFixed(0) + "%";
+  var html = "";
+  for (var i = 12; i <= 39; i++) {
+    var f = fc[i], a = ac[i];
+    var isSel = i === step;
+    var fTxt = f != null ? f.toFixed(2) : "&mdash;";
+    var fCls = "v" + (i === peakIdx ? " peak" : "");
+    var barF = f != null ? Math.max(1.5, 100 * f / peakFc) : 0;
+    var actHtml = "", actCls = "v act";
+    if (i < step) {
+      actHtml = a != null ? a.toFixed(2) : "&mdash;";
+      if (a != null && f != null) { if (a >= f) actCls += " over"; else actCls += " under"; }
+    } else if (i === step) { actHtml = a != null ? a.toFixed(2) : "&mdash;"; }
+    else { actHtml = "&mdash;"; actCls = "v na"; }
+    var barA = 0, actBarCls = "bar-act";
+    if (i <= step && a != null && f != null) { barA = Math.max(1, 100 * a / peakFc); if (a < f) actBarCls += " under"; }
+    else if (i <= step && a != null) { barA = Math.max(1, 100 * a / peakFc); }
+    html += '<div class="srow' + (isSel ? " sel" : "") + '">' +
+      '<span class="t">' + tm[i] + '</span>' +
+      '<span class="bar-zone">' +
+        '<span class="bar-fcst" style="width:' + barF + '%"></span>' +
+        (barA > 0 ? '<span class="' + actBarCls + '" style="width:' + barA + '%"></span>' : '') +
+      '</span>' +
+      '<span class="' + fCls + '">' + fTxt + '</span>' +
+      '<span class="' + actCls + '">' + actHtml + '</span></div>';
+  }
+  document.getElementById("solar-rows").innerHTML = html;
+}
+
+/* ================= panels / renderers ================= */
 function renderKpis(key) {
   var b = T.buildings[key];
   var d = b[mode];
@@ -600,8 +892,7 @@ function renderKpis(key) {
   var head = document.getElementById("headline");
   if (b.shave_pct > 0) {
     head.className = "headline";
-    head.textContent = "WattWise cuts this building\u2019s billed peak by " + b.shave_pct +
-      "% \u2014 RM " + saving.toLocaleString() + " a month, with zero new equipment.";
+    head.textContent = "WattWise cuts this building\u2019s billed peak by " + b.shave_pct + "% \u2014 RM " + saving.toLocaleString() + " a month, with zero new equipment.";
   } else {
     head.className = "headline flat";
     head.textContent = "Flat, inflexible load \u2014 WattWise does not apply here. The honest counter-example.";
@@ -632,176 +923,28 @@ function renderForecastKpis() {
     '<div class="kpi"><div class="lbl">Demand MAE</div><div class="val">10.2 <span class="unit">kW</span></div><div class="dlt">walk-forward, held-out 60 days</div></div>';
 }
 
-function refreshTown() {
-  var peak = 0, billD = 0, billW = 0;
-  ORDER.forEach(function (k) {
-    var b = T.buildings[k];
-    peak = Math.max(peak, (mode === "dumb" ? b.dumb : b.wattwise).net_kw[step]);
-    billD += b.bill_dumb_rm; billW += b.bill_wattwise_rm;
-  });
-  document.getElementById("t-peak").textContent = Math.round(peak) + " kW @ " + TIMES[step];
-  document.getElementById("t-bill").textContent = "RM " + Math.round(mode === "dumb" ? billD : billW).toLocaleString();
-  document.getElementById("t-save").textContent = "RM " + Math.round(billD - billW).toLocaleString();
-}
-
-function refreshMap() {
-  ORDER.forEach(function (key) {
-    var b = T.buildings[key];
-    var maxB = Math.max.apply(null, b.dumb.net_kw.concat(b.wattwise.net_kw));
-    var now = b[mode].net_kw[step];
-    var r = rectEls[key];
-    r.setAttribute("fill", heat(now / maxB));
-    r.setAttribute("stroke", selected === key ? "#e88b33" : "#b9c6d2");
-    r.setAttribute("stroke-width", selected === key ? 3 : 1.5);
-    kWTexts[key].textContent = Math.round(now) + " kW";
-  });
-}
-
-function renderSolarTable() {
-  var F = T.forecast;
-  var fc = F.solar_fc_kw, ac = F.solar_actual_kw, tm = F.times;
-  // scale: peak forecast value of the day
-  var peakFc = 0;
-  fc.forEach(function (v) { if (v != null && v > peakFc) peakFc = v; });
-  var peakIdx = fc.indexOf(peakFc);
-
-  // headline numbers
-  var fcKwh = 0, actKwh = 0;
-  fc.forEach(function (v, i) { if (v != null && i <= step) fcKwh += v * 0.5; });
-  ac.forEach(function (v, i) { if (i <= step) actKwh += v * 0.5; });
-  document.getElementById("sc-fcst").textContent = fcKwh.toFixed(2);
-  document.getElementById("sc-act").textContent = actKwh.toFixed(2);
-  document.getElementById("sc-cov").textContent =
-    (100 * (step + 1) / N).toFixed(0) + "%";
-
-  var html = "";
-  // show daylight hours only (06:00-19:30)
-  for (var i = 12; i <= 39; i++) {
-    var f = fc[i], a = ac[i];
-    var isSel = i === step;
-    var fTxt = f != null ? f.toFixed(2) : "&mdash;";
-    var fCls = "v" + (i === peakIdx ? " peak" : "");
-    var barF = f != null ? Math.max(1.5, 100 * f / peakFc) : 0;
-    var actHtml = "", actCls = "v act";
-    if (i < step) {
-      // past interval: actual known
-      actHtml = a != null ? a.toFixed(2) : "&mdash;";
-      if (a != null && f != null) {
-        if (a >= f) actCls += " over";
-        else actCls += " under";
-      }
-    } else if (i === step) {
-      actHtml = a != null ? a.toFixed(2) : "&mdash;";
-    } else {
-      actHtml = "&mdash;";
-      actCls = "v na";
-    }
-    var barA = 0, actBarCls = "bar-act";
-    if (i <= step && a != null && f != null) {
-      barA = Math.max(1, 100 * a / peakFc);
-      if (a < f) actBarCls += " under";
-    } else if (i <= step && a != null) {
-      barA = Math.max(1, 100 * a / peakFc);
-    }
-    html += '<div class="srow' + (isSel ? " sel" : "") + '">' +
-      '<span class="t">' + tm[i] + '</span>' +
-      '<span class="bar-zone">' +
-        '<span class="bar-fcst" style="width:' + barF + '%"></span>' +
-        (barA > 0 ? '<span class="' + actBarCls + '" style="width:' + barA + '%"></span>' : '') +
-      '</span>' +
-      '<span class="' + fCls + '">' + fTxt + '</span>' +
-      '<span class="' + actCls + '">' + actHtml + '</span>' +
-      '</div>';
-  }
-  document.getElementById("solar-rows").innerHTML = html;
-}
-
-function refresh() {
-  refreshTown(); refreshMap();
-  if (selected) { renderKpis(selected); dayChart(selected); zoneChart(selected); }
-  renderForecastKpis();
-  renderSolarTable();
-  forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
-  renderOverview();
-  renderScheduler();
-  comfortChart();
-  renderReports();
-  document.getElementById("clock").textContent = TIMES[step];
-  document.getElementById("scrub").value = step;
-}
-
-function select(key) {
-  selected = key;
-  var b = T.buildings[key];
-  document.getElementById("sel-name").textContent = b.label;
-  document.getElementById("sel-sub").textContent =
-    "peak " + Math.round(b.peak_dumb_kw) + " \u2192 " + Math.round(b.peak_wattwise_kw) +
-    " kW \u00B7 shave " + b.shave_pct + "%";
-  refresh();
-}
-function stepSelect(dir) { select(ORDER[(ORDER.indexOf(selected) + dir + ORDER.length) % ORDER.length]); }
-
-/* ---------- tabs & wiring ---------- */
-function showPage(id) {
-  document.querySelectorAll(".page").forEach(function (p) { p.className = "page" + (p.id === id ? " on" : ""); });
-  document.querySelectorAll(".tab").forEach(function (t) { t.className = "tab" + (t.dataset.page === id ? " on" : ""); });
-  setTimeout(redrawVisible, 50);
-}
-document.querySelectorAll(".tab").forEach(function (t) {
-  t.addEventListener("click", function () { showPage(t.dataset.page); });
-});
-function redrawVisible() {
-  if (selected) { dayChart(selected); zoneChart(selected); }
-  renderForecastKpis();
-  renderSolarTable();
-  forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
-  renderOverview();
-  renderScheduler();
-  comfortChart();
-  renderReports();
-}
-
-document.getElementById("btn-dumb").onclick = function () { setMode("dumb"); };
-document.getElementById("btn-wise").onclick = function () { setMode("wattwise"); };
-function setMode(m) {
-  mode = m;
-  document.getElementById("btn-dumb").className = m === "dumb" ? "on" : "";
-  document.getElementById("btn-wise").className = m === "wattwise" ? "on" : "";
-  refresh();
-}
-document.getElementById("btn-play").onclick = function () { playing = !playing; };
-document.getElementById("scrub").oninput = function () { playing = false; step = +this.value; refresh(); };
-document.getElementById("btn-map").onclick = function () {
-  document.body.classList.toggle("map-collapsed");
-  var col = document.body.classList.contains("map-collapsed");
-  this.innerHTML = col ? "&#9654; Map" : "&#9664; Map";
-  setTimeout(redrawVisible, 300);
-};
-document.getElementById("bld-prev").onclick = function () { stepSelect(-1); };
-document.getElementById("bld-next").onclick = function () { stepSelect(1); };
-document.getElementById("rep-csv").onclick = exportCsv;
-window.addEventListener("resize", redrawVisible);
-
-/* ---------- overview tab ---------- */
 function renderOverview() {
-  var totPeak = 0, totSolar = 0, totBill = 0, totSave = 0;
+  var totSolar = 0, totBill = 0, totSave = 0;
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
     totSolar += b[mode].solar_kw[step];
     totBill += mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm;
     totSave += b.bill_dumb_rm - b.bill_wattwise_rm;
   });
-  totPeak = peakNow();
+  var draw = 0, peak = 0;
+  ORDER.forEach(function (k) {
+    var v = T.buildings[k][mode].net_kw[step];
+    draw += v; peak = Math.max(peak, v);
+  });
   document.getElementById("ov-totals").innerHTML =
-    '<div class="kpi"><div class="lbl">Township draw now</div><div class="val">' + Math.round(totDrawNow()) +
+    '<div class="kpi"><div class="lbl">Township draw now</div><div class="val">' + Math.round(draw) +
     ' <span class="unit">kW</span></div><div class="dlt">solar ' + Math.round(totSolar) + ' kW</div></div>' +
-    '<div class="kpi"><div class="lbl">Township peak</div><div class="val">' + Math.round(totPeak) +
+    '<div class="kpi"><div class="lbl">Township peak</div><div class="val">' + Math.round(peak) +
     ' <span class="unit">kW</span></div><div class="dlt">@ ' + TIMES[step] + '</div></div>' +
     '<div class="kpi"><div class="lbl">Combined MD bill</div><div class="val">RM ' + Math.round(totBill).toLocaleString() +
     '</div><div class="dlt">per month</div></div>' +
     '<div class="kpi"><div class="lbl">WattWise saving</div><div class="val">RM ' + Math.round(totSave).toLocaleString() +
     '</div><div class="dlt good">per month, zero capex</div></div>';
-
   var rows = "";
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
@@ -824,12 +967,8 @@ function renderOverview() {
     '<tr><th>Building</th><th class="num">Now kW</th><th class="num">Peak kW</th>' +
     '<th class="num">Shave</th><th class="num">MD / mo</th><th>Status</th></tr>' + rows;
   document.querySelectorAll("#ov-table tr.clickable").forEach(function (tr) {
-    tr.addEventListener("click", function () {
-      select(tr.dataset.k); showPage("page-buildings");
-    });
+    tr.addEventListener("click", function () { select(tr.dataset.k); showPage("page-buildings"); });
   });
-
-  // alarm feed: generated from current state
   var alarms = "";
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
@@ -843,27 +982,41 @@ function renderOverview() {
   });
   if (!alarms) alarms = '<div>' + TIMES[step] + ' \u2014 no active alarms. All buildings nominal.</div>';
   document.getElementById("alarms").innerHTML = alarms;
+
+  // layers panel register
+  var lb = "";
+  ORDER.forEach(function (k) {
+    lb += '<div class="side-kpi"><span>' + T.buildings[k].label.replace("Elmina ", "") + '</span><b>' +
+      Math.round(T.buildings[k][mode].net_kw[step]) + ' kW</b></div>';
+  });
+  var lbEl = document.getElementById("layers-blds");
+  if (lbEl) lbEl.innerHTML = lb;
+
+  // analytics panel
+  var an = "";
+  an += '<div class="side-kpi"><span>Draw now</span><b>' + Math.round(draw) + ' kW</b></div>';
+  an += '<div class="side-kpi"><span>Solar now</span><b>' + Math.round(totSolar) + ' kW</b></div>';
+  an += '<div class="side-kpi"><span>Peak bldg</span><b>' + Math.round(peak) + ' kW</b></div>';
+  an += '<div class="side-kpi"><span>MD bill</span><b>RM ' + Math.round(totBill).toLocaleString() + '</b></div>';
+  an += '<div class="side-kpi"><span>Saving</span><b>RM ' + Math.round(totSave).toLocaleString() + '</b></div>';
+  an += '<div class="side-kpi"><span>Mode</span><b>' + (mode === "dumb" ? "BASELINE" : "WATTWISE") + '</b></div>';
+  var anEl = document.getElementById("analytics-body");
+  if (anEl) anEl.innerHTML = an;
 }
 
-function totDrawNow() {
-  var s = 0;
-  ORDER.forEach(function (k) { s += T.buildings[k][mode].net_kw[step]; });
-  return s;
-}
-function peakNow() {
-  var p = 0;
-  ORDER.forEach(function (k) { p = Math.max(p, T.buildings[k][mode].net_kw[step]); });
-  return p;
-}
-
-/* ---------- scheduler tab ---------- */
 function renderScheduler() {
-  // rule state table
+  if (mode !== "wattwise") {
+    document.getElementById("sch-rules").innerHTML =
+      '<tr><td colspan="4" style="padding:14px;color:var(--muted)">Scheduler offline &mdash; switch the scenario to <b>WattWise</b> (Home tab or command bar: <span style="font-family:Consolas">mode wattwise</span>) to see live rule states.</td></tr>';
+    document.getElementById("sch-gauges").innerHTML = "";
+    document.getElementById("sch-log").innerHTML = "";
+    return;
+  }
   var rows = "";
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
     var a = b.wattwise.action[step];
-    var cls = a.split("-")[0] === "comfort" || a === "safety" || a === "hold" ? a.split("-")[0] : a;
+    var cls = a.split("-")[0];
     if (a === "night-min") cls = "night";
     rows += '<tr><td>' + b.label + '</td>' +
       '<td><span class="lamp ' + cls + '"><span class="pip"></span>' + a.replace(/-/g, " ") + '</span></td>' +
@@ -872,8 +1025,6 @@ function renderScheduler() {
   });
   document.getElementById("sch-rules").innerHTML =
     '<tr><th>Building</th><th>Current rule</th><th class="num">Chiller kW</th><th class="num">Solar kW</th></tr>' + rows;
-
-  // cold bank gauges
   var g = "";
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
@@ -884,8 +1035,6 @@ function renderScheduler() {
       '<div class="g-val">' + Math.round(v) + ' / 900 kWh</div></div>';
   });
   document.getElementById("sch-gauges").innerHTML = g;
-
-  // intervention log: collect rule transitions up to now
   var log = "";
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
@@ -904,98 +1053,86 @@ function renderScheduler() {
 }
 
 function comfortChart() {
-  var c = document.getElementById("sch-comfort");
-  if (!c.clientWidth) return;
-  var W = c.width = c.clientWidth * 2, H = c.height = 340;
-  var x = c.getContext("2d");
-  var lo = 23.4, hi = 26.8;
-  var px = function (i) { return 140 + (W - 170) * i / (N - 1); };
-  var py = function (v) { return H - 46 - (H - 80) * (v - lo) / (hi - lo); };
-  x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
-  x.fillStyle = "rgba(16,124,65,.08)"; x.fillRect(140, py(26), W - 170, py(24) - py(26));
-  x.strokeStyle = "#9fc3aa"; x.setLineDash([7, 7]); x.lineWidth = 1.5;
-  [24, 26].forEach(function (t) { x.beginPath(); x.moveTo(140, py(t)); x.lineTo(W - 30, py(t)); x.stroke(); });
-  x.setLineDash([]);
-  var colors = ["#d13438", "#2f6fbf", "#e88b33", "#8b5cf6", "#0ea5a0"];
-  ORDER.forEach(function (k, ki) {
-    x.strokeStyle = colors[ki % colors.length]; x.lineWidth = 3; x.beginPath();
-    T.buildings[k].wattwise.zone_c.forEach(function (v, i) {
-      i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
+  mkChart("sch-comfort", function (x, W, H) {
+    var lo = 23.4, hi = 26.8;
+    var px = function (i) { return 140 + (W - 170) * i / (N - 1); };
+    var py = function (v) { return H - 46 - (H - 80) * (v - lo) / (hi - lo); };
+    x.fillStyle = "rgba(16,124,65,.08)"; x.fillRect(140, py(26), W - 170, py(24) - py(26));
+    x.strokeStyle = "#9fc3aa"; x.setLineDash([7, 7]); x.lineWidth = 1.5;
+    [24, 26].forEach(function (t) { x.beginPath(); x.moveTo(140, py(t)); x.lineTo(W - 30, py(t)); x.stroke(); });
+    x.setLineDash([]);
+    var colors = ["#d13438", "#2f6fbf", "#e88b33", "#8b5cf6", "#0ea5a0"];
+    ORDER.forEach(function (k, ki) {
+      x.strokeStyle = colors[ki % colors.length]; x.lineWidth = 3; x.beginPath();
+      T.buildings[k].wattwise.zone_c.forEach(function (v, i) {
+        i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
+      });
+      x.stroke();
+      x.fillStyle = colors[ki % colors.length]; x.font = "600 14px Calibri";
+      x.fillText(T.buildings[k].label.replace("Elmina ", "").replace("SDP ", ""), 12, 40 + ki * 24);
     });
-    x.stroke();
-    // legend entry
-    x.fillStyle = colors[ki % colors.length]; x.font = "600 14px Calibri";
-    x.fillText(T.buildings[k].label.replace("Elmina ", "").replace("SDP ", ""), 12, 40 + ki * 24);
+    x.strokeStyle = "#e88b33"; x.lineWidth = 2;
+    x.beginPath(); x.moveTo(px(step), 30); x.lineTo(px(step), H - 46); x.stroke();
+    x.fillStyle = "#5a6472"; x.font = "600 14px Calibri";
+    x.fillText("24\u00B0", 100, py(24) + 5); x.fillText("26\u00B0", 100, py(26) + 5);
   });
-  x.strokeStyle = "#e88b33"; x.lineWidth = 2;
-  x.beginPath(); x.moveTo(px(step), 30); x.lineTo(px(step), H - 46); x.stroke();
-  x.fillStyle = "#5a6472"; x.font = "600 14px Calibri";
-  x.fillText("24\u00B0", 100, py(24) + 5); x.fillText("26\u00B0", 100, py(26) + 5);
 }
 
-/* ---------- reports tab ---------- */
 function renderReports() {
-  // EECA: annualised GJ per building vs 21,600 threshold
-  var c = document.getElementById("rep-eeca");
-  if (!c.clientWidth) return;
-  var W = c.width = c.clientWidth * 2, H = c.height = 300;
-  var x = c.getContext("2d");
-  x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
-  var gj = ORDER.map(function (k) {
-    var b = T.buildings[k];
-    var kwh = 0;
-    b.wattwise.net_kw.forEach(function (v) { kwh += v * 0.5; });
-    return kwh * 3.6 * 365;  // kWh -> GJ, annualised
+  mkChart("rep-eeca", function (x, W, H) {
+    var gj = ORDER.map(function (k) {
+      var b = T.buildings[k];
+      var kwh = 0;
+      b.wattwise.net_kw.forEach(function (v) { kwh += v * 0.5; });
+      return kwh * 3.6 * 365;
+    });
+    var maxG = Math.max(40000, Math.max.apply(null, gj) * 1.1);
+    var bw = (W - 220) / ORDER.length;
+    var py = function (v) { return H - 60 - (H - 100) * v / maxG; };
+    x.strokeStyle = "#d13438"; x.lineWidth = 2; x.setLineDash([8, 5]);
+    x.beginPath(); x.moveTo(180, py(21600)); x.lineTo(W - 30, py(21600)); x.stroke();
+    x.setLineDash([]);
+    x.fillStyle = "#d13438"; x.font = "700 15px Calibri";
+    x.fillText("EECA threshold 21,600 GJ/yr", 190, py(21600) - 8);
+    ORDER.forEach(function (k, i) {
+      var X = 200 + i * bw;
+      x.fillStyle = gj[i] > 21600 ? "#f0b8b5" : "#cfe8d8";
+      x.fillRect(X, py(gj[i]), bw * 0.55, H - 60 - py(gj[i]));
+      x.strokeStyle = gj[i] > 21600 ? "#d13438" : "#107c41"; x.lineWidth = 1.5;
+      x.strokeRect(X, py(gj[i]), bw * 0.55, H - 60 - py(gj[i]));
+      x.fillStyle = "#1f2430"; x.font = "600 13.5px Calibri";
+      x.save(); x.translate(X + bw * 0.28, H - 46); x.rotate(-0.32);
+      x.fillText(T.buildings[k].label.replace("Elmina ", "").replace("SDP ", ""), 0, 0);
+      x.restore();
+      x.font = "700 14px Consolas";
+      x.fillText(Math.round(gj[i]).toLocaleString() + " GJ", X + bw * 0.6, py(gj[i]) + 5);
+    });
+    var over = gj.filter(function (v) { return v > 21600; }).length;
+    document.getElementById("rep-eeca-note").textContent =
+      "Illustrative annualisation of one simulated day x365. " + over + " of " + ORDER.length +
+      " buildings cross the 21,600 GJ EECA threshold \u2014 statutory duties apply (Registered Energy" +
+      " Manager, EnMS, annual reports, 5-yearly audits). WattWise generates the consumption data" +
+      " trail those reports require. Replace with metered data at pilot.";
   });
-  var maxG = Math.max(40000, Math.max.apply(null, gj) * 1.1);
-  var bw = (W - 220) / ORDER.length;
-  var py = function (v) { return H - 60 - (H - 100) * v / maxG; };
-  // threshold line
-  x.strokeStyle = "#d13438"; x.lineWidth = 2; x.setLineDash([8, 5]);
-  x.beginPath(); x.moveTo(180, py(21600)); x.lineTo(W - 30, py(21600)); x.stroke();
-  x.setLineDash([]);
-  x.fillStyle = "#d13438"; x.font = "700 15px Calibri";
-  x.fillText("EECA threshold 21,600 GJ/yr", 190, py(21600) - 8);
-  ORDER.forEach(function (k, i) {
-    var X = 200 + i * bw;
-    x.fillStyle = gj[i] > 21600 ? "#f0b8b5" : "#cfe8d8";
-    x.fillRect(X, py(gj[i]), bw * 0.55, H - 60 - py(gj[i]));
-    x.strokeStyle = gj[i] > 21600 ? "#d13438" : "#107c41"; x.lineWidth = 1.5;
-    x.strokeRect(X, py(gj[i]), bw * 0.55, H - 60 - py(gj[i]));
-    x.fillStyle = "#1f2430"; x.font = "600 13.5px Calibri";
-    x.save(); x.translate(X + bw * 0.28, H - 46); x.rotate(-0.32);
-    x.fillText(T.buildings[k].label.replace("Elmina ", "").replace("SDP ", ""), 0, 0);
-    x.restore();
-    x.font = "700 14px Consolas";
-    x.fillText(Math.round(gj[i]).toLocaleString() + " GJ", X + bw * 0.6, py(gj[i]) + 5);
-  });
-
-  var over = gj.filter(function (v) { return v > 21600; }).length;
-  document.getElementById("rep-eeca-note").textContent =
-    "Illustrative annualisation of one simulated day x365. " + over + " of " + ORDER.length +
-    " buildings cross the 21,600 GJ EECA threshold \u2014 statutory duties apply (Registered Energy" +
-    " Manager, EnMS, annual reports, 5-yearly audits). WattWise generates the consumption data" +
-    " trail those reports require. Replace with metered data at pilot.";
-
-  // MD table
   var rows = "";
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
-    var cap = Math.round((mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm) * 0.3038);
-    var net = Math.round((mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm) - cap);
+    var total = mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm;
+    var cap = Math.round(total * 0.3038);
+    var net = Math.round(total - cap);
     rows += '<tr><td>' + b.label + '</td>' +
       '<td class="num">' + Math.round(mode === "dumb" ? b.peak_dumb_kw : b.peak_wattwise_kw) + '</td>' +
       '<td class="num">RM ' + cap.toLocaleString() + '</td>' +
       '<td class="num">RM ' + net.toLocaleString() + '</td>' +
-      '<td class="num">RM ' + Math.round(mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm).toLocaleString() + '</td>' +
-      '<td class="num good">RM ' + Math.round(b.bill_dumb_rm - b.bill_wattwise_rm).toLocaleString() + '</td></tr>';
+      '<td class="num">RM ' + Math.round(total).toLocaleString() + '</td>' +
+      '<td class="num" style="color:var(--good);font-weight:600">RM ' + Math.round(b.bill_dumb_rm - b.bill_wattwise_rm).toLocaleString() + '</td></tr>';
   });
   document.getElementById("rep-md").innerHTML =
     '<tr><th>Building</th><th class="num">Billed peak kW</th><th class="num">Capacity (31%)</th>' +
     '<th class="num">Network (69%)</th><th class="num">Total MD/mo</th><th class="num">WattWise saves</th></tr>' + rows;
 }
 
-/* CSV export */
+/* ================= csv export ================= */
 function exportCsv() {
   var lines = ["building,time,mode,net_grid_kw,chiller_kw,zone_c,stored_kwh,solar_kw,action"];
   ORDER.forEach(function (k) {
@@ -1014,13 +1151,13 @@ function exportCsv() {
   a.click();
 }
 
-/* ---------- command bar ---------- */
+/* ================= command bar ================= */
 function runCommand(raw) {
   var out = "";
   var cmd = raw.trim().toLowerCase();
   var m;
   if (cmd === "help") {
-    out = "commands: select <building> | set time HH:MM | mode dumb|wattwise | play | pause | reset | tab <name>";
+    out = "commands: select <building> | set time HH:MM | mode dumb|wattwise | play | pause | reset | tab <name> | panel <map|layers|analytics|settings>";
   } else if ((m = cmd.match(/^select (.+)/))) {
     var key = null;
     ORDER.forEach(function (k) { if (k.indexOf(m[1]) === 0 || m[1] === k) key = k; });
@@ -1039,34 +1176,115 @@ function runCommand(raw) {
   else if (cmd === "pause") { playing = false; out = "paused"; }
   else if (cmd === "reset") { playing = false; step = 0; refresh(); out = "reset to 00:00"; }
   else if ((m = cmd.match(/^tab (.+)/))) {
-    var pages = { overview: "page-overview", buildings: "page-buildings", forecast: "page-forecast", scheduler: "page-scheduler", reports: "page-reports" };
+    var pages = { overview: "page-overview", home: "page-overview", buildings: "page-buildings", forecast: "page-forecast", scheduler: "page-scheduler", reports: "page-reports" };
     if (pages[m[1]]) { showPage(pages[m[1]]); out = "tab = " + m[1]; }
     else out = "no tab '" + m[1] + "'";
+  } else if ((m = cmd.match(/^panel (.+)/))) {
+    if (["map", "layers", "analytics", "settings"].indexOf(m[1]) >= 0) { togglePanel(m[1]); out = "panel = " + m[1]; }
+    else out = "no panel '" + m[1] + "'";
   } else if (cmd === "") { out = ""; }
   else out = "unknown command. type help";
   document.getElementById("cmd-out").textContent = out;
+  updateStatusWord();
 }
 document.getElementById("cmd").addEventListener("keydown", function (e) {
   if (e.key === "Enter") { runCommand(this.value); this.value = ""; }
 });
 
+/* ================= status ================= */
+function updateStatusWord() {
+  var w = document.getElementById("st-word");
+  w.textContent = playing ? "RUNNING" : "READY";
+  w.className = "st-word" + (playing ? " run" : "");
+  document.getElementById("st-mode").textContent = mode === "dumb" ? "BASELINE" : "WATTWISE";
+}
+function refreshTown() {
+  var peak = 0, billD = 0, billW = 0;
+  ORDER.forEach(function (k) {
+    var b = T.buildings[k];
+    peak = Math.max(peak, b[mode].net_kw[step]);
+    billD += b.bill_dumb_rm; billW += b.bill_wattwise_rm;
+  });
+  document.getElementById("t-peak").textContent = Math.round(peak) + " kW @ " + TIMES[step];
+  document.getElementById("t-bill").textContent = "RM " + Math.round(mode === "dumb" ? billD : billW).toLocaleString();
+  document.getElementById("t-save").textContent = "RM " + Math.round(billD - billW).toLocaleString();
+}
+
+/* ================= refresh ================= */
+function refresh() {
+  refreshTown(); refreshMap(); updateStatusWord();
+  if (selected) { renderKpis(selected); dayChart(selected); zoneChart(selected); }
+  renderForecastKpis();
+  renderSolarTable();
+  forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
+  renderOverview();
+  renderScheduler();
+  comfortChart();
+  renderReports();
+  document.getElementById("clock").textContent = TIMES[step];
+  document.getElementById("scrub").value = step;
+  updateCrumbs();
+}
+function redrawVisible() {
+  if (selected) { dayChart(selected); zoneChart(selected); }
+  renderForecastKpis();
+  renderSolarTable();
+  forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
+  renderOverview();
+  renderScheduler();
+  comfortChart();
+  renderReports();
+}
+
+function select(key) {
+  selected = key;
+  var b = T.buildings[key];
+  document.getElementById("sel-name").textContent = b.label;
+  document.getElementById("sel-sub").textContent =
+    "peak " + Math.round(b.peak_dumb_kw) + " \u2192 " + Math.round(b.peak_wattwise_kw) + " kW \u00B7 shave " + b.shave_pct + "%";
+  refresh();
+}
+function stepSelect(dir) { select(ORDER[(ORDER.indexOf(selected) + dir + ORDER.length) % ORDER.length]); }
+
+function setMode(m) {
+  mode = m;
+  renderRibbon();
+  refresh();
+}
+
+/* ================= transport ================= */
+document.getElementById("btn-play").onclick = function () { playing = !playing; updateStatusWord(); };
+document.getElementById("btn-reset").onclick = function () { playing = false; step = 0; refresh(); };
+document.getElementById("scrub").oninput = function () { playing = false; step = +this.value; refresh(); };
+document.getElementById("bld-prev").onclick = function () { stepSelect(-1); };
+document.getElementById("bld-next").onclick = function () { stepSelect(1); };
+document.getElementById("rep-csv").onclick = exportCsv;
+window.addEventListener("resize", redrawVisible);
+
+/* ================= loop ================= */
 var last = 0, acc = 0;
 function loop(t) {
   requestAnimationFrame(loop);
   var dt = (t - last) / 1000; last = t;
-  if (playing) { acc += dt; if (acc > 0.35) { acc = 0; step = (step + 1) % N; refresh(); } }
+  if (playing) { acc += dt; if (acc > speed) { acc = 0; step = (step + 1) % N; refresh(); } }
 }
 
+/* ================= init ================= */
 fetch("./data/township.json").then(function (r) { return r.json(); }).then(function (json) {
   T = json;
   TIMES = T.buildings.office_tower.dumb.times;
   buildMap();
+  renderRibbon();
+  togglePanel("map");
   select("mall");
+  showPage("page-buildings");
   refresh();
+  updateStatusWord();
   requestAnimationFrame(loop);
 }).catch(function () {
   document.getElementById("sel-name").textContent = "Failed to load township.json - run generate_ui_data.py";
 });
+
 })();
 </script>
 </body>
