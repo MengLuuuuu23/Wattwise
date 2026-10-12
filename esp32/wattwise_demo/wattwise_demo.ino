@@ -162,7 +162,7 @@ void driveLcd() {
            simMinute / 60, simMinute % 60,
            wattwiseActive() ? "WATTWISE" : "BASELINE");
   String st = stateWord();
-  if (st == "PEAK") st = wattwiseActive() ? "COAST" : "UNMANAGED";
+  if (st == "PEAK") st = wattwiseActive() ? "COAST" : "WASTED";
   if (lastSerialMs) {
     // linked: kW granted comes live from the CLI
     snprintf(l1, sizeof(l1), "%-8s %5.0f kW", st.c_str(), grantedKw);
