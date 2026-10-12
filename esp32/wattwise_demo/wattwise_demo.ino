@@ -45,6 +45,10 @@
 static const int LED_RED = 19;
 static const int LED_GREEN = 18;
 static const int SERVO_PIN = 13;
+// power toggle button. GPIO 0 = the BOOT button already on the board
+// (zero wiring). For your own breadboard button: change to 27 (or
+// 25/26/32/33), one leg to the pin, other leg to GND.
+static const int BUTTON_PIN = 0;
 
 // ---------------- demo windows (hours, mirrors scheduler.py) ----------
 static const float PEAK_START = 8.5, PEAK_END = 10.5;   // billed window
@@ -62,6 +66,12 @@ static const int START_MINUTE = 5 * 60 + 30;    // boot at 05:30 (precool!)
 
 LiquidCrystal_I2C lcd(LCD_ADDR, 16, 2);
 Servo servo;
+
+// ---------------- power state (button toggle) ----------------
+bool isOn = false;                // starts quiet; button wakes it
+static int btnStable = HIGH;      // debounced button level
+static int btnLastReading = HIGH;
+static unsigned long btnDebounceMs = 0;
 
 // ---------------- state ----------------
 int simMinute = START_MINUTE;
@@ -175,6 +185,47 @@ void driveLcd() {
   lcdShow(l0, l1);
 }
 
+bool buttonPressed() {
+  // debounce the power button; true exactly once per press
+  int reading = digitalRead(BUTTON_PIN);
+  if (reading != btnLastReading) btnDebounceMs = millis();
+  btnLastReading = reading;
+  if (millis() - btnDebounceMs > 30 && reading != btnStable) {
+    btnStable = reading;
+    if (btnStable == LOW) return true;   // press edge
+  }
+  return false;
+}
+
+void powerOnSequence() {
+  isOn = true;
+  // fresh day every wake-up
+  simMinute = START_MINUTE;
+  strcpy(serMode, "wattwise");
+  serState[0] = 0;
+  grantedKw = 0.0;
+  lastSerialMs = 0;
+  servoPos = 90; servoDir = 1;
+  servo.setPeriodHertz(50);
+  servo.attach(SERVO_PIN, 500, 2400);
+  lcd.backlight();
+  lcd.clear();
+  lcdLine0[0] = 0; lcdLine1[0] = 0;      // force full rewrite
+  bootSelfTest();                         // LED test + servo sweep test
+  lastTickMs = millis();
+}
+
+void powerOffSequence() {
+  lcdShow("WattWise node", "powering off...");
+  delay(1200);
+  digitalWrite(LED_RED, LOW);
+  digitalWrite(LED_GREEN, LOW);
+  servo.detach();                         // no pulses: motor goes limp+silent
+  lcd.noBacklight();
+  lcd.clear();
+  isOn = false;
+}
+
 void bootSelfTest() {
   // 3 blinks on both LEDs: proves LED wiring at power-up
   lcdShow("WattWise node", "LED test");
@@ -199,27 +250,33 @@ void setup() {
   pinMode(LED_GREEN, OUTPUT);
   digitalWrite(LED_RED, LOW);
   digitalWrite(LED_GREEN, LOW);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
   servo.setPeriodHertz(50);
-  servo.attach(SERVO_PIN, 500, 2400);
   Wire.begin(21, 22);
   lcd.init();
-  lcd.backlight();
-  bootSelfTest();
-  lastTickMs = millis();
+  // powered up quiet: dark screen, limp servo, waiting for the button
+  lcd.noBacklight();
+  lcd.clear();
 }
 
 void loop() {
-  // 1. serial link from the CLI
-  static char buf[64];
-  static uint8_t n = 0;
-  while (Serial.available()) {
-    char c = Serial.read();
-    if (c == '\n' || c == '\r') {
-      if (n) { buf[n] = 0; handleLine(buf); n = 0; }
-    } else if (n < sizeof(buf) - 1) {
-      buf[n++] = c;
-    }
+  // 0. power toggle: press = run self-tests + demo, press again = quiet
+  if (buttonPressed()) {
+    if (!isOn) powerOnSequence();
+    else powerOffSequence();
+    return;   // skip one cycle so the lcdShow in the sequences settles
   }
+  if (!isOn) {
+    // quiet: nothing runs, nothing glows, servo stays limp.
+    // serial still parsed so a CLI link auto-wakes the node.
+    readSerial();
+    if (lastSerialMs) powerOnSequence();
+    delay(20);
+    return;
+  }
+
+  // 1. serial link from the CLI
+  readSerial();
   unsigned long now = millis();
   if (lastSerialMs && now - lastSerialMs > LINK_TIMEOUT_MS) {
     // link lost -> back to the standalone demo, wattwise on
@@ -236,4 +293,17 @@ void loop() {
   driveServo();
   driveLeds();
   driveLcd();
+}
+
+void readSerial() {
+  static char buf[64];
+  static uint8_t n = 0;
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '\n' || c == '\r') {
+      if (n) { buf[n] = 0; handleLine(buf); n = 0; }
+    } else if (n < sizeof(buf) - 1) {
+      buf[n++] = c;
+    }
+  }
 }
