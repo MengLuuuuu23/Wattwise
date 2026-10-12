@@ -172,6 +172,64 @@
   footer b { color: var(--text); font-variant-numeric: tabular-nums; }
   footer .save b { color: var(--good); }
   .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
+
+  /* ---------- command bar ---------- */
+  .cmdbar {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--panel2); border-top: 1px solid var(--border2);
+    padding: 5px 16px; font-family: Consolas, "Courier New", monospace;
+  }
+  .cmd-prompt { color: var(--excel); font-weight: 700; font-size: 14px; }
+  #cmd {
+    flex: 0 0 420px; font-family: inherit; font-size: 13.5px;
+    border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px;
+    background: var(--panel); color: var(--text);
+  }
+  #cmd:focus { outline: none; border-color: var(--excel); }
+  .cmd-out { font-size: 12.5px; color: var(--muted); }
+
+  /* ---------- overview ---------- */
+  .ov-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .ov-table th {
+    text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .7px; color: var(--muted); background: var(--panel2);
+    padding: 7px 12px; border-bottom: 1px solid var(--border2);
+  }
+  .ov-table td { padding: 7px 12px; border-bottom: 1px solid var(--border2); font-variant-numeric: tabular-nums; }
+  .ov-table td.num { font-family: Consolas, "Courier New", monospace; text-align: right; }
+  .ov-table th.num { text-align: right; }
+  .ov-table tr.clickable { cursor: pointer; }
+  .ov-table tr.clickable:hover { background: #fdf3e7; }
+  .ov-table tr.sel { background: #fdf3e7; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11.5px; font-weight: 700; }
+  .badge.ok { background: #e2f1e8; color: #0b5d31; }
+  .badge.warn { background: #fdf3e7; color: #9a5a14; }
+  .badge.alarm { background: #fbe3e4; color: #9c2226; }
+  .alarms { max-height: 200px; overflow-y: auto; font-family: Consolas, "Courier New", monospace; font-size: 13px; }
+  .alarms div { padding: 4px 12px; border-bottom: 1px solid var(--border2); color: var(--muted); }
+  .alarms .warn { color: #9a5a14; }
+  .alarms .alarm { color: #9c2226; font-weight: 600; }
+
+  /* ---------- scheduler tab ---------- */
+  .sch-intro { color: var(--muted); font-size: 13.5px; max-width: 780px; margin-bottom: 12px; }
+  .gauges { display: flex; gap: 18px; padding: 14px 16px; flex-wrap: wrap; }
+  .gauge { width: 150px; }
+  .gauge .g-label { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gauge .g-tube { height: 16px; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .gauge .g-fill { height: 100%; background: linear-gradient(90deg, #58a6ff, #7cc4ff); transition: width .3s; }
+  .gauge .g-val { font-family: Consolas, "Courier New", monospace; font-size: 12.5px; color: var(--text); margin-top: 3px; }
+  .lamp { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+  .lamp .pip { width: 10px; height: 10px; border-radius: 50%; background: #c3cbd6; }
+  .lamp.precool .pip { background: #58a6ff; }
+  .lamp.coast .pip { background: #2ea043; }
+  .lamp.soak .pip { background: #e9a820; }
+  .lamp.comfort .pip { background: #a371f7; }
+  .lamp.safety .pip { background: #d13438; }
+  .lamp.night .pip { background: #8b95a3; }
+
+  /* ---------- reports tab ---------- */
+  .rep-note { padding: 8px 14px; font-size: 13px; color: var(--muted); }
+  .rep-actions { margin-top: 12px; }
 </style>
 </head>
 <body>
@@ -195,8 +253,16 @@
     </div>
   </div>
   <div class="tabs">
+    <div class="tab" data-page="page-overview">Overview</div>
     <div class="tab on" data-page="page-buildings">Buildings</div>
     <div class="tab" data-page="page-forecast">Solar &amp; Demand Forecast</div>
+    <div class="tab" data-page="page-scheduler">Scheduler</div>
+    <div class="tab" data-page="page-reports">Reports</div>
+  </div>
+  <div class="cmdbar">
+    <span class="cmd-prompt">&gt;</span>
+    <input type="text" id="cmd" placeholder="type a command: select mall | set time 14:00 | mode wattwise | play | help" spellcheck="false">
+    <span class="cmd-out" id="cmd-out"></span>
   </div>
 </header>
 
@@ -213,6 +279,19 @@
   </section>
 
   <section class="content">
+    <!-- ============ page 0: overview ============ -->
+    <div class="page" id="page-overview">
+      <div class="ov-totals kpi-row" id="ov-totals"></div>
+      <div class="chart-card">
+        <div class="ttl">Building register &mdash; click a row to inspect</div>
+        <table class="ov-table" id="ov-table"></table>
+      </div>
+      <div class="chart-card">
+        <div class="ttl">Alarm feed</div>
+        <div class="alarms" id="alarms"></div>
+      </div>
+    </div>
+
     <!-- ============ page 1: buildings ============ -->
     <div class="page on" id="page-buildings">
       <div class="bld-head">
@@ -265,6 +344,51 @@
         solar nRMSE 7.35% / R&sup2; 0.996 &middot; demand MAE 10.2 kW.
         Published Malaysian rooftop-LSTM benchmark for comparison: nRMSE 6.75%, R&sup2; 0.957.
         Demo runs on calibrated synthetic data; swap in TNB interval data at pilot.
+      </div>
+    </div>
+
+    <!-- ============ page 3: scheduler ============ -->
+    <div class="page" id="page-scheduler">
+      <div class="sch-intro">
+        <b>WATTWISE-2 control room</b> &mdash; what the scheduler is doing to every
+        building, right now. Rules: precool before the 08:30&ndash;10:30 billed window,
+        coast through it on banked cold, soak midday solar, comfort always wins.
+      </div>
+      <div class="chart-card">
+        <div class="ttl">Rule state &mdash; current action per building</div>
+        <table class="ov-table" id="sch-rules"></table>
+      </div>
+      <div class="chart-card">
+        <div class="ttl">Cold bank &mdash; stored thermal energy (0&ndash;900 kWh)</div>
+        <div class="gauges" id="sch-gauges"></div>
+      </div>
+      <div class="chart-card">
+        <div class="ttl">Comfort monitor &mdash; all buildings vs the 24&ndash;26&deg;C band</div>
+        <canvas id="sch-comfort" height="170"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="ttl">Intervention log</div>
+        <div class="alarms" id="sch-log"></div>
+      </div>
+    </div>
+
+    <!-- ============ page 4: reports ============ -->
+    <div class="page" id="page-reports">
+      <div class="sch-intro">
+        <b>Reports</b> &mdash; the compliance and billing outputs the same data
+        generates. EECA status, demand-charge breakdown, export.
+      </div>
+      <div class="chart-card">
+        <div class="ttl">EECA 2024 threshold check &mdash; annual consumption vs 21,600 GJ</div>
+        <canvas id="rep-eeca" height="150"></canvas>
+        <div class="rep-note" id="rep-eeca-note"></div>
+      </div>
+      <div class="chart-card">
+        <div class="ttl">Maximum Demand charge &mdash; monthly breakdown per building</div>
+        <table class="ov-table" id="rep-md"></table>
+      </div>
+      <div class="rep-actions">
+        <button class="btn" id="rep-csv">&#8681; Export township data (CSV)</button>
       </div>
     </div>
   </section>
@@ -598,6 +722,10 @@ function refresh() {
   renderForecastKpis();
   renderSolarTable();
   forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
+  renderOverview();
+  renderScheduler();
+  comfortChart();
+  renderReports();
   document.getElementById("clock").textContent = TIMES[step];
   document.getElementById("scrub").value = step;
 }
@@ -627,6 +755,10 @@ function redrawVisible() {
   renderForecastKpis();
   renderSolarTable();
   forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
+  renderOverview();
+  renderScheduler();
+  comfortChart();
+  renderReports();
 }
 
 document.getElementById("btn-dumb").onclick = function () { setMode("dumb"); };
@@ -647,7 +779,276 @@ document.getElementById("btn-map").onclick = function () {
 };
 document.getElementById("bld-prev").onclick = function () { stepSelect(-1); };
 document.getElementById("bld-next").onclick = function () { stepSelect(1); };
+document.getElementById("rep-csv").onclick = exportCsv;
 window.addEventListener("resize", redrawVisible);
+
+/* ---------- overview tab ---------- */
+function renderOverview() {
+  var totPeak = 0, totSolar = 0, totBill = 0, totSave = 0;
+  ORDER.forEach(function (k) {
+    var b = T.buildings[k];
+    totSolar += b[mode].solar_kw[step];
+    totBill += mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm;
+    totSave += b.bill_dumb_rm - b.bill_wattwise_rm;
+  });
+  totPeak = peakNow();
+  document.getElementById("ov-totals").innerHTML =
+    '<div class="kpi"><div class="lbl">Township draw now</div><div class="val">' + Math.round(totDrawNow()) +
+    ' <span class="unit">kW</span></div><div class="dlt">solar ' + Math.round(totSolar) + ' kW</div></div>' +
+    '<div class="kpi"><div class="lbl">Township peak</div><div class="val">' + Math.round(totPeak) +
+    ' <span class="unit">kW</span></div><div class="dlt">@ ' + TIMES[step] + '</div></div>' +
+    '<div class="kpi"><div class="lbl">Combined MD bill</div><div class="val">RM ' + Math.round(totBill).toLocaleString() +
+    '</div><div class="dlt">per month</div></div>' +
+    '<div class="kpi"><div class="lbl">WattWise saving</div><div class="val">RM ' + Math.round(totSave).toLocaleString() +
+    '</div><div class="dlt good">per month, zero capex</div></div>';
+
+  var rows = "";
+  ORDER.forEach(function (k) {
+    var b = T.buildings[k];
+    var d = b[mode];
+    var now = d.net_kw[step];
+    var maxB = Math.max.apply(null, b.dumb.net_kw.concat(b.wattwise.net_kw));
+    var stress = now / maxB;
+    var badge = stress > 0.8 ? '<span class="badge alarm">NEAR PEAK</span>'
+      : stress > 0.5 ? '<span class="badge warn">MODERATE</span>'
+      : '<span class="badge ok">OK</span>';
+    rows += '<tr class="clickable' + (selected === k ? " sel" : "") + '" data-k="' + k + '">' +
+      '<td>' + b.label + '</td>' +
+      '<td class="num">' + Math.round(now) + '</td>' +
+      '<td class="num">' + Math.round(mode === "dumb" ? b.peak_dumb_kw : b.peak_wattwise_kw) + '</td>' +
+      '<td class="num">' + (b.shave_pct > 0 ? "\u2212" + b.shave_pct + "%" : "\u2014") + '</td>' +
+      '<td class="num">RM ' + Math.round(mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm).toLocaleString() + '</td>' +
+      '<td>' + badge + '</td></tr>';
+  });
+  document.getElementById("ov-table").innerHTML =
+    '<tr><th>Building</th><th class="num">Now kW</th><th class="num">Peak kW</th>' +
+    '<th class="num">Shave</th><th class="num">MD / mo</th><th>Status</th></tr>' + rows;
+  document.querySelectorAll("#ov-table tr.clickable").forEach(function (tr) {
+    tr.addEventListener("click", function () {
+      select(tr.dataset.k); showPage("page-buildings");
+    });
+  });
+
+  // alarm feed: generated from current state
+  var alarms = "";
+  ORDER.forEach(function (k) {
+    var b = T.buildings[k];
+    var d = b[mode];
+    var now = d.net_kw[step];
+    var pk = mode === "dumb" ? b.peak_dumb_kw : b.peak_wattwise_kw;
+    if (now > 0.95 * pk)
+      alarms += '<div class="alarm">' + TIMES[step] + ' \u2014 ' + b.label + ' at ' + Math.round(now) + ' kW (within 5% of peak ' + Math.round(pk) + ' kW)</div>';
+    if (d.zone_c[step] > 26.01)
+      alarms += '<div class="alarm">' + TIMES[step] + ' \u2014 ' + b.label + ' zone ' + d.zone_c[step].toFixed(1) + '\u00B0C exceeds comfort band</div>';
+  });
+  if (!alarms) alarms = '<div>' + TIMES[step] + ' \u2014 no active alarms. All buildings nominal.</div>';
+  document.getElementById("alarms").innerHTML = alarms;
+}
+
+function totDrawNow() {
+  var s = 0;
+  ORDER.forEach(function (k) { s += T.buildings[k][mode].net_kw[step]; });
+  return s;
+}
+function peakNow() {
+  var p = 0;
+  ORDER.forEach(function (k) { p = Math.max(p, T.buildings[k][mode].net_kw[step]); });
+  return p;
+}
+
+/* ---------- scheduler tab ---------- */
+function renderScheduler() {
+  // rule state table
+  var rows = "";
+  ORDER.forEach(function (k) {
+    var b = T.buildings[k];
+    var a = b.wattwise.action[step];
+    var cls = a.split("-")[0] === "comfort" || a === "safety" || a === "hold" ? a.split("-")[0] : a;
+    if (a === "night-min") cls = "night";
+    rows += '<tr><td>' + b.label + '</td>' +
+      '<td><span class="lamp ' + cls + '"><span class="pip"></span>' + a.replace(/-/g, " ") + '</span></td>' +
+      '<td class="num">' + Math.round(b.wattwise.chiller_kw[step]) + '</td>' +
+      '<td class="num">' + Math.round(b.wattwise.solar_kw[step]) + '</td></tr>';
+  });
+  document.getElementById("sch-rules").innerHTML =
+    '<tr><th>Building</th><th>Current rule</th><th class="num">Chiller kW</th><th class="num">Solar kW</th></tr>' + rows;
+
+  // cold bank gauges
+  var g = "";
+  ORDER.forEach(function (k) {
+    var b = T.buildings[k];
+    var v = b.wattwise.stored_kwh[step];
+    var pct = Math.min(100, 100 * v / 900);
+    g += '<div class="gauge"><div class="g-label">' + b.label.replace("Elmina ", "") + '</div>' +
+      '<div class="g-tube"><div class="g-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="g-val">' + Math.round(v) + ' / 900 kWh</div></div>';
+  });
+  document.getElementById("sch-gauges").innerHTML = g;
+
+  // intervention log: collect rule transitions up to now
+  var log = "";
+  ORDER.forEach(function (k) {
+    var b = T.buildings[k];
+    var acts = b.wattwise.action;
+    var prev = acts[0];
+    for (var i = 1; i <= step; i++) {
+      if (acts[i] !== prev) {
+        log += '<div>' + TIMES[i] + ' \u2014 ' + b.label.replace("Elmina ", "").replace("SDP ", "") +
+          ': ' + prev.replace(/-/g, " ") + ' \u2192 ' + acts[i].replace(/-/g, " ") + '</div>';
+        prev = acts[i];
+      }
+    }
+  });
+  if (!log) log = '<div>00:30 \u2014 scheduler online. Rules armed: precool, coast, soak, comfort.</div>';
+  document.getElementById("sch-log").innerHTML = log;
+}
+
+function comfortChart() {
+  var c = document.getElementById("sch-comfort");
+  if (!c.clientWidth) return;
+  var W = c.width = c.clientWidth * 2, H = c.height = 340;
+  var x = c.getContext("2d");
+  var lo = 23.4, hi = 26.8;
+  var px = function (i) { return 140 + (W - 170) * i / (N - 1); };
+  var py = function (v) { return H - 46 - (H - 80) * (v - lo) / (hi - lo); };
+  x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
+  x.fillStyle = "rgba(16,124,65,.08)"; x.fillRect(140, py(26), W - 170, py(24) - py(26));
+  x.strokeStyle = "#9fc3aa"; x.setLineDash([7, 7]); x.lineWidth = 1.5;
+  [24, 26].forEach(function (t) { x.beginPath(); x.moveTo(140, py(t)); x.lineTo(W - 30, py(t)); x.stroke(); });
+  x.setLineDash([]);
+  var colors = ["#d13438", "#2f6fbf", "#e88b33", "#8b5cf6", "#0ea5a0"];
+  ORDER.forEach(function (k, ki) {
+    x.strokeStyle = colors[ki % colors.length]; x.lineWidth = 3; x.beginPath();
+    T.buildings[k].wattwise.zone_c.forEach(function (v, i) {
+      i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
+    });
+    x.stroke();
+    // legend entry
+    x.fillStyle = colors[ki % colors.length]; x.font = "600 14px Calibri";
+    x.fillText(T.buildings[k].label.replace("Elmina ", "").replace("SDP ", ""), 12, 40 + ki * 24);
+  });
+  x.strokeStyle = "#e88b33"; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(px(step), 30); x.lineTo(px(step), H - 46); x.stroke();
+  x.fillStyle = "#5a6472"; x.font = "600 14px Calibri";
+  x.fillText("24\u00B0", 100, py(24) + 5); x.fillText("26\u00B0", 100, py(26) + 5);
+}
+
+/* ---------- reports tab ---------- */
+function renderReports() {
+  // EECA: annualised GJ per building vs 21,600 threshold
+  var c = document.getElementById("rep-eeca");
+  if (!c.clientWidth) return;
+  var W = c.width = c.clientWidth * 2, H = c.height = 300;
+  var x = c.getContext("2d");
+  x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
+  var gj = ORDER.map(function (k) {
+    var b = T.buildings[k];
+    var kwh = 0;
+    b.wattwise.net_kw.forEach(function (v) { kwh += v * 0.5; });
+    return kwh * 3.6 * 365;  // kWh -> GJ, annualised
+  });
+  var maxG = Math.max(40000, Math.max.apply(null, gj) * 1.1);
+  var bw = (W - 220) / ORDER.length;
+  var py = function (v) { return H - 60 - (H - 100) * v / maxG; };
+  // threshold line
+  x.strokeStyle = "#d13438"; x.lineWidth = 2; x.setLineDash([8, 5]);
+  x.beginPath(); x.moveTo(180, py(21600)); x.lineTo(W - 30, py(21600)); x.stroke();
+  x.setLineDash([]);
+  x.fillStyle = "#d13438"; x.font = "700 15px Calibri";
+  x.fillText("EECA threshold 21,600 GJ/yr", 190, py(21600) - 8);
+  ORDER.forEach(function (k, i) {
+    var X = 200 + i * bw;
+    x.fillStyle = gj[i] > 21600 ? "#f0b8b5" : "#cfe8d8";
+    x.fillRect(X, py(gj[i]), bw * 0.55, H - 60 - py(gj[i]));
+    x.strokeStyle = gj[i] > 21600 ? "#d13438" : "#107c41"; x.lineWidth = 1.5;
+    x.strokeRect(X, py(gj[i]), bw * 0.55, H - 60 - py(gj[i]));
+    x.fillStyle = "#1f2430"; x.font = "600 13.5px Calibri";
+    x.save(); x.translate(X + bw * 0.28, H - 46); x.rotate(-0.32);
+    x.fillText(T.buildings[k].label.replace("Elmina ", "").replace("SDP ", ""), 0, 0);
+    x.restore();
+    x.font = "700 14px Consolas";
+    x.fillText(Math.round(gj[i]).toLocaleString() + " GJ", X + bw * 0.6, py(gj[i]) + 5);
+  });
+
+  var over = gj.filter(function (v) { return v > 21600; }).length;
+  document.getElementById("rep-eeca-note").textContent =
+    "Illustrative annualisation of one simulated day x365. " + over + " of " + ORDER.length +
+    " buildings cross the 21,600 GJ EECA threshold \u2014 statutory duties apply (Registered Energy" +
+    " Manager, EnMS, annual reports, 5-yearly audits). WattWise generates the consumption data" +
+    " trail those reports require. Replace with metered data at pilot.";
+
+  // MD table
+  var rows = "";
+  ORDER.forEach(function (k) {
+    var b = T.buildings[k];
+    var cap = Math.round((mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm) * 0.3038);
+    var net = Math.round((mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm) - cap);
+    rows += '<tr><td>' + b.label + '</td>' +
+      '<td class="num">' + Math.round(mode === "dumb" ? b.peak_dumb_kw : b.peak_wattwise_kw) + '</td>' +
+      '<td class="num">RM ' + cap.toLocaleString() + '</td>' +
+      '<td class="num">RM ' + net.toLocaleString() + '</td>' +
+      '<td class="num">RM ' + Math.round(mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm).toLocaleString() + '</td>' +
+      '<td class="num good">RM ' + Math.round(b.bill_dumb_rm - b.bill_wattwise_rm).toLocaleString() + '</td></tr>';
+  });
+  document.getElementById("rep-md").innerHTML =
+    '<tr><th>Building</th><th class="num">Billed peak kW</th><th class="num">Capacity (31%)</th>' +
+    '<th class="num">Network (69%)</th><th class="num">Total MD/mo</th><th class="num">WattWise saves</th></tr>' + rows;
+}
+
+/* CSV export */
+function exportCsv() {
+  var lines = ["building,time,mode,net_grid_kw,chiller_kw,zone_c,stored_kwh,solar_kw,action"];
+  ORDER.forEach(function (k) {
+    var b = T.buildings[k];
+    ["dumb", "wattwise"].forEach(function (m) {
+      for (var i = 0; i < N; i++) {
+        lines.push([b.label, TIMES[i], m, b[m].net_kw[i], b[m].chiller_kw[i],
+          b[m].zone_c[i], b[m].stored_kwh[i], b[m].solar_kw[i], b[m].action[i]].join(","));
+      }
+    });
+  });
+  var blob = new Blob([lines.join("\n")], { type: "text/csv" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "wattwise_township_demo.csv";
+  a.click();
+}
+
+/* ---------- command bar ---------- */
+function runCommand(raw) {
+  var out = "";
+  var cmd = raw.trim().toLowerCase();
+  var m;
+  if (cmd === "help") {
+    out = "commands: select <building> | set time HH:MM | mode dumb|wattwise | play | pause | reset | tab <name>";
+  } else if ((m = cmd.match(/^select (.+)/))) {
+    var key = null;
+    ORDER.forEach(function (k) { if (k.indexOf(m[1]) === 0 || m[1] === k) key = k; });
+    if (!key) ORDER.forEach(function (k) { if (T.buildings[k].label.toLowerCase().indexOf(m[1]) >= 0) key = k; });
+    if (key) { select(key); showPage("page-buildings"); out = "selected " + T.buildings[key].label; }
+    else out = "no building matches '" + m[1] + "'";
+  } else if ((m = cmd.match(/^set time (\d{1,2}):(\d{2})/))) {
+    var hh = +m[1], mm = +m[2];
+    var idx = (hh * 60 + (mm >= 30 ? 30 : 0)) / 30;
+    playing = false; step = Math.min(47, idx); refresh();
+    out = "time set to " + TIMES[step];
+  } else if ((m = cmd.match(/^mode (dumb|wattwise|baseline)/))) {
+    setMode(m[1] === "baseline" ? "dumb" : m[1]);
+    out = "mode = " + mode;
+  } else if (cmd === "play") { playing = true; out = "playing"; }
+  else if (cmd === "pause") { playing = false; out = "paused"; }
+  else if (cmd === "reset") { playing = false; step = 0; refresh(); out = "reset to 00:00"; }
+  else if ((m = cmd.match(/^tab (.+)/))) {
+    var pages = { overview: "page-overview", buildings: "page-buildings", forecast: "page-forecast", scheduler: "page-scheduler", reports: "page-reports" };
+    if (pages[m[1]]) { showPage(pages[m[1]]); out = "tab = " + m[1]; }
+    else out = "no tab '" + m[1] + "'";
+  } else if (cmd === "") { out = ""; }
+  else out = "unknown command. type help";
+  document.getElementById("cmd-out").textContent = out;
+}
+document.getElementById("cmd").addEventListener("keydown", function (e) {
+  if (e.key === "Enter") { runCommand(this.value); this.value = ""; }
+});
 
 var last = 0, acc = 0;
 function loop(t) {
