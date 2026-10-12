@@ -30,6 +30,11 @@ import sys
 import time
 from pathlib import Path
 
+try:
+    import serial  # pyserial, only needed for --port hardware link
+except ImportError:
+    serial = None
+
 HERE = Path(__file__).parent
 DATA = HERE / "data" / "township.json"
 N = 48
@@ -990,13 +995,64 @@ def export_csv(app):
     dest.write_text("\n".join(lines) + "\n")
     return green("wrote %s (%d rows)" % (dest, len(lines) - 1))
 
-def play_loop(app, speed):
+
+# ---------------------------------------------------------------- esp32 link
+class EspLink:
+    """Streams dispatch state to the ESP32 demo node over serial.
+
+    Protocol (one line per update, 115200 baud):
+        S,HH:MM,mode,STATE,kW
+        mode  = dumb | wattwise
+        STATE = DUMB | NORMAL | PRECOOL | PEAK
+        kW    = total cooling granted to the selected scope right now
+    The node mirrors the CLI clock, so scrubbing/play on screen drives
+    the physical servo/LEDs/LCD in real time.
+    """
+
+    def __init__(self, port, baud=115200):
+        if serial is None:
+            raise SystemExit("pyserial not installed. For the hardware"
+                             " link:  pip install pyserial")
+        self.ser = serial.Serial(port, baud, timeout=0)
+        self.last_sent = ""
+
+    def push(self, app):
+        # scope: selected building -> its town -> whole portfolio
+        if app.selected:
+            keys = [app.selected]
+        elif app.town:
+            keys = app.T["towns"][app.town]["buildings"]
+        else:
+            keys = app.order
+        kw = 0.0
+        state = "NORMAL"
+        t = app.times[app.step]
+        h = app.step / 2.0
+        in_peak = 8.5 <= h < 10.5
+        in_precool = 5.5 <= h < 8.0
+        for k in keys:
+            tr = app.trace(k)
+            kw += tr["chiller_kw"][app.step]
+        if app.mode != "wattwise":
+            state = "DUMB"
+        elif in_peak:
+            state = "PEAK"
+        elif in_precool:
+            state = "PRECOOL"
+        line = "S,%s,%s,%s,%.0f" % (t, app.mode, state, kw)
+        if line != self.last_sent:      # only send on change
+            self.ser.write((line + "\n").encode("ascii"))
+            self.last_sent = line
+
+def play_loop(app, speed, esp=None):
     # run the day like the dashboard play button; Ctrl+C returns to prompt
     try:
         while True:
             os.system("cls" if os.name == "nt" else "clear")
             print(app.render())
             print(dim("playing... Ctrl+C to stop"))
+            if esp:
+                esp.push(app)
             time.sleep(speed)
             app.step = (app.step + 1) % N
     except KeyboardInterrupt:
@@ -1016,6 +1072,9 @@ def main():
                    help="seconds per step in play mode")
     p.add_argument("--live", action="store_true",
                    help="start playing immediately (Ctrl+C stops)")
+    p.add_argument("--port", default=None,
+                   help="COM port of the ESP32 demo node (e.g. COM3);"
+                        " streams dispatch state to the hardware")
     p.add_argument("--once", action="store_true",
                    help="print once and exit (for scripts/monitoring)")
     args = p.parse_args()
@@ -1028,6 +1087,14 @@ def main():
     app = App(json.loads(DATA.read_text()))
     app.tab = args.tab
     app.mode = args.mode
+    esp = None
+    if args.port:
+        try:
+            esp = EspLink(args.port)
+            print(green("esp32 link open on %s" % args.port))
+        except Exception as e:
+            print(red("could not open %s: %s" % (args.port, e)))
+            sys.exit(2)
     if args.time:
         try:
             hh, mm = args.time.split(":")
@@ -1050,9 +1117,11 @@ def main():
         return
 
     if args.live:
-        play_loop(app, args.speed)
+        play_loop(app, args.speed, esp)
 
     # interactive loop, same commands as the dashboard command bar
+    if esp:
+        esp.push(app)
     print(app.render())
     while True:
         try:
@@ -1067,12 +1136,14 @@ def main():
         if result == "quit":
             break
         if result == "play":
-            play_loop(app, args.speed)
+            play_loop(app, args.speed, esp)
         # re-render only when the state actually changed; for help/errors
         # the message alone is the point, don't scroll it away
         if (app.tab, app.mode, app.step, app.selected, app.town,
                 app.week_idx, app.plan_day) != snap:
             os.system("cls" if os.name == "nt" else "clear")
+            if esp:
+                esp.push(app)
             print(app.render())
         for m in msgs:
             print(m)
