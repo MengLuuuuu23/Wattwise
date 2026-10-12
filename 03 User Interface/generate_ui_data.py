@@ -156,6 +156,7 @@ def main():
 
     fc_solar, fc_demand = base_forecasts(df)
     base_fc_day = fc_solar.iloc[doy * 48:(doy + 1) * 48].tolist()
+    base_dm_day = fc_demand.iloc[doy * 48:(doy + 1) * 48].tolist()
 
     out = {
         "day_label": f"{demo_date.strftime('%B')} (monsoon season) - "
@@ -195,6 +196,16 @@ def main():
             wise = S.simulate_day(day, S.make_policy_wattwise(), "wattwise", plant)
 
             def pack(log):
+                # per-building demand forecast: the base-site WATTWISE-1
+                # demand forecast scaled to this building (weekday demo
+                # day, so the plain scale applies). Flat sites (DC) know
+                # their own block load: forecast = the flat line.
+                if a.get("flat"):
+                    dm_fc = [700.0] * 48
+                else:
+                    dm_fc = [round(v * a["scale"], 1)
+                             if v is not None and np.isfinite(v) else None
+                             for v in base_dm_day]
                 return {
                     "net_kw": log.net_grid_kw.tolist(),
                     "total_kw": log.total_kw.tolist(),
@@ -205,6 +216,7 @@ def main():
                     "solar_fc_kw": [round(v * a["solar"], 1)
                                     if v is not None and np.isfinite(v)
                                     else None for v in base_fc_day],
+                    "demand_fc_kw": dm_fc,
                     "action": log.action.tolist(),
                     "times": log.time.tolist(),
                 }

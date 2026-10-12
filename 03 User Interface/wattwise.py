@@ -330,48 +330,137 @@ class App:
         return "\n".join(lines)
 
     def tab_forecast(self):
-        F = self.T["forecast"]
+        if self.town is None:
+            return self.forecast_towns()
+        if self.selected is None:
+            return self.forecast_town()
+        return self.forecast_building()
+
+    # ---- forecast: per-town grid draw vs forecast -----------------------
+    def forecast_towns(self):
+        lines = [bold("WATTWISE-1 towns - TNB grid draw vs forecast, now"),
+                 dim("drill in: town <name|1-3>; back returns here")]
+        for n, tk in enumerate(self.towns, 1):
+            t = self.T["towns"][tk]
+            keys = t["buildings"]
+            grid = sum(self.trace(k)["net_kw"][self.step] for k in keys)
+            fc = sum(self.trace(k)["demand_fc_kw"][self.step] or 0
+                     for k in keys)
+            solar = t["solar_actual_kw"][self.step]
+            shave = t["peak_dumb_kw"] - t["peak_wattwise_kw"]
+            spct = 100 * shave / t["peak_dumb_kw"] if t["peak_dumb_kw"] else 0
+            save = t["bill_dumb_rm"] - t["bill_wattwise_rm"]
+            mx = max(fc, grid + solar, 1)
+            lines.append("%d  %s" % (n, bold(t["label"])))
+            lines.append("   grid now   %s %6s kW"
+                         % (bar(grid / mx, 26), f"{grid:,.0f}"))
+            lines.append("   fcst draw  %s %6s kW"
+                         % (bar(fc / mx, 26, amber("#") if USE_COLOR else "#"),
+                            f"{fc:,.0f}"))
+            lines.append("   solar now  %s %6s kW"
+                         % (bar(solar / mx, 26, green("=") if USE_COLOR else "="),
+                            f"{solar:,.0f}"))
+            if fc > 0:
+                pct = 100 * grid / fc
+                tag = (green("%d%%" % round(pct)) if pct <= 100
+                       else red("%d%%" % round(pct)))
+                lines.append("   grid is %s of forecast draw;"
+                             " solar + scheduling covering the rest" % tag)
+            lines.append("   peak shave %s kW (%.1f%%)   saves RM %s/mo"
+                         % (green(f"{shave:,.0f}"), spct, f"{save:,.0f}"))
+        lines.append("")
+        lines.append(dim("fcst draw = WATTWISE-1 demand forecast (what the"
+                         " town would pull with no solar, no scheduling);"
+                         " grid now = actual TNB draw"))
+        return "\n".join(lines)
+
+    # ---- forecast: buildings of a town ----------------------------------
+    def forecast_town(self):
+        t = self.T["towns"][self.town]
+        lines = [bold(t["label"]) + dim("  - grid draw vs forecast, now"),
+                 dim("select <name|#> to drill into one building")]
+        for n, k in enumerate(t["buildings"], 1):
+            b = self.b(k)
+            tr = self.trace(k)
+            grid = tr["net_kw"][self.step]
+            fc = tr["demand_fc_kw"][self.step] or 0
+            solar = tr["solar_kw"][self.step]
+            mx = max(fc, grid, 1)
+            shave = b["peak_dumb_kw"] - b["peak_wattwise_kw"]
+            lines.append("%d  %-26s grid %6s kW  fcst %6s kW  solar %5s kW"
+                         % (n, b["label"], f"{grid:,.0f}", f"{fc:,.0f}",
+                            f"{solar:,.0f}"))
+            lines.append("   grid    %s" % bar(grid / mx, 26))
+            lines.append("   fcst    %s" % bar(fc / mx, 26,
+                                               amber("#") if USE_COLOR else "#"))
+            if solar > 0:
+                lines.append("   solar   %s"
+                             % bar(solar / mx, 26,
+                                   green("=") if USE_COLOR else "="))
+            lines.append("   peak shave %s kW (%s%%)"
+                         % (green(f"{shave:,.0f}"), b["shave_pct"]))
+        return "\n".join(lines)
+
+    # ---- forecast: one building -----------------------------------------
+    def forecast_building(self):
+        k = self.selected
+        b = self.b(k)
+        tr = self.trace(k)
         errs, ape = [], []
         # only elapsed steps: the forecast is 30-min-ahead, never see ahead
         for i in range(self.step + 1):
-            f = F["solar_fc_kw"][i]
-            a = F["solar_actual_kw"][i]
+            f = tr["solar_fc_kw"][i]
+            a = tr["solar_kw"][i]
             if f is not None and a > 20:
                 errs.append(abs(f - a))
                 ape.append(abs(f - a) / a)
         mae = (sum(errs) / len(errs)) if errs else None
         mape = (100 * sum(ape) / len(ape)) if ape else None
-        pk = max((F["solar_actual_kw"][i] for i in range(self.step + 1)),
-                 default=0)
+        derrs = [abs((tr["demand_fc_kw"][i] or 0) - tr["total_kw"][i])
+                 for i in range(self.step + 1)]
+        dmae = (sum(derrs) / len(derrs)) if derrs else None
+        shave = b["peak_dumb_kw"] - b["peak_wattwise_kw"]
         lines = [
-            bold("WATTWISE-1 live forecasts (base site, 30-min ahead)"),
-            "solar MAE   %s   mean abs error %s   peak so far %s kW"
+            bold(b["label"]) + dim("  (%s, %s)" % (k, b["town_label"])),
+            "grid draw now     %s kW   (forecast %s kW)"
+            % (bold(f"{tr['net_kw'][self.step]:,.0f}"),
+               f"{tr['demand_fc_kw'][self.step]:,.0f}"),
+            "solar now         %s kW generating / %s kW forecast"
+            % (green(f"{tr['solar_kw'][self.step]:,.0f}"),
+               f"{tr['solar_fc_kw'][self.step]:,.0f}"),
+            "peak shave        %s kW (%s%%)   MD RM %s -> RM %s/mo"
+            % (green(f"{shave:,.0f}"), b["shave_pct"],
+               f"{b['bill_dumb_rm']:,.0f}", f"{b['bill_wattwise_rm']:,.0f}"),
+            "solar fcst MAE    %s   mean abs err %s"
             % (("-" if mae is None else f"{mae:.1f} kW"),
-               ("-" if mape is None else f"{mape:.1f}%"),
-               f"{pk:,.0f}"),
-            "demand MAE  10.2 kW (walk-forward, held-out 60 days)",
+               ("-" if mape is None else f"{mape:.1f}%")),
+            "draw vs fcst gap  %s mean (scheduling effect, not model error:"
+            " precool sits above forecast off-peak by design)"
+            % ("-" if dmae is None else f"{dmae:.1f} kW"),
             "",
-            bold("solar output, daylight steps (amber = forecast, green = actual)"),
+            bold("grid draw vs forecast, elapsed day"),
         ]
-        peak_fc = max((v for v in F["solar_fc_kw"] if v is not None), default=1) or 1
-        for i in range(12, 40):
-            f = F["solar_fc_kw"][i]
-            a = F["solar_actual_kw"][i]
-            fb = bar((f or 0) / peak_fc, 30, amber("#") if USE_COLOR else "#")
-            ab = bar(a / peak_fc, 30, green("=") if USE_COLOR else "=")
+        mx = max(max(tr["net_kw"]), max(v or 0 for v in tr["demand_fc_kw"]), 1)
+        for i in range(0, self.step + 1, 2):
+            grid = tr["net_kw"][i]
+            fc = tr["demand_fc_kw"][i] or 0
             mark = dim(" <- now") if i == self.step else ""
-            lines.append("%s  %s %7s   %s %7s%s"
-                         % (F["times"][i], fb, f"{f:.1f}" if f is not None else "-",
-                            ab, f"{a:.1f}", mark))
-        lines.append(dim("model metrics (held-out): solar nRMSE 7.35% R2 0.996,"
-                         " demand MAE 10.2 kW. benchmark LSTM nRMSE 6.75%."))
-
-        # PV health: sustained under-delivery vs forecast = inspect panels
+            lines.append("%s  %s %6s kW   %s %6s kW%s"
+                         % (self.times[i],
+                            bar(grid / mx, 20), f"{grid:,.0f}",
+                            bar(fc / mx, 20,
+                                amber("#") if USE_COLOR else "#"),
+                            f"{fc:,.0f}", mark))
+        lines.append(dim("left bar = actual TNB grid draw; right bar ="
+                         " WATTWISE-1 forecast draw (no solar/scheduling)"))
+        lines.append("")
+        lines.append(bold("PV health (elapsed daylight)"))
+        # sustained under-delivery vs forecast = inspect panels
         lag = 0
         worst = 0
         for i in range(self.step + 1):
-            f = F["solar_fc_kw"][i]
-            a = F["solar_actual_kw"][i]
+            f = tr["solar_fc_kw"][i]
+            a = tr["solar_kw"][i]
             if f is not None and f > 50:
                 if a < 0.8 * f:
                     lag += 1
@@ -380,9 +469,9 @@ class App:
                     lag = 0
             else:
                 lag = 0
-        lines.append("")
-        lines.append(bold("PV health (elapsed daylight)"))
-        if lag >= 3:
+        if not b["has_solar"]:
+            lines.append(dim("no PV on this building"))
+        elif lag >= 3:
             lines.append(red("UNDER-DELIVERY: actuals <80%% of forecast for %d"
                              " consecutive steps (worst gap %.0f%%)"
                              % (lag, 100 * worst)))
@@ -576,6 +665,11 @@ def resolve_town(app, name):
             return k
     return None
 
+def _drill_tab(app):
+    # tab to show after a town/select drill: stay where we are if the
+    # current tab renders the hierarchy (buildings + forecast do)
+    return app.tab if app.tab in ("buildings", "forecast") else "buildings"
+
 def run_command(app, raw, msgs):
     # returns "quit", "play", or None; informational output goes into msgs
     # so the caller can print it AFTER the screen refresh (otherwise the
@@ -602,7 +696,7 @@ def run_command(app, raw, msgs):
             if tk:
                 app.town = tk
                 app.selected = None
-                app.tab = "buildings"
+                app.tab = _drill_tab(app)
             elif arg:
                 msgs.append(red("pick a town first: town <name|1-3>"))
             else:
@@ -611,7 +705,7 @@ def run_command(app, raw, msgs):
             k = resolve_building(app, arg)
             if k:
                 app.selected = k
-                app.tab = "buildings"
+                app.tab = _drill_tab(app)
             else:
                 msgs.append(red("no building matches '%s'" % arg))
     elif head == "town":
@@ -619,7 +713,7 @@ def run_command(app, raw, msgs):
         if tk:
             app.town = tk
             app.selected = None
-            app.tab = "buildings"
+            app.tab = _drill_tab(app)
         else:
             msgs.append(red("no town matches '%s'" % arg))
     elif head == "back":
@@ -765,7 +859,7 @@ def main():
             print()
             break
         msgs = []
-        snap = (app.tab, app.mode, app.step, app.selected)
+        snap = (app.tab, app.mode, app.step, app.selected, app.town)
         result = run_command(app, raw, msgs)
         if result == "quit":
             break
@@ -773,7 +867,7 @@ def main():
             play_loop(app, args.speed)
         # re-render only when the state actually changed; for help/errors
         # the message alone is the point, don't scroll it away
-        if (app.tab, app.mode, app.step, app.selected) != snap:
+        if (app.tab, app.mode, app.step, app.selected, app.town) != snap:
             os.system("cls" if os.name == "nt" else "clear")
             print(app.render())
         for m in msgs:
