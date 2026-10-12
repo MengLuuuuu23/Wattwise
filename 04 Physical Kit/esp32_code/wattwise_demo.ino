@@ -48,7 +48,7 @@ static const int SERVO_PIN = 13;
 // power toggle button. GPIO 0 = the BOOT button already on the board
 // (zero wiring). For your own breadboard button: change to 27 (or
 // 25/26/32/33), one leg to the pin, other leg to GND.
-static const int BUTTON_PIN = 0;
+static const int BUTTON_PIN = 27;
 
 // ---------------- demo windows (hours, mirrors scheduler.py) ----------
 static const float PEAK_START = 8.5, PEAK_END = 10.5;   // billed window
