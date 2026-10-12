@@ -74,8 +74,8 @@ Servo servo;
 
 // ---------------- state ----------------
 int simMinute = START_MINUTE;
-char serMode[8] = "wattwise";    // standalone default: wattwise demo on
-char serState[10] = "";          // "", NORMAL, PRECOOL, PEAK, DUMB
+char serMode[10] = "wattwise";   // standalone default: wattwise demo on
+char serState[12] = "";          // "", NORMAL, PRECOOL, PEAK, DUMB
 float grantedKw = 0.0;
 unsigned long lastSerialMs = 0;
 unsigned long lastTickMs = 0;
