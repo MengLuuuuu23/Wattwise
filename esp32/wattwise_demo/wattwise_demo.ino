@@ -17,8 +17,8 @@
       - SLOW crawl through the peak window 08:30-10:30 in wattwise mode
       - stays FAST through the peak in dumb mode (the waste we sell
         against), red LED blinking to call it out
+    Green LED = off-peak window (outside 08:30-10:30)
     Red LED   = peak window (solid when coasting, blinking when dumb)
-    Green LED = wattwise mode active
     LCD row 1 = clock + mode, row 2 = state + kW (kW only when the CLI
       is linked; standalone honestly shows "no link")
 
@@ -117,9 +117,9 @@ void driveLeds() {
   unsigned long now = millis();
   bool peak = inPeak();
   bool managed = wattwiseActive();
-  // green: wattwise active (on from boot in standalone)
-  digitalWrite(LED_GREEN, managed ? HIGH : LOW);
-  // red: peak window; solid when coasting, blinking when dumb/unmanaged
+  // window indicators: green = off-peak, red = peak window.
+  // red blinks when the peak is unmanaged (dumb mode) - the waste visual
+  digitalWrite(LED_GREEN, peak ? LOW : HIGH);
   if (peak) {
     if (managed) {
       digitalWrite(LED_RED, HIGH);
