@@ -41,7 +41,7 @@
 #include <LiquidCrystal_I2C.h>
 
 // ---------------- user config ----------------
-#define CONTINUOUS_ROTATION false   // true only for continuous-rotation servos
+#define CONTINUOUS_ROTATION true   // true only for continuous-rotation servos
 #define LCD_ADDR 0x27
 #define BAUD 115200
 
@@ -191,13 +191,20 @@ void driveLcd() {
 }
 
 void bootSelfTest() {
-  // 3 blinks on both LEDs: proves wiring at power-up
+  // 3 blinks on both LEDs: proves LED wiring at power-up
   lcdShow("WattWise node", "LED test");
   for (int i = 0; i < 3; i++) {
     digitalWrite(LED_GREEN, HIGH); digitalWrite(LED_RED, LOW);  delay(150);
     digitalWrite(LED_GREEN, LOW);  digitalWrite(LED_RED, HIGH); delay(150);
   }
   digitalWrite(LED_RED, LOW);
+  // one slow full sweep: proves servo signal+power at power-up.
+  // if the horn does not move here, it is wiring/power/dead servo.
+  lcdShow("WattWise node", "servo sweep...");
+  for (int p = 90; p <= 180; p += 2) { servo.write(p); delay(20); }
+  for (int p = 180; p >= 0; p -= 2)   { servo.write(p); delay(20); }
+  for (int p = 0; p <= 90; p += 2)    { servo.write(p); delay(20); }
+  servoPos = 90; servoDir = 1;
   lcdShow("WattWise node", "05:30 precool");
 }
 
