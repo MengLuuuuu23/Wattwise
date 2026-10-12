@@ -186,7 +186,13 @@ void driveLcd() {
            wattwiseActive() ? "WATTWISE" : "BASELINE");
   String st = stateWord();
   if (st == "PEAK") st = wattwiseActive() ? "COAST" : "UNMANAGED";
-  snprintf(l1, sizeof(l1), "%-8s %5.0f kW", st.c_str(), grantedKw);
+  if (lastSerialMs) {
+    // linked: kW granted comes live from the CLI
+    snprintf(l1, sizeof(l1), "%-8s %5.0f kW", st.c_str(), grantedKw);
+  } else {
+    // standalone: no data source for kW - say so instead of faking 0
+    snprintf(l1, sizeof(l1), "%-8s   no link", st.c_str());
+  }
   lcdShow(l0, l1);
 }
 
