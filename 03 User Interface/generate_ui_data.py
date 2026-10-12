@@ -101,6 +101,23 @@ FLOORS = {"elmina_mall": "2F", "elmina_tower": "17F", "elmina_park": "3F",
           "elmina_dc": "1F", "elmina_wh": "1F"}
 
 
+def build_plant(arch):
+    """Derive the PLANT dict for an archetype key (shared by all loops)."""
+    a = ARCHETYPES[arch]
+    pm = a.get("plant_mult", 1.0)
+    plant = S.scale_plant(
+        a["scale"],
+        occ_shape=a["occ_shape"],
+        wk_factor=a["wk_factor"],
+        essential=bool(a.get("flat")),
+    )
+    if pm != 1.0:
+        for kk in ("chiller_max_kw", "chiller_min_kw", "night_kw",
+                   "cap_kwh", "kwh_per_degc", "strip_kw"):
+            plant[kk] *= pm
+    return plant
+
+
 def variant_day(df, doy, arch):
     """Scale + reshape one day of the base dataset for an archetype."""
     day = df.iloc[doy * 48:(doy + 1) * 48].copy().reset_index(drop=True)
@@ -180,17 +197,7 @@ def main():
     for tkey, town in TOWNS.items():
         for bkey, (label, arch) in town["buildings"].items():
             a = ARCHETYPES[arch]
-            pm = a.get("plant_mult", 1.0)
-            plant = S.scale_plant(
-                a["scale"],
-                occ_shape=a["occ_shape"],
-                wk_factor=a["wk_factor"],
-                essential=bool(a.get("flat")),
-            )
-            if pm != 1.0:
-                for kk in ("chiller_max_kw", "chiller_min_kw", "night_kw",
-                           "cap_kwh", "kwh_per_degc", "strip_kw"):
-                    plant[kk] *= pm
+            plant = build_plant(arch)
             day = variant_day(df, doy, arch)
             dumb = S.simulate_day(day, S.make_policy_dumb(), "dumb", plant)
             wise = S.simulate_day(day, S.make_policy_wattwise(), "wattwise", plant)
@@ -258,6 +265,47 @@ def main():
             "bill_dumb_rm": round(sum(out["buildings"][k]["bill_dumb_rm"] for k in keys), 0),
             "bill_wattwise_rm": round(sum(out["buildings"][k]["bill_wattwise_rm"] for k in keys), 0),
         }
+
+    # --- weekly dispatch schedules (3 weeks around the demo week) -------
+    # the scheduler tab is a planner: per day, per building, what the
+    # rules dispatch (chiller kW) at each half-hour. Weekends differ from
+    # weekdays because the underlying dataset days differ.
+    demo_monday = demo_date - datetime.timedelta(days=demo_date.weekday())
+    week_mondays = [demo_monday - datetime.timedelta(days=7),
+                    demo_monday,
+                    demo_monday + datetime.timedelta(days=7)]
+    out["demo_date"] = demo_date.isoformat()
+    out["weeks"] = [{"monday": m.isoformat(),
+                     "label": "week of %s" % m.strftime("%d %b %Y")}
+                    for m in week_mondays]
+
+    out["week_schedule"] = {}
+    for tkey, town in TOWNS.items():
+        for bkey, (label, arch) in town["buildings"].items():
+            plant = build_plant(arch)
+            days = []
+            for wi, wmon in enumerate(week_mondays):
+                for d in range(7):
+                    ddate = wmon + datetime.timedelta(days=d)
+                    doy_d = (ddate - ts0).days
+                    day = variant_day(df, doy_d, arch)
+                    dl = S.simulate_day(day, S.make_policy_dumb(), "dumb", plant)
+                    wl = S.simulate_day(day, S.make_policy_wattwise(),
+                                        "wattwise", plant)
+                    days.append({
+                        "date": ddate.isoformat(),
+                        "week": wi, "dow": d,
+                        "chiller_kw": wl.chiller_kw.tolist(),
+                        "action": wl.action.tolist(),
+                        "net_kw": wl.net_grid_kw.tolist(),
+                        "solar_kw": wl.solar_kw.tolist(),
+                        "zone_c": wl.zone_c.tolist(),
+                        "peak_dumb_kw": round(S.billed_peak(dl), 1),
+                        "peak_wattwise_kw": round(S.billed_peak(wl), 1),
+                        "bill_dumb_rm": round(S.billed_peak(dl) * S.MD_RATE_RM, 0),
+                        "bill_wattwise_rm": round(S.billed_peak(wl) * S.MD_RATE_RM, 0),
+                    })
+            out["week_schedule"][bkey] = {"days": days}
 
     dest = HERE / "data" / "township.json"
     dest.parent.mkdir(parents=True, exist_ok=True)
