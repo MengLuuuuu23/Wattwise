@@ -164,8 +164,9 @@ void driveLcd() {
   String st = stateWord();
   if (st == "PEAK") st = wattwiseActive() ? "COAST" : "WASTED";
   if (lastSerialMs) {
-    // linked: kW granted comes live from the CLI
-    snprintf(l1, sizeof(l1), "%-8s %5.0f kW", st.c_str(), grantedKw);
+    // linked: kW granted comes live from the CLI.
+    // 8 + 5 + 3 = 16 cols exactly; kW up to 4 digits fits the 5-wide field
+    snprintf(l1, sizeof(l1), "%-8s%5.0f kW", st.c_str(), grantedKw);
   } else {
     // standalone: no data source for kW - say so instead of faking 0.
     // keep it short: longest state (PRECOOL) + this text must fit 16 cols
