@@ -511,75 +511,145 @@ class App:
             return ("scheduler offline. switch mode first: "
                     + bold("mode wattwise"))
         if self.town is None:
-            return self.week_overview()
+            return self.timeline_root()
         if self.selected is None:
-            return self.week_town()
+            return self.timeline_town()
         return self.day_plan()
 
-    # ---- scheduler: week overview (all towns) ---------------------------
-    def week_overview(self):
-        wk = self.T["weeks"][self.week_idx]
-        lines = [bold("WATTWISE-2 weekly dispatch - %s" % wk["label"])
-                 + dim("  [%d/3]" % (self.week_idx + 1)),
-                 dim("prev | next (or week <1-3>) to move week;"
-                     " open a town for per-building dispatch")]
-        demo_iso = self.T.get("demo_date")
-        hdr = "%-22s" % "town \\ day"
-        days0 = self.week_days(self.order[0])
-        for d in days0:
-            dd = datetime.date.fromisoformat(d["date"])
-            star = "*" if d["date"] == demo_iso else ""
-            hdr += "%6s%s" % (dd.strftime("%a")[:2], star)
-        lines.append(bold(hdr))
-        for tk in self.towns:
+    # ---- scheduler helpers ----------------------------------------------
+    def all_dates(self):
+        # every building shares the same 21-day calendar
+        return [d["date"]
+                for d in self.T["week_schedule"][self.order[0]]["days"]]
+
+    def move_day(self, delta, msgs):
+        # walk the day cursor by delta days inside the schedule window
+        dates = self.all_dates()
+        try:
+            i = dates.index(self.plan_day)
+        except ValueError:
+            i = dates.index(self.T["demo_date"])
+        j = i + delta
+        if 0 <= j < len(dates):
+            self.plan_day = dates[j]
+            d = datetime.date.fromisoformat(self.plan_day)
+            for wi, w in enumerate(self.T["weeks"]):
+                wm = datetime.date.fromisoformat(w["monday"])
+                if wm <= d <= wm + datetime.timedelta(days=6):
+                    self.week_idx = wi
+                    break
+        else:
+            msgs.append(dim("end of schedule window (%s to %s)"
+                            % (dates[0], dates[-1])))
+
+    # short unique column names for the timelines
+    SHORT = {"elmina": "Elmina", "bbr": "BukitRaja", "ara": "AraDasa"}
+
+    # ---- scheduler: day timeline, towns as columns ----------------------
+    def timeline_root(self):
+        ddate = datetime.date.fromisoformat(self.plan_day)
+        lines = [
+            bold("WATTWISE-2 dispatch timeline - %s"
+                 % ddate.strftime("%A %d %b %Y"))
+            + dim("  [%d/3]" % (self.week_idx + 1)),
+            dim("prev | next moves the day; open a town to see per-building"
+                " grants (town <name|1-3>)"),
+            "",
+        ]
+        towns = self.towns
+        recs = {}
+        for tk in towns:
             t = self.T["towns"][tk]
-            row = "%-22s" % t["label"][:22]
-            for d in days0:
-                kwh = 0.0
-                for k in t["buildings"]:
-                    r = self.day_rec(k, d["date"])
+            recs[tk] = {k: self.day_rec(k, self.plan_day)
+                        for k in t["buildings"]}
+        # column header
+        hdr = "%-6s" % "time"
+        for tk in towns:
+            hdr += "%11s" % self.SHORT.get(tk, tk[:9])
+        hdr += "%11s" % "portfolio"
+        lines.append(bold(hdr))
+        for i in range(48):
+            tlabel = self.times[i]
+            if 8.5 <= i / 2 < 10.5:
+                tlabel = amber(tlabel)
+            row = "%-6s" % tlabel
+            tot = 0.0
+            for tk in towns:
+                kws = 0.0
+                for k, r in recs[tk].items():
                     if r:
-                        kwh += sum(r["chiller_kw"]) * 0.5
-                row += "%7s" % f"{kwh/1000:,.1f}"
+                        kws += r["chiller_kw"][i]
+                tot += kws
+                row += "%10s" % f"{kws:,.0f}"
+            row += "%11s" % f"{tot:,.0f}"
             lines.append(row)
-        lines.append(dim("cells = MWh of cooling dispatched to the town's"
-                         " buildings that day (* = demo day)"))
+        # day totals
+        lines.append("")
+        for tk in towns:
+            kwh = 0.0
+            save = 0.0
+            for k in self.T["towns"][tk]["buildings"]:
+                r = recs[tk][k]
+                if r:
+                    kwh += sum(r["chiller_kw"]) * 0.5
+                    save += r["bill_dumb_rm"] - r["bill_wattwise_rm"]
+            lines.append("%-6s %-11s %6s kWh cooling granted   saves RM %s"
+                         % ("", self.SHORT.get(tk, tk[:9]),
+                            f"{kwh:,.0f}", f"{save:,.0f}"))
+        lines.append(dim("kW granted to each town per half-hour;"
+                         " amber rows = billed window 08:30-10:30"))
         return "\n".join(lines)
 
-    # ---- scheduler: per-building dispatch for the week ------------------
-    def week_town(self):
-        wk = self.T["weeks"][self.week_idx]
+    # ---- scheduler: day timeline, buildings as columns ------------------
+    def timeline_town(self):
         t = self.T["towns"][self.town]
-        lines = [bold("WATTWISE-2 dispatch - %s, %s" % (t["label"],
-                                                        wk["label"])),
-                 dim("select <name|#> for the half-hourly plan of a"
-                     " building; prev | next moves week")]
-        demo_iso = self.T.get("demo_date")
-        hdr = "%-26s" % "building \\ day"
-        days0 = self.week_days(self.order[0])
-        for d in days0:
-            dd = datetime.date.fromisoformat(d["date"])
-            star = "*" if d["date"] == demo_iso else ""
-            hdr += "%6s%s" % (dd.strftime("%a")[:2], star)
+        keys = t["buildings"]
+        recs = {k: self.day_rec(k, self.plan_day) for k in keys}
+        if any(r is None for r in recs.values()):
+            return red("no schedule for %s" % self.plan_day)
+        ddate = datetime.date.fromisoformat(self.plan_day)
+        lines = [
+            bold("WATTWISE-2 dispatch - %s, %s"
+                 % (t["label"], ddate.strftime("%A %d %b %Y")))
+            + dim("  [%d/3]" % (self.week_idx + 1)),
+            dim("at each time: cooling energy granted to each building;"
+                " select <name|#> for one building's full plan"),
+            "",
+        ]
+        hdr = "%-6s" % "time"
+        for k in keys:
+            hdr += "%9s" % self.b(k)["label"].split()[-1][:8]
+        hdr += "%9s" % "town"
         lines.append(bold(hdr))
-        for k in t["buildings"]:
-            b = self.b(k)
-            row = "%-26s" % b["label"][:26]
-            for d in days0:
-                r = self.day_rec(k, d["date"])
-                kwh = sum(r["chiller_kw"]) * 0.5 if r else 0
-                row += "%7s" % f"{kwh/1000:,.1f}"
+        for i in range(48):
+            tlabel = self.times[i]
+            if 8.5 <= i / 2 < 10.5:
+                tlabel = amber(tlabel)
+            row = "%-6s" % tlabel
+            tot = 0.0
+            for k in keys:
+                kw = recs[k]["chiller_kw"][i]
+                tot += kw
+                row += "%9s" % f"{kw:,.0f}"
+            row += "%10s" % f"{tot:,.0f}"
             lines.append(row)
-        # week totals: energy + savings
-        wk_kwh = 0.0
-        wk_save = 0.0
-        for k in t["buildings"]:
-            for d in self.week_days(k):
-                wk_kwh += sum(d["chiller_kw"]) * 0.5
-                wk_save += d["bill_dumb_rm"] - d["bill_wattwise_rm"]
+        # day totals per building
         lines.append("")
-        lines.append("week cooling dispatched %s MWh   MD savings RM %s"
-                     % (f"{wk_kwh/1000:,.1f}", green(f"{wk_save:,.0f}")))
+        for k in keys:
+            r = recs[k]
+            if r is None:
+                continue
+            kwh = sum(r["chiller_kw"]) * 0.5
+            save = r["bill_dumb_rm"] - r["bill_wattwise_rm"]
+            lines.append("%-6s %-8s %6s kWh granted   peak %s -> %s kW"
+                         "   saves RM %s"
+                         % ("", self.b(k)["label"].split()[-1][:8],
+                            f"{kwh:,.0f}",
+                            f"{r['peak_dumb_kw']:,.0f}",
+                            f"{r['peak_wattwise_kw']:,.0f}", f"{save:,.0f}"))
+        lines.append(dim("kW granted per building per half-hour;"
+                         " amber rows = billed window 08:30-10:30;"
+                         " prev | next moves the day"))
         return "\n".join(lines)
 
     # ---- scheduler: one building, one day, half-hourly plan -------------
@@ -712,9 +782,8 @@ HELP = """commands:
   next | prev         next / previous building (or town at the top level)
   set time HH:MM       jump the clock (snaps to the 30-min grid)
   mode dumb|wattwise   switch scenario (scheduler needs wattwise)
-  prev | next         scheduler: move week - elsewhere: prev/next building
-  week <1-3>          scheduler: jump to a week
-  day <mon|sat|date>  scheduler: move the day cursor (YYYY-MM-DD ok)
+  prev | next         scheduler: move the day - elsewhere: prev/next building
+  day <mon|sat|date>  scheduler: jump the day cursor (YYYY-MM-DD ok)
   play                 run the day (Ctrl+C stops playback)
   pause                stop playback
   reset                back to 00:00
@@ -824,13 +893,9 @@ def run_command(app, raw, msgs):
         elif head == "week":
             msgs.append(red("week: 1-3"))
     elif head == "prev":
-        # in the scheduler planner, prev/next move the week
+        # in the scheduler planner, prev/next move the day
         if app.tab == "scheduler":
-            if app.week_idx > 0:
-                app.week_idx -= 1
-                app.plan_day = app.T["weeks"][app.week_idx]["monday"]
-            else:
-                msgs.append(dim("already at the first week"))
+            app.move_day(-1, msgs)
         elif app.town is None:
             msgs.append(dim("open a town first: town <name|1-3>"))
         else:
@@ -839,11 +904,7 @@ def run_command(app, raw, msgs):
             app.selected = pool[(cur - 1) % len(pool)]
     elif head == "next":
         if app.tab == "scheduler":
-            if app.week_idx < len(app.T.get("weeks", [])) - 1:
-                app.week_idx += 1
-                app.plan_day = app.T["weeks"][app.week_idx]["monday"]
-            else:
-                msgs.append(dim("already at the last week"))
+            app.move_day(1, msgs)
         elif app.town is None:
             msgs.append(dim("open a town first: town <name|1-3>"))
         else:
