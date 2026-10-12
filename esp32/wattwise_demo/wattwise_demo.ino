@@ -1,9 +1,11 @@
 /*
-  WattWise physical demo node - ESP32 (v3, continuous-rotation servo)
-  ==================================================================
-  Hardware: CONTINUOUS-ROTATION servo confirmed on the bench (spins
-  freely by hand). For a positional servo use the v2 git history and
-  set CONTINUOUS_ROTATION false there instead.
+  WattWise physical demo node - ESP32 (v4, POSITIONAL servo, fan sweep)
+  =====================================================================
+  VERDICT from the bench: the servo is POSITIONAL (0-180, hard stops).
+  Proof: v3.1 commanded write(180) constantly and the horn swung to one
+  extreme and PARKED - a continuous servo would have spun. Positional
+  servos cannot spin 360; continuous motion for them = an oscillating
+  fan sweep, which is what this sketch does.
 
   Wiring:
     LED red   GPIO 19 (220R to GND)
@@ -12,9 +14,9 @@
     LCD I2C   SDA 21 / SCL 22 (5V + common GND)
 
   Behaviour:
-    Servo = the chiller plant, spinning like a fan:
-      - fast outside the billed window
-      - SLOW crawl through the peak window 08:30-10:30 in wattwise mode
+    Servo = the chiller plant, oscillating like a fan:
+      - fast sweep outside the billed window
+      - SLOW sweep through the peak window 08:30-10:30 in wattwise mode
       - stays FAST through the peak in dumb mode (the waste we sell
         against), red LED blinking to call it out
     Green LED = off-peak window (outside 08:30-10:30)
@@ -22,13 +24,13 @@
     LCD row 1 = clock + mode, row 2 = state + kW (kW only when the CLI
       is linked; standalone honestly shows "no link")
 
-  Standalone: boots at 05:30 wattwise (precool, green on, spinning);
+  Standalone: boots at 05:30 wattwise (precool, green on, sweeping);
     compressed day = 5 minutes. Peak lands ~37 s after boot.
   Tandem: python wattwise.py --port COMx  (CLI becomes the clock;
     set time / mode / play drive the hardware live)
 
-  Tuning: if top speed seems slow, raise PULSE_FAST toward the attach
-  max; if it creeps when told to stop, trim PULSE_STOP around 1500.
+  Tuning: smaller STEP_xx = faster sweep. If motion is jittery, that is
+  the power rail: feed the servo its own 5V (battery pack), common GND.
 */
 
 #include <ESP32Servo.h>
@@ -48,10 +50,10 @@ static const int SERVO_PIN = 13;
 static const float PEAK_START = 8.5, PEAK_END = 10.5;   // billed window
 static const float PRECOOL_START = 5.5, PRECOOL_END = 8.0;
 
-// ---------------- continuous servo pulse widths (us) -------------------
-static const int PULSE_FAST = 2000;   // full speed forward
-static const int PULSE_SLOW = 1600;   // crawl forward (peak window)
-static const int PULSE_STOP = 1500;   // neutral
+// ---------------- positional sweep speed (ms per degree step) ---------
+static const int STEP_FAST = 5;     // off-peak: fast fan sweep
+static const int STEP_PRECOOL = 3; // precool surge: maximum
+static const int STEP_SLOW = 50;   // peak window coast: lazy sweep
 
 // ---------------- standalone clock ----------------
 static const unsigned long TICK_MS = 6250;      // 48 steps = 5 min per day
@@ -68,10 +70,14 @@ char serState[12] = "";          // "", NORMAL, PRECOOL, PEAK, DUMB
 float grantedKw = 0.0;
 unsigned long lastSerialMs = 0;
 unsigned long lastTickMs = 0;
+unsigned long lastServoMs = 0;
 unsigned long lastBlinkMs = 0;
 bool blinkOn = false;
 char lcdLine0[17] = "", lcdLine1[17] = "";   // lcd cache: write on change only
-int lastPulse = -1;                          // servo cache: write on change
+
+// sweep state
+int servoPos = 90;
+int servoDir = 1;
 
 float hourNow() { return (simMinute % 1440) / 60.0; }
 bool inPeak() { float h = hourNow(); return h >= PEAK_START && h < PEAK_END; }
@@ -103,13 +109,19 @@ void handleLine(char *line) {
 }
 
 void driveServo() {
-  // continuous servo: spin one direction, speed = state
+  // positional servo: oscillate 0..180 like an oscillating fan.
+  // Speed = ms per degree: fast normally, lazy through the peak.
   String st = stateWord();
-  int pulse = PULSE_FAST;
-  if (st == "PEAK") pulse = wattwiseActive() ? PULSE_SLOW : PULSE_FAST;
-  if (pulse != lastPulse) {          // ESP32Servo re-sends at 50 Hz anyway
-    servo.writeMicroseconds(pulse);
-    lastPulse = pulse;
+  int stepMs = STEP_FAST;
+  if (st == "PEAK")          stepMs = wattwiseActive() ? STEP_SLOW : STEP_FAST;
+  else if (st == "PRECOOL")  stepMs = STEP_PRECOOL;
+  unsigned long now = millis();
+  if (now - lastServoMs >= (unsigned long)stepMs) {
+    lastServoMs = now;
+    servoPos += servoDir;
+    if (servoPos >= 180) { servoPos = 180; servoDir = -1; }
+    else if (servoPos <= 0) { servoPos = 0; servoDir = 1; }
+    servo.write(servoPos);
   }
 }
 
@@ -169,13 +181,13 @@ void bootSelfTest() {
     digitalWrite(LED_GREEN, LOW);  digitalWrite(LED_RED, HIGH); delay(150);
   }
   digitalWrite(LED_RED, LOW);
-  // continuous-servo boot test: spin fast 1 s, then stop.
-  // If the horn does not spin here, it is wiring/power/dead servo.
-  lcdShow("WattWise node", "servo 360 test");
-  servo.writeMicroseconds(PULSE_FAST);
-  delay(1000);
-  servo.writeMicroseconds(PULSE_STOP);
-  delay(500);
+  // positional boot test: one gentle full sweep 90->180->0->90.
+  // If the horn does not sweep here, it is wiring/power/dead servo.
+  lcdShow("WattWise node", "servo sweep test");
+  for (int p = 90; p <= 180; p += 2) { servo.write(p); delay(15); }
+  for (int p = 180; p >= 0; p -= 2)   { servo.write(p); delay(15); }
+  for (int p = 0; p <= 90; p += 2)    { servo.write(p); delay(15); }
+  servoPos = 90; servoDir = 1;
   lcdShow("WattWise node", "05:30 precool");
 }
 
@@ -186,7 +198,7 @@ void setup() {
   digitalWrite(LED_RED, LOW);
   digitalWrite(LED_GREEN, LOW);
   servo.setPeriodHertz(50);
-  servo.attach(SERVO_PIN, 1000, 2000);  // safe continuous-servo pulse range
+  servo.attach(SERVO_PIN, 500, 2400);
   Wire.begin(21, 22);
   lcd.init();
   lcd.backlight();
