@@ -61,13 +61,14 @@ def bar(frac, width=20, fill="#"):
 class App:
     def __init__(self, data):
         self.T = data
-        self.times = data["buildings"]["office_tower"]["dumb"]["times"]
-        self.order = ["mall", "office_tower", "innovation_park",
-                      "data_centre", "warehouse"]
+        self.times = data["buildings"]["elmina_tower"]["dumb"]["times"]
+        self.towns = list(data["towns"].keys())
+        self.town = None          # None = portfolio root (town list)
+        self.order = list(data["buildings"].keys())
         self.mode = "dumb"
         self.step = 0
         self.tab = "overview"
-        self.selected = "mall"
+        self.selected = None      # building key; None = town/building list
         self.tariff = data.get("tariff", {})
         self.cap_share = self.tariff.get("capacity_share", 0.311)
 
@@ -129,21 +130,24 @@ class App:
     # ---- tabs ---------------------------------------------------------
     def tab_overview(self):
         rows = []
-        for k in self.order:
-            b = self.b(k)
-            tr = self.trace(k)
-            now = tr["net_kw"][self.step]
-            max_b = max(max(b["dumb"]["net_kw"]), max(b["wattwise"]["net_kw"]))
-            stress = now / max_b if max_b else 0
-            badge = (red("NEAR PEAK") if stress > 0.8
-                     else amber("MODERATE") if stress > 0.5
-                     else green("OK"))
-            peak = b["peak_dumb_kw"] if self.mode == "dumb" else b["peak_wattwise_kw"]
-            bill = b["bill_dumb_rm"] if self.mode == "dumb" else b["bill_wattwise_rm"]
-            shave = ("-%s%%" % b["shave_pct"]) if b["shave_pct"] > 0 else "-"
-            rows.append("%-24s %9s kW %9s kW %7s %11s   %s"
-                        % (b["label"], f"{now:,.0f}", f"{peak:,.0f}",
-                           shave, "RM %s" % f"{bill:,.0f}", badge))
+        for tk in self.towns:
+            t = self.T["towns"][tk]
+            rows.append(bold(t["label"]))
+            for k in t["buildings"]:
+                b = self.b(k)
+                tr = self.trace(k)
+                now = tr["net_kw"][self.step]
+                max_b = max(max(b["dumb"]["net_kw"]), max(b["wattwise"]["net_kw"]))
+                stress = now / max_b if max_b else 0
+                badge = (red("NEAR PEAK") if stress > 0.8
+                         else amber("MODERATE") if stress > 0.5
+                         else green("OK"))
+                peak = b["peak_dumb_kw"] if self.mode == "dumb" else b["peak_wattwise_kw"]
+                bill = b["bill_dumb_rm"] if self.mode == "dumb" else b["bill_wattwise_rm"]
+                shave = ("-%s%%" % b["shave_pct"]) if b["shave_pct"] > 0 else "-"
+                rows.append("  %-24s %9s kW %9s kW %7s %11s   %s"
+                            % (b["label"], f"{now:,.0f}", f"{peak:,.0f}",
+                               shave, "RM %s" % f"{bill:,.0f}", badge))
         head = "%-24s %10s %10s %7s %12s   %s" % (
             "building", "now kW", "peak kW", "shave", "MD/mo", "status")
         out = [bold(head), dim("-" * len(head))] + rows
@@ -195,6 +199,64 @@ class App:
         return "\n".join(out)
 
     def tab_buildings(self):
+        if self.town is None:
+            return self.town_list()
+        if self.selected is None:
+            return self.building_list()
+        return self.building_detail()
+
+    # ---- town list (portfolio root) ------------------------------------
+    def town_list(self):
+        lines = [bold("towns"), dim("navigate: town <name|number>, then"
+                                    " select a building; back goes up")]
+        load_total = 0
+        for k in self.order:
+            load_total += self.trace(k)["total_kw"][self.step]
+        for n, tk in enumerate(self.towns, 1):
+            t = self.T["towns"][tk]
+            keys = t["buildings"]
+            load = sum(self.trace(k)["total_kw"][self.step] for k in keys)
+            solar = t["solar_actual_kw"][self.step]
+            fc_kwh = sum(v * 0.5 for v in t["solar_fc_kw"])
+            cov = 100 * solar / load if load else 0
+            save = t["bill_dumb_rm"] - t["bill_wattwise_rm"]
+            lines.append("%d  %-22s %d bldgs   load %7s kW   solar now %6s kW"
+                         "  fcst %6s kWh   covers %4.1f%%   saves RM %s/mo"
+                         % (n, bold(t["label"]), len(keys), f"{load:,.0f}",
+                            green(f"{solar:,.0f}"), f"{fc_kwh:,.0f}",
+                            cov, f"{save:,.0f}"))
+        lines.append("")
+        lines.append(dim("portfolio: %d buildings, load %s kW"
+                         % (len(self.order), f"{load_total:,.0f}")))
+        return "\n".join(lines)
+
+    # ---- buildings of the selected town --------------------------------
+    def building_list(self):
+        t = self.T["towns"][self.town]
+        lines = [bold(t["label"]) + dim("  (town %s)" % self.town),
+                 dim("select <name|number> to inspect; back returns to towns")]
+        fc_kwh = sum(v * 0.5 for v in t["solar_fc_kw"])
+        lines.append("town solar forecast %s kWh today   solar now %s kW"
+                     % (f"{fc_kwh:,.0f}",
+                        green(f"{t['solar_actual_kw'][self.step]:,.0f}")))
+        lines.append("")
+        for n, k in enumerate(t["buildings"], 1):
+            b = self.b(k)
+            tr = self.trace(k)
+            load = tr["total_kw"][self.step]
+            solar = tr["solar_kw"][self.step]
+            used = min(solar, load)
+            cov = 100 * used / load if load else 0
+            shave = ("-%s%%" % b["shave_pct"]) if b["shave_pct"] > 0 else "-"
+            lines.append("%d  %-26s load %6s kW  solar %5s kW (use %5s kW,"
+                         " %4.1f%%)  peak %6s kW  shave %6s"
+                         % (n, b["label"], f"{load:,.0f}",
+                            f"{solar:,.0f}", f"{used:,.0f}", cov,
+                            f"{b['peak_dumb_kw']:,.0f}", shave))
+        return "\n".join(lines)
+
+    # ---- one building ---------------------------------------------------
+    def building_detail(self):
         k = self.selected
         b = self.b(k)
         tr = self.trace(k)
@@ -225,6 +287,14 @@ class App:
             "zone / cold bank  %.1fC   %s kWh / %s kWh"
             % (zone, f"{banked:,.0f}", f"{cap:,.0f}"),
             "current action    " + bold(action),
+            "solar now         %s kW forecast, %s kW generating;"
+            " on-site use %s kW of %s kW load (%.1f%%)"
+            % (f"{tr['solar_fc_kw'][self.step]:,.0f}",
+               green(f"{tr['solar_kw'][self.step]:,.0f}"),
+               f"{min(tr['solar_kw'][self.step], tr['total_kw'][self.step]):,.0f}",
+               f"{tr['total_kw'][self.step]:,.0f}",
+               100 * min(tr["solar_kw"][self.step], tr["total_kw"][self.step])
+               / tr["total_kw"][self.step] if tr["total_kw"][self.step] else 0),
             "",
             bold("plant detail (maintenance)"),
             "chiller loading   %s %4d%%  (%s / %s kW)"
@@ -459,8 +529,10 @@ MENU = ("tabs: 1 home | 2 buildings | 3 forecast | 4 scheduler | 5 reports"
 
 HELP = """commands:
   1..5                jump straight to a tab
-  select <building>    pick a building (prefix ok: mall, office, dc, ware)
-  next | prev          next / previous building
+  town <name|1-3>     open a township
+  select <name|#>     pick a building from the open town
+  back                up one level (building -> town -> portfolio)
+  next | prev         next / previous building (or town at the top level)
   set time HH:MM       jump the clock (snaps to the 30-min grid)
   mode dumb|wattwise   switch scenario (scheduler needs wattwise)
   play                 run the day (Ctrl+C stops playback)
@@ -472,13 +544,35 @@ HELP = """commands:
   quit                 exit"""
 
 def resolve_building(app, name):
-    # match on key prefix or label substring, like the dashboard
+    # numbers pick from the visible list; names match key prefix or label
     name = name.lower()
-    for k in app.order:
+    pool = (app.T["towns"][app.town]["buildings"]
+            if app.town else app.order)
+    if name.isdigit():
+        i = int(name) - 1
+        if 0 <= i < len(pool):
+            return pool[i]
+        return None
+    for k in pool:
         if k.startswith(name) or name == k:
             return k
-    for k in app.order:
+    for k in pool:
         if app.b(k)["label"].lower().find(name) >= 0:
+            return k
+    return None
+
+def resolve_town(app, name):
+    name = name.lower()
+    if name.isdigit():
+        i = int(name) - 1
+        if 0 <= i < len(app.towns):
+            return app.towns[i]
+        return None
+    for k in app.towns:
+        if k.startswith(name) or name == k:
+            return k
+    for k in app.towns:
+        if app.T["towns"][k]["label"].lower().find(name) >= 0:
             return k
     return None
 
@@ -502,15 +596,46 @@ def run_command(app, raw, msgs):
     elif head == "export":
         msgs.append(export_csv(app))
     elif head == "select":
-        k = resolve_building(app, arg)
-        if k:
-            app.selected = k
+        if app.town is None:
+            # no town yet: treat select as a town jump for convenience
+            tk = resolve_town(app, arg)
+            if tk:
+                app.town = tk
+                app.selected = None
+                app.tab = "buildings"
+            elif arg:
+                msgs.append(red("pick a town first: town <name|1-3>"))
+            else:
+                msgs.append(red("town <name|1-3> first, then select a building"))
+        else:
+            k = resolve_building(app, arg)
+            if k:
+                app.selected = k
+                app.tab = "buildings"
+            else:
+                msgs.append(red("no building matches '%s'" % arg))
+    elif head == "town":
+        tk = resolve_town(app, arg)
+        if tk:
+            app.town = tk
+            app.selected = None
             app.tab = "buildings"
         else:
-            msgs.append(red("no building matches '%s'" % arg))
+            msgs.append(red("no town matches '%s'" % arg))
+    elif head == "back":
+        if app.selected is not None:
+            app.selected = None
+        elif app.town is not None:
+            app.town = None
+        else:
+            msgs.append(dim("already at the top"))
     elif head == "next" or head == "prev":
-        i = app.order.index(app.selected)
-        app.selected = app.order[(i + (1 if head == "next" else -1)) % len(app.order)]
+        if app.town is None:
+            msgs.append(dim("open a town first: town <name|1-3>"))
+        else:
+            pool = app.T["towns"][app.town]["buildings"]
+            cur = pool.index(app.selected) if app.selected in pool else 0
+            app.selected = pool[(cur + (1 if head == "next" else -1)) % len(pool)]
     elif head == "set" and arg.startswith("time"):
         t = arg[4:].strip()
         try:
@@ -620,6 +745,7 @@ def main():
             print(red("no building matches '%s'" % args.building))
             sys.exit(2)
         app.selected = k
+        app.town = app.b(k)["town"]
         if args.tab == "overview":
             app.tab = "buildings"
 

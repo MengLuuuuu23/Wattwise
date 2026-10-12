@@ -1,28 +1,17 @@
 """
-generate_ui_data.py - produce township.json for the dashboard.
+generate_ui_data.py - produce township.json for the dashboard + CLI.
 
-Runs the WATTWISE-2 scheduler for five building archetypes by scaling the
-synthetic dataset, and writes one JSON with per-building 48-step traces
-(dumb vs wattwise), so the UI can scrub a full day for the whole township.
+v2 (2026-10-13): multi-town portfolio. Three SDP-style townships, each
+with several commercial buildings (mall, offices, cafes, retail,
+warehouse, data centre). The JSON keeps a flat "buildings" dict (dashboard
+compatibility) plus a "towns" index with per-town aggregates. Every
+building carries its own scaled WATTWISE-1 solar forecast and its
+total_kw, so "solar actually used on-site" is exact:
+net = max(total - solar, 0) - no export under SELCO, surplus is clipped.
 
-Archetypes (scaled from the base ~1,000 kW site):
-  - mall             x1.6 scale, weekend-heavy, solar x1.3
-  - office_tower     x1.0 (the base building itself), no PV (tower roof
-                     is a plant deck, not panels)
-  - innovation_park  x0.85, solar x1.15
-  - data_centre      FLAT load, essential 24/7 cooling, no PV: the honest
-                     counter-example in the demo
-  - warehouse        x0.45, solar x0.8
-
-v1 (2026-10-12), fixing the REVIEW.md findings:
-  - every archetype passes its own PLANT into the scheduler, so thermal
-    traces (zone/bank/actions) differ per building (flaw 1)
-  - has_solar matches the data: office_tower and data_centre false (flaw 3)
-  - demo day picked by calendar date, verified Tuesday (flaw 9)
-  - billed peak / bills computed over the CHARGED window 08:00-22:00 only,
-    via scheduler.billed_peak (verified TNB rule)
-  - exports tariff constants + windows so the UI derives numbers from data
-    instead of hardcoding them (flaw 10)
+Townships are synthetic archetypes on the same calibrated base site;
+labels reuse real SDP township names for the rollout story (numbers stay
+illustrative, per 03-FACTS-AND-SOURCES discipline).
 
 Run:  python generate_ui_data.py      (from 03 User Interface/)
 Out:  data/township.json
@@ -42,32 +31,74 @@ import scheduler as S  # noqa: E402
 
 DATA = SCHED.parent / "01 Prediction Module" / "data" / "dataset.csv"
 
+# --- reusable building archetypes ---------------------------------------
 # scale     : multiple of the base ~1,000 kW site (drives the PLANT)
 # wk_factor : whole-load weekend factor (mirrors generate_data.py)
 # occ_shape : occupancy profile for thermal gains and strip estimate
 # solar     : PV multiple; 0.0 = no array (has_solar = false)
-# plant_mult: extra plant-size factor - mall chiller plants are a smaller
-#             share of load (~26% energy, AIP 2187 verified) than offices
+# plant_mult: plant-size factor (mall-type plants are a smaller share of
+#             load, ~26% energy, AIP 2187 verified)
 ARCHETYPES = {
-    "mall":             {"scale": 1.40, "wk_factor": 1.00, "occ_shape": "mall",
-                         "solar": 1.15, "plant_mult": 0.75},
-    "office_tower":     {"scale": 1.00, "wk_factor": 0.55, "occ_shape": "office",
-                         "solar": 1.0},
-    "innovation_park":  {"scale": 0.85, "wk_factor": 0.70, "occ_shape": "office",
-                         "solar": 1.15},
-    "data_centre":      {"scale": 0.70, "wk_factor": 1.00, "occ_shape": "flat",
-                         "solar": 0.0, "flat": True},
-    "warehouse":        {"scale": 0.50, "wk_factor": 0.60, "occ_shape": "office",
-                         "solar": 0.8},
+    "mall":      {"scale": 1.40, "wk_factor": 1.00, "occ_shape": "mall",
+                  "solar": 1.15, "plant_mult": 0.75},
+    "office":    {"scale": 1.00, "wk_factor": 0.55, "occ_shape": "office",
+                  "solar": 1.0},
+    "office_md": {"scale": 0.65, "wk_factor": 0.55, "occ_shape": "office",
+                  "solar": 0.7},
+    "office_sm": {"scale": 0.22, "wk_factor": 0.55, "occ_shape": "office",
+                  "solar": 0.15, "plant_mult": 1.2},
+    "retail":    {"scale": 0.55, "wk_factor": 1.00, "occ_shape": "mall",
+                  "solar": 0.50, "plant_mult": 0.75},
+    "retail_sm": {"scale": 0.35, "wk_factor": 1.00, "occ_shape": "mall",
+                  "solar": 0.30, "plant_mult": 0.75},
+    "cafe":      {"scale": 0.10, "wk_factor": 1.00, "occ_shape": "mall",
+                  "solar": 0.06, "plant_mult": 0.80},
+    "cafe_sm":   {"scale": 0.12, "wk_factor": 1.00, "occ_shape": "mall",
+                  "solar": 0.08, "plant_mult": 0.80},
+    "park":      {"scale": 0.85, "wk_factor": 0.70, "occ_shape": "office",
+                  "solar": 1.15},
+    "dc":        {"scale": 0.70, "wk_factor": 1.00, "occ_shape": "flat",
+                  "solar": 0.0, "flat": True},
+    "warehouse": {"scale": 0.50, "wk_factor": 0.60, "occ_shape": "office",
+                  "solar": 0.8},
+    "warehouse_sm": {"scale": 0.40, "wk_factor": 0.60, "occ_shape": "office",
+                     "solar": 0.5, "plant_mult": 1.25},
 }
 
-BUILDING_META = {
-    "mall":            {"label": "Elmina Lakeside Mall",    "h": 2.2},
-    "office_tower":    {"label": "Menara Elmina",           "h": 5.0},
-    "innovation_park": {"label": "Elmina Innovation Park",  "h": 1.4},
-    "data_centre":     {"label": "SDP Hyperscale DC1",      "h": 1.1},
-    "warehouse":       {"label": "Elmina Business Park W3", "h": 1.0},
+# --- the portfolio: three townships --------------------------------------
+TOWNS = {
+    "elmina": {
+        "label": "City of Elmina",
+        "buildings": {
+            "elmina_mall":   ("Elmina Lakeside Mall",    "mall"),
+            "elmina_tower":  ("Menara Elmina",           "office"),
+            "elmina_park":   ("Elmina Innovation Park",  "park"),
+            "elmina_dc":     ("SDP Hyperscale DC1",      "dc"),
+            "elmina_wh":     ("Elmina Business Park W3", "warehouse"),
+        },
+    },
+    "bbr": {
+        "label": "Bandar Bukit Raja",
+        "buildings": {
+            "bbr_plaza":  ("BBR Community Plaza", "retail"),
+            "bbr_office": ("BBR Corporate Office", "office_md"),
+            "bbr_cafe":   ("Kafe Nusantara BBR",  "cafe"),
+            "bbr_wh":     ("BBR Logistics Hub",   "warehouse_sm"),
+        },
+    },
+    "ara": {
+        "label": "Ara Damansara",
+        "buildings": {
+            "ara_tower":  ("Ara Damansara Tower",  "office"),
+            "ara_retail": ("Ara Retail Row",       "retail_sm"),
+            "ara_cafe":   ("Ara Corner Cafe",      "cafe_sm"),
+            "ara_clinic": ("Ara Medical Centre",   "office_sm"),
+        },
+    },
 }
+
+FLOORS = {"elmina_mall": "2F", "elmina_tower": "17F", "elmina_park": "3F",
+          "elmina_dc": "1F", "elmina_wh": "1F"}
 
 
 def variant_day(df, doy, arch):
@@ -124,6 +155,7 @@ def main():
     print(f"demo day {demo_date} ({demo_date.strftime('%A')}), doy={doy}")
 
     fc_solar, fc_demand = base_forecasts(df)
+    base_fc_day = fc_solar.iloc[doy * 48:(doy + 1) * 48].tolist()
 
     out = {
         "day_label": f"{demo_date.strftime('%B')} (monsoon season) - "
@@ -140,58 +172,85 @@ def main():
             "billed": list(S.PEAK_WINDOW),    # documented MD-capture 8:30-10:30
             "charged": list(S.CHARGED_WINDOW),  # MD charged 08:00-22:00 only
         },
-        "buildings": {},
+        "towns": {},       # town index + aggregates (filled below)
+        "buildings": {},   # flat, all buildings, dashboard-compatible
     }
 
-    for arch, meta in BUILDING_META.items():
-        a = ARCHETYPES[arch]
-        pm = a.get("plant_mult", 1.0)
-        plant = S.scale_plant(
-            a["scale"],
-            occ_shape=a["occ_shape"],
-            wk_factor=a["wk_factor"],
-            essential=bool(a.get("flat")),
-        )
-        if pm != 1.0:
-            for k in ("chiller_max_kw", "chiller_min_kw", "night_kw",
-                      "cap_kwh", "kwh_per_degc", "strip_kw"):
-                plant[k] *= pm
-        day = variant_day(df, doy, arch)
-        dumb = S.simulate_day(day, S.make_policy_dumb(), "dumb", plant)
-        wise = S.simulate_day(day, S.make_policy_wattwise(), "wattwise", plant)
+    for tkey, town in TOWNS.items():
+        for bkey, (label, arch) in town["buildings"].items():
+            a = ARCHETYPES[arch]
+            pm = a.get("plant_mult", 1.0)
+            plant = S.scale_plant(
+                a["scale"],
+                occ_shape=a["occ_shape"],
+                wk_factor=a["wk_factor"],
+                essential=bool(a.get("flat")),
+            )
+            if pm != 1.0:
+                for kk in ("chiller_max_kw", "chiller_min_kw", "night_kw",
+                           "cap_kwh", "kwh_per_degc", "strip_kw"):
+                    plant[kk] *= pm
+            day = variant_day(df, doy, arch)
+            dumb = S.simulate_day(day, S.make_policy_dumb(), "dumb", plant)
+            wise = S.simulate_day(day, S.make_policy_wattwise(), "wattwise", plant)
 
-        def pack(log):
-            return {
-                "net_kw": log.net_grid_kw.tolist(),
-                "chiller_kw": log.chiller_kw.tolist(),
-                "zone_c": log.zone_c.tolist(),
-                "stored_kwh": log.stored_kwh.tolist(),
-                "solar_kw": log.solar_kw.tolist(),
-                "action": log.action.tolist(),
-                "times": log.time.tolist(),
+            def pack(log):
+                return {
+                    "net_kw": log.net_grid_kw.tolist(),
+                    "total_kw": log.total_kw.tolist(),
+                    "chiller_kw": log.chiller_kw.tolist(),
+                    "zone_c": log.zone_c.tolist(),
+                    "stored_kwh": log.stored_kwh.tolist(),
+                    "solar_kw": log.solar_kw.tolist(),
+                    "solar_fc_kw": [round(v * a["solar"], 1)
+                                    if v is not None and np.isfinite(v)
+                                    else None for v in base_fc_day],
+                    "action": log.action.tolist(),
+                    "times": log.time.tolist(),
+                }
+
+            # billed peak over the CHARGED window only (verified TNB rule)
+            peak_d = S.billed_peak(dumb)
+            peak_w = S.billed_peak(wise)
+            out["buildings"][bkey] = {
+                "label": label,
+                "town": tkey,
+                "town_label": town["label"],
+                "has_solar": a["solar"] > 0,
+                "cap_kwh": round(plant["cap_kwh"], 0),
+                "peak_dumb_kw": round(peak_d, 1),
+                "peak_wattwise_kw": round(peak_w, 1),
+                "shave_pct": round(100 * (peak_d - peak_w) / peak_d, 1) if peak_d else 0.0,
+                "bill_dumb_rm": round(peak_d * S.MD_RATE_RM, 0),
+                "bill_wattwise_rm": round(peak_w * S.MD_RATE_RM, 0),
+                "dumb": pack(dumb),
+                "wattwise": pack(wise),
             }
 
-        # billed peak over the CHARGED window only (verified TNB rule)
-        peak_d = S.billed_peak(dumb)
-        peak_w = S.billed_peak(wise)
-        out["buildings"][arch] = {
-            "label": meta["label"],
-            "height": meta["h"],
-            "has_solar": a["solar"] > 0,
-            "cap_kwh": round(plant["cap_kwh"], 0),
-            "peak_dumb_kw": round(peak_d, 1),
-            "peak_wattwise_kw": round(peak_w, 1),
-            "shave_pct": round(100 * (peak_d - peak_w) / peak_d, 1) if peak_d else 0.0,
-            "bill_dumb_rm": round(peak_d * S.MD_RATE_RM, 0),
-            "bill_wattwise_rm": round(peak_w * S.MD_RATE_RM, 0),
-            "dumb": pack(dumb),
-            "wattwise": pack(wise),
+    # --- town aggregates -------------------------------------------------
+    for tkey, town in TOWNS.items():
+        keys = list(town["buildings"].keys())
+        agg_fc, agg_act = [], []
+        for i in range(48):
+            agg_fc.append(round(sum(out["buildings"][k]["wattwise"]["solar_fc_kw"][i] or 0
+                                    for k in keys), 1))
+            agg_act.append(round(sum(out["buildings"][k]["wattwise"]["solar_kw"][i]
+                                    for k in keys), 1))
+        out["towns"][tkey] = {
+            "label": town["label"],
+            "buildings": keys,
+            "solar_fc_kw": agg_fc,
+            "solar_actual_kw": agg_act,
+            "peak_dumb_kw": round(sum(out["buildings"][k]["peak_dumb_kw"] for k in keys), 1),
+            "peak_wattwise_kw": round(sum(out["buildings"][k]["peak_wattwise_kw"] for k in keys), 1),
+            "bill_dumb_rm": round(sum(out["buildings"][k]["bill_dumb_rm"] for k in keys), 0),
+            "bill_wattwise_rm": round(sum(out["buildings"][k]["bill_wattwise_rm"] for k in keys), 0),
         }
 
     dest = HERE / "data" / "township.json"
     dest.parent.mkdir(parents=True, exist_ok=True)
 
-    # --- township-level forecast payload (WATTWISE-1, base site) --------
+    # --- portfolio-level forecast payload (WATTWISE-1, base site) --------
     sl = fc_solar.iloc[doy * 48:(doy + 1) * 48]
     dm = fc_demand.iloc[doy * 48:(doy + 1) * 48]
     act_s = df["solar_pv_kw"].iloc[doy * 48:(doy + 1) * 48]
@@ -209,10 +268,24 @@ def main():
     size = dest.stat().st_size / 1024
     print(f"wrote {dest} ({size:.0f} KB)")
     print(f"day_label: {out['day_label']}")
-    for k, v in out["buildings"].items():
-        print(f"  {k:16s} {v['label']:28s} billed peak {v['peak_dumb_kw']:6.0f} -> "
-              f"{v['peak_wattwise_kw']:6.0f} kW  shave {v['shave_pct']:4.1f}%  "
-              f"solar={v['has_solar']}")
+
+    warn = []
+    for tkey, town in TOWNS.items():
+        print(f"  {town['label']}")
+        for k in town["buildings"]:
+            v = out["buildings"][k]
+            shave = v["shave_pct"]
+            if not (0 <= shave <= 15.05):
+                warn.append((k, shave))
+            print(f"    {k:14s} {v['label']:26s} peak {v['peak_dumb_kw']:6.0f} -> "
+                  f"{v['peak_wattwise_kw']:6.0f} kW  shave {shave:4.1f}%  "
+                  f"solar={v['has_solar']}")
+        t = out["towns"][tkey]
+        print(f"    {'':14s} {'TOWN TOTAL':26s} peak {t['peak_dumb_kw']:6.0f} -> "
+              f"{t['peak_wattwise_kw']:6.0f} kW  bill RM {t['bill_dumb_rm']:,.0f} -> "
+              f"RM {t['bill_wattwise_rm']:,.0f}")
+    if warn:
+        print("SHAVE DISCIPLINE WARNING:", warn)
 
 
 if __name__ == "__main__":
