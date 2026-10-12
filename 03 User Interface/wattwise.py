@@ -75,6 +75,13 @@ class App:
     def b(self, key):
         return self.T["buildings"][key]
 
+    def plant_max(self, key):
+        # chiller plant capacity: the day's own max draw (precool runs at
+        # full plant, so the trace tops out at capacity)
+        b = self.b(key)
+        return max(max(b["dumb"]["chiller_kw"]),
+                   max(b["wattwise"]["chiller_kw"]))
+
     def trace(self, key=None):
         # the active mode's trace for a building
         k = key or self.selected
@@ -161,6 +168,30 @@ class App:
         out.extend(alarms if alarms
                    else [dim("%s  no active alarms. all buildings nominal."
                              % self.clock())])
+
+        # plant watchlist: chiller loading right now (strain before breakdown)
+        out.append("")
+        out.append(bold("plant watchlist (chiller loading now)"))
+        for k in self.order:
+            tr = self.trace(k)
+            cap = self.plant_max(k)
+            now = tr["chiller_kw"][self.step]
+            pct = 100 * now / cap if cap else 0
+            act = tr["action"][self.step]
+            col = red if pct > 70 else (amber if pct > 40 else green)
+            # full plant is BY DESIGN during precool/soak; the DC's
+            # essential cooling runs at max around the clock by design.
+            # Flag those as expected instead of crying wolf at the desk.
+            if pct > 70 and (act in ("precool", "soak")
+                             or act == "essential-cooling"):
+                flag = dim("  (expected: %s)" % act)
+            elif pct > 70:
+                flag = red("  <-- HIGH LOAD")
+            else:
+                flag = ""
+            out.append("%-24s %s %4d%%  (%s / %s kW)%s"
+                       % (self.b(k)["label"], col(bar(pct / 100, 20)),
+                          pct, f"{now:,.0f}", f"{cap:,.0f}", flag))
         return "\n".join(out)
 
     def tab_buildings(self):
@@ -173,6 +204,13 @@ class App:
         banked = tr["stored_kwh"][self.step]
         cap = b.get("cap_kwh", 900)
         action = tr["action"][self.step].replace("-", " ")
+        # maintenance stats over the elapsed day
+        zmax = max(tr["zone_c"][:self.step + 1])
+        zover = sum(1 for z in tr["zone_c"][:self.step + 1] if z > 26.01)
+        pmax = self.plant_max(k)
+        pnow = tr["chiller_kw"][self.step]
+        full_h = sum(1 for v in tr["chiller_kw"][:self.step + 1]
+                     if v >= 0.9 * pmax) * 0.5
         lines = [
             bold(b["label"]) + dim("  (%s)" % k),
             "grid draw now     %s kW   (solar %s kW)"
@@ -187,6 +225,15 @@ class App:
             "zone / cold bank  %.1fC   %s kWh / %s kWh"
             % (zone, f"{banked:,.0f}", f"{cap:,.0f}"),
             "current action    " + bold(action),
+            "",
+            bold("plant detail (maintenance)"),
+            "chiller loading   %s %4d%%  (%s / %s kW)"
+            % (bar(pnow / pmax if pmax else 0, 20), 100 * pnow / pmax if pmax else 0,
+               f"{pnow:,.0f}", f"{pmax:,.0f}"),
+            "zone today        max %.1fC   steps above 26C: %d%s"
+            % (zmax, zover, red("  <-- CHECK" if zover else "")),
+            "full-load runtime %s h at >90%% plant so far today%s"
+            % (f"{full_h:.1f}", amber("  <-- wear watch") if full_h >= 4 else ""),
             "",
         ]
 
@@ -248,6 +295,31 @@ class App:
                             ab, f"{a:.1f}", mark))
         lines.append(dim("model metrics (held-out): solar nRMSE 7.35% R2 0.996,"
                          " demand MAE 10.2 kW. benchmark LSTM nRMSE 6.75%."))
+
+        # PV health: sustained under-delivery vs forecast = inspect panels
+        lag = 0
+        worst = 0
+        for i in range(self.step + 1):
+            f = F["solar_fc_kw"][i]
+            a = F["solar_actual_kw"][i]
+            if f is not None and f > 50:
+                if a < 0.8 * f:
+                    lag += 1
+                    worst = max(worst, 1 - a / f)
+                else:
+                    lag = 0
+            else:
+                lag = 0
+        lines.append("")
+        lines.append(bold("PV health (elapsed daylight)"))
+        if lag >= 3:
+            lines.append(red("UNDER-DELIVERY: actuals <80%% of forecast for %d"
+                             " consecutive steps (worst gap %.0f%%)"
+                             % (lag, 100 * worst)))
+            lines.append(red("action: inspect panels / inverter / soiling"))
+        else:
+            lines.append(green("ok: no sustained under-delivery vs forecast"
+                               " (flag raises at 3+ steps below 80%)"))
         return "\n".join(lines)
 
     def tab_scheduler(self):
@@ -291,6 +363,27 @@ class App:
                     prev = acts[i]
         lines.extend(log[-12:] if log
                      else [dim("no rule changes yet at " + self.clock())])
+
+        # next up: when each building's rule changes next (plan rounds around)
+        lines.append("")
+        lines.append(bold("next up (upcoming rule changes today)"))
+        for k in self.order:
+            acts = self.b(k)["wattwise"]["action"]
+            nxt = None
+            for i in range(self.step + 1, N):
+                if acts[i] != acts[self.step]:
+                    nxt = i
+                    break
+            if nxt is not None:
+                lines.append("%-24s %s -> %s at %s"
+                             % (self.b(k)["label"].replace("Elmina ", ""),
+                                bold(acts[self.step].replace("-", " ")),
+                                acts[nxt].replace("-", " "),
+                                self.times[nxt]))
+            else:
+                lines.append("%-24s %s for the rest of the day"
+                             % (self.b(k)["label"].replace("Elmina ", ""),
+                                acts[self.step].replace("-", " ")))
         return "\n".join(lines)
 
     def tab_reports(self):
@@ -325,6 +418,27 @@ class App:
                          % (b["label"], f"{peak:,.0f}", "RM %s" % f"{cap:,.0f}",
                             "RM %s" % f"{net:,.0f}", "RM %s" % f"{total:,.0f}",
                             green("RM %s" % f"{save:,.0f}")))
+
+        # rule runtime summary: hours each plant spends in each state
+        lines.append("")
+        lines.append(bold("rule runtime, full day (hours per rule, wattwise)"))
+        rules = ["precool", "coast", "soak", "recovery", "comfort",
+                 "hold", "night", "essential", "safety"]
+        hdr = "%-24s" % "building" + "".join("%8s" % r[:7] for r in rules)
+        lines.append(hdr)
+        for k in self.order:
+            acts = self.b(k)["wattwise"]["action"]
+            hours = {r: 0.0 for r in rules}
+            for a in acts:
+                for r in rules:
+                    if a.startswith(r):
+                        hours[r] += 0.5
+                        break
+            lines.append("%-24s" % self.b(k)["label"].replace("Elmina ", "")
+                         + "".join("%8.1f" % hours[r] if hours[r] else "%8s" % "-"
+                                   for r in rules))
+        lines.append(dim("export csv at the prompt writes the full township"
+                         " dataset (same as the dashboard export)"))
         return "\n".join(lines)
 
     # ---- render -------------------------------------------------------
@@ -335,11 +449,16 @@ class App:
               "scheduler": self.tab_scheduler,
               "reports": self.tab_reports}[self.tab]
         body = fn()
-        return self.header() + "\n" + body + "\n"
+        return self.header() + "\n" + body + "\n" + dim(MENU) + "\n"
 
 # ---------------------------------------------------------------- commands
 
+# always-shown tab menu; numbers work at the prompt as shortcuts
+MENU = ("tabs: 1 home | 2 buildings | 3 forecast | 4 scheduler | 5 reports"
+        "   (export csv, help, quit)")
+
 HELP = """commands:
+  1..5                jump straight to a tab
   select <building>    pick a building (prefix ok: mall, office, dc, ware)
   next | prev          next / previous building
   set time HH:MM       jump the clock (snaps to the 30-min grid)
@@ -348,6 +467,7 @@ HELP = """commands:
   pause                stop playback
   reset                back to 00:00
   tab <name>           overview | buildings | forecast | scheduler | reports
+  export               write the township CSV (same as the dashboard export)
   help                 this list
   quit                 exit"""
 
@@ -374,8 +494,13 @@ def run_command(app, raw, msgs):
     arg = parts[1] if len(parts) > 1 else ""
     if head == "help":
         msgs.append(HELP)
+    elif head in ("1", "2", "3", "4", "5"):
+        app.tab = {"1": "overview", "2": "buildings", "3": "forecast",
+                   "4": "scheduler", "5": "reports"}[head]
     elif head == "quit" or head == "exit":
         return "quit"
+    elif head == "export":
+        msgs.append(export_csv(app))
     elif head == "select":
         k = resolve_building(app, arg)
         if k:
@@ -426,6 +551,23 @@ def run_command(app, raw, msgs):
     else:
         msgs.append(red("unknown command. type help"))
     return None
+
+def export_csv(app):
+    # same rows the dashboard export writes, from the same data
+    dest = HERE / "wattwise_township_demo.csv"
+    lines = ["building,time,mode,net_grid_kw,chiller_kw,zone_c,stored_kwh,"
+             "solar_kw,action"]
+    for k in app.order:
+        b = app.b(k)
+        for m in ("dumb", "wattwise"):
+            tr = b[m]
+            for i in range(N):
+                lines.append(",".join(str(x) for x in
+                    (b["label"], tr["times"][i], m, tr["net_kw"][i],
+                     tr["chiller_kw"][i], tr["zone_c"][i], tr["stored_kwh"][i],
+                     tr["solar_kw"][i], tr["action"][i])))
+    dest.write_text("\n".join(lines) + "\n")
+    return green("wrote %s (%d rows)" % (dest, len(lines) - 1))
 
 def play_loop(app, speed):
     # run the day like the dashboard play button; Ctrl+C returns to prompt
