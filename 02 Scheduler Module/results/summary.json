@@ -1,15 +1,15 @@
 {
   "dumb": {
-    "peak_kw_mean": 794.6,
-    "peak_kw_max": 844.3,
-    "day_bill_rm_mean": 81728.0
+    "billed_peak_kw_mean": 685.3,
+    "billed_peak_kw_max": 735.1,
+    "day_bill_rm_mean": 71633.0
   },
   "wattwise": {
-    "peak_kw_mean": 679.6,
-    "peak_kw_max": 701.7,
-    "day_bill_rm_mean": 70659.0
+    "billed_peak_kw_mean": 629.7,
+    "billed_peak_kw_max": 669.1,
+    "day_bill_rm_mean": 66061.0
   },
-  "peak_shave_pct": 14.5,
+  "peak_shave_pct": 8.1,
   "comfort_violations_wattwise": 0,
-  "comfort_violations_dumb": 5
+  "comfort_violations_dumb": 0
 }
