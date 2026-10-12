@@ -1,22 +1,34 @@
 """
-generate_ui_data.py — produce township.json for the 3D dashboard.
+generate_ui_data.py - produce township.json for the dashboard.
 
 Runs the WATTWISE-2 scheduler for five building archetypes by scaling the
 synthetic dataset, and writes one JSON with per-building 48-step traces
 (dumb vs wattwise), so the UI can scrub a full day for the whole township.
 
 Archetypes (scaled from the base ~1,000 kW site):
-  - mall            x1.6, weekend-heavy (mall-style occupancy)
-  - office_tower    x1.0, the base building itself
-  - innovation_park x0.85
-  - data_centre     FLAT load ~700 kW (no occupancy shape, no precool win:
-                     the honest counter-example in the demo)
-  - warehouse       x0.45
+  - mall             x1.6 scale, weekend-heavy, solar x1.3
+  - office_tower     x1.0 (the base building itself), no PV (tower roof
+                     is a plant deck, not panels)
+  - innovation_park  x0.85, solar x1.15
+  - data_centre      FLAT load, essential 24/7 cooling, no PV: the honest
+                     counter-example in the demo
+  - warehouse        x0.45, solar x0.8
 
-Run:  python generate_ui_data.py
+v1 (2026-10-12), fixing the REVIEW.md findings:
+  - every archetype passes its own PLANT into the scheduler, so thermal
+    traces (zone/bank/actions) differ per building (flaw 1)
+  - has_solar matches the data: office_tower and data_centre false (flaw 3)
+  - demo day picked by calendar date, verified Tuesday (flaw 9)
+  - billed peak / bills computed over the CHARGED window 08:00-22:00 only,
+    via scheduler.billed_peak (verified TNB rule)
+  - exports tariff constants + windows so the UI derives numbers from data
+    instead of hardcoding them (flaw 10)
+
+Run:  python generate_ui_data.py      (from 03 User Interface/)
 Out:  data/township.json
 """
 
+import datetime
 import json
 import numpy as np
 import pandas as pd
@@ -30,21 +42,31 @@ import scheduler as S  # noqa: E402
 
 DATA = SCHED.parent / "01 Prediction Module" / "data" / "dataset.csv"
 
+# scale     : multiple of the base ~1,000 kW site (drives the PLANT)
+# wk_factor : whole-load weekend factor (mirrors generate_data.py)
+# occ_shape : occupancy profile for thermal gains and strip estimate
+# solar     : PV multiple; 0.0 = no array (has_solar = false)
+# plant_mult: extra plant-size factor - mall chiller plants are a smaller
+#             share of load (~26% energy, AIP 2187 verified) than offices
 ARCHETYPES = {
-    "mall":             {"scale": 1.60, "weekend_boost": 1.15, "solar": 1.3},
-    "office_tower":     {"scale": 1.00, "weekend_boost": 0.55, "solar": 1.0},
-    "innovation_park":  {"scale": 0.85, "weekend_boost": 0.70, "solar": 1.15},
-    "data_centre":      {"scale": 0.70, "weekend_boost": 1.00, "solar": 0.0,
-                         "flat": True},
-    "warehouse":        {"scale": 0.45, "weekend_boost": 0.60, "solar": 0.8},
+    "mall":             {"scale": 1.40, "wk_factor": 1.00, "occ_shape": "mall",
+                         "solar": 1.15, "plant_mult": 0.75},
+    "office_tower":     {"scale": 1.00, "wk_factor": 0.55, "occ_shape": "office",
+                         "solar": 1.0},
+    "innovation_park":  {"scale": 0.85, "wk_factor": 0.70, "occ_shape": "office",
+                         "solar": 1.15},
+    "data_centre":      {"scale": 0.70, "wk_factor": 1.00, "occ_shape": "flat",
+                         "solar": 0.0, "flat": True},
+    "warehouse":        {"scale": 0.50, "wk_factor": 0.60, "occ_shape": "office",
+                         "solar": 0.8},
 }
 
 BUILDING_META = {
-    "mall":             {"label": "Elmina Lakeside Mall",   "h": 2.2, "solar": True},
-    "office_tower":     {"label": "Menara Elmina",          "h": 5.0, "solar": False},
-    "innovation_park":  {"label": "Elmina Innovation Park", "h": 1.4, "solar": True},
-    "data_centre":      {"label": "SDP Hyperscale DC1",     "h": 1.1, "solar": True},
-    "warehouse":        {"label": "Elmina Business Park W3","h": 1.0, "solar": True},
+    "mall":            {"label": "Elmina Lakeside Mall",    "h": 2.2},
+    "office_tower":    {"label": "Menara Elmina",           "h": 5.0},
+    "innovation_park": {"label": "Elmina Innovation Park",  "h": 1.4},
+    "data_centre":     {"label": "SDP Hyperscale DC1",      "h": 1.1},
+    "warehouse":       {"label": "Elmina Business Park W3", "h": 1.0},
 }
 
 
@@ -60,7 +82,7 @@ def variant_day(df, doy, arch):
         if not bool(day.weekday.iloc[0]):
             day.loc[day.index[(day.timestamp.dt.hour >= 10) &
                               (day.timestamp.dt.hour < 22)],
-                    "building_kw"] *= a["weekend_boost"]
+                    "building_kw"] *= a["wk_factor"]
     day["solar_pv_kw"] = day["solar_pv_kw"] * a["solar"]
     day["solar_pv_kw"] = day["solar_pv_kw"].clip(upper=600 * a["solar"])
     day["building_kw"] = day["building_kw"].clip(lower=60)
@@ -69,7 +91,7 @@ def variant_day(df, doy, arch):
 
 def base_forecasts(df):
     """Run the trained WATTWISE-1 models (30-min ahead) on the demo day.
-    Returns (solar_fc, demand_fc) arrays of 48 values for the base site."""
+    Returns (solar_fc, demand_fc) series for the base site."""
     import joblib
     sys.path.insert(0, str(HERE.parent / "01 Prediction Module"))
     import train_forecast as TF
@@ -80,8 +102,7 @@ def base_forecasts(df):
         valid = X.dropna().index
         m = joblib.load(HERE.parent / "01 Prediction Module" /
                         "models" / f"{label}_h1.joblib")
-        Xd = X.loc[valid]
-        pred = np.clip(m.predict(Xd), 0, None)
+        pred = np.clip(m.predict(X.loc[valid]), 0, None)
         full = pd.Series(np.nan, index=df.index)
         full.loc[valid] = pred
         out[label] = full
@@ -92,16 +113,52 @@ def main():
     df = pd.read_csv(DATA, parse_dates=["timestamp"])
     df["weekday"] = df.timestamp.dt.dayofweek < 5
 
-    # demo day: a clear September Tuesday (doy 260)
-    doy = 260
+    # demo day picked by calendar date: Fri 18 Sep 2026 - a verified
+    # weekday in the monsoon month of September whose morning stack-up
+    # produces the documented 8:30-10:30 coincident peak
+    demo_date = datetime.date(2026, 9, 18)
+    ts0 = df.timestamp.iloc[0].date()
+    assert ts0 == datetime.date(2026, 1, 1), "dataset must start 2026-01-01"
+    doy = (demo_date - ts0).days
+    assert df.timestamp.iloc[doy * 48].date() == demo_date
+    print(f"demo day {demo_date} ({demo_date.strftime('%A')}), doy={doy}")
+
     fc_solar, fc_demand = base_forecasts(df)
 
-    out = {"day_label": "September (monsoon season) - Tuesday", "buildings": {}}
+    out = {
+        "day_label": f"{demo_date.strftime('%B')} (monsoon season) - "
+                     f"{demo_date.strftime('%A')} {demo_date.day} "
+                     f"{demo_date.strftime('%B')} 2026",
+        "tariff": {
+            "md_rate_rm": S.MD_RATE_RM,               # 97.06 RM/kW/mo (C2 ToU)
+            "md_capacity_rm": S.MD_CAPACITY_RM,       # 30.19
+            "md_network_rm": S.MD_NETWORK_RM,         # 66.87
+            "capacity_share": round(S.MD_CAPACITY_RM / S.MD_RATE_RM, 4),
+            "energy_rm_kwh": S.ENERGY_RM_KWH,
+        },
+        "windows": {
+            "billed": list(S.PEAK_WINDOW),    # documented MD-capture 8:30-10:30
+            "charged": list(S.CHARGED_WINDOW),  # MD charged 08:00-22:00 only
+        },
+        "buildings": {},
+    }
 
     for arch, meta in BUILDING_META.items():
+        a = ARCHETYPES[arch]
+        pm = a.get("plant_mult", 1.0)
+        plant = S.scale_plant(
+            a["scale"],
+            occ_shape=a["occ_shape"],
+            wk_factor=a["wk_factor"],
+            essential=bool(a.get("flat")),
+        )
+        if pm != 1.0:
+            for k in ("chiller_max_kw", "chiller_min_kw", "night_kw",
+                      "cap_kwh", "kwh_per_degc", "strip_kw"):
+                plant[k] *= pm
         day = variant_day(df, doy, arch)
-        dumb = S.simulate_day(day, S.policy_dumb, "dumb")
-        wise = S.simulate_day(day, S.policy_wattwise, "wattwise")
+        dumb = S.simulate_day(day, S.make_policy_dumb(), "dumb", plant)
+        wise = S.simulate_day(day, S.make_policy_wattwise(), "wattwise", plant)
 
         def pack(log):
             return {
@@ -114,12 +171,14 @@ def main():
                 "times": log.time.tolist(),
             }
 
-        peak_d = float(dumb.net_grid_kw.max())
-        peak_w = float(wise.net_grid_kw.max())
+        # billed peak over the CHARGED window only (verified TNB rule)
+        peak_d = S.billed_peak(dumb)
+        peak_w = S.billed_peak(wise)
         out["buildings"][arch] = {
             "label": meta["label"],
             "height": meta["h"],
-            "has_solar": meta["solar"],
+            "has_solar": a["solar"] > 0,
+            "cap_kwh": round(plant["cap_kwh"], 0),
             "peak_dumb_kw": round(peak_d, 1),
             "peak_wattwise_kw": round(peak_w, 1),
             "shave_pct": round(100 * (peak_d - peak_w) / peak_d, 1) if peak_d else 0.0,
@@ -149,9 +208,11 @@ def main():
     dest.write_text(json.dumps(out))
     size = dest.stat().st_size / 1024
     print(f"wrote {dest} ({size:.0f} KB)")
+    print(f"day_label: {out['day_label']}")
     for k, v in out["buildings"].items():
-        print(f"  {k:16s} {v['label']:28s} peak {v['peak_dumb_kw']:6.0f} -> "
-              f"{v['peak_wattwise_kw']:6.0f} kW  shave {v['shave_pct']:4.1f}%")
+        print(f"  {k:16s} {v['label']:28s} billed peak {v['peak_dumb_kw']:6.0f} -> "
+              f"{v['peak_wattwise_kw']:6.0f} kW  shave {v['shave_pct']:4.1f}%  "
+              f"solar={v['has_solar']}")
 
 
 if __name__ == "__main__":

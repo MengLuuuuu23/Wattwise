@@ -397,9 +397,9 @@
       <div class="fc-stats kpi-row" id="fc-kpis"></div>
       <div class="solar-card">
         <div class="solar-head">
-          <div><div class="big" id="sc-fcst">&mdash;</div><div class="lab">kWh forecast today</div></div>
+          <div><div class="big" id="sc-fcst">&mdash;</div><div class="lab">kWh forecast so far</div></div>
           <div><div class="big done" id="sc-act">&mdash;</div><div class="lab">kWh generated so far</div></div>
-          <div><div class="big" id="sc-cov">&mdash;</div><div class="lab">forecast coverage</div></div>
+          <div><div class="big" id="sc-cov">&mdash;</div><div class="lab">day elapsed</div></div>
         </div>
         <div class="solar-cols"><span>Time</span><span>Power</span><span class="r">Fcst</span><span class="r">Act.</span></div>
         <div class="solar-rows" id="solar-rows"></div>
@@ -427,7 +427,7 @@
         <table class="ov-table" id="sch-rules"></table>
       </div>
       <div class="chart-card">
-        <div class="ttl">Cold bank &mdash; stored thermal energy (0&ndash;900 kWh)</div>
+        <div class="ttl">Cold bank &mdash; stored thermal energy (per-building capacity)</div>
         <div class="gauges" id="sch-gauges"></div>
       </div>
       <div class="chart-card">
@@ -488,6 +488,7 @@ var mode = "dumb", step = 0, playing = false, selected = null;
 var speed = 0.6;
 var FLAGS = { peak: true, solar: true, other: true };
 var ORDER = ["mall", "office_tower", "innovation_park", "data_centre", "warehouse"];
+var TARIFF = null, WINDOWS = null;
 
 var PLAN = {
   mall:            { x: 40,  y: 60,  w: 170, h: 130 },
@@ -791,7 +792,12 @@ function zoneChart(key) {
     x.fillStyle = "#5a6472"; x.font = "600 14px Calibri"; x.textAlign = "right";
     x.fillText("26\u00B0", 46, py(26) + 5); x.fillText("24\u00B0", 46, py(24) + 5);
     x.textAlign = "left";
-    x.fillText("zone stays inside the band \u2014 comfort is never traded away", 60, 24);
+    // caption reflects the data, not a promise
+    var violations = b.wattwise.zone_c.filter(function (z) { return z > 26.01; }).length;
+    x.fillStyle = violations ? "#9c2226" : "#5a6472";
+    x.fillText(violations
+      ? violations + " steps above 26\u00B0C today \u2014 comfort is never traded away lightly"
+      : "zone stays inside the band \u2014 comfort is never traded away", 60, 24);
   });
 }
 function forecastChart(canvasId, fcArr, actArr, color, unit) {
@@ -814,9 +820,11 @@ function forecastChart(canvasId, fcArr, actArr, color, unit) {
       started = true;
     });
     x.stroke(); x.setLineDash([]);
-    x.strokeStyle = "#e88b33"; x.lineWidth = 2;
-    x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 46); x.stroke();
-    x.font = "600 15px Calibri";
+    if (step < N - 1) {
+      // "now" line only while the day is still running
+      x.strokeStyle = "#e88b33"; x.lineWidth = 2;
+      x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 46); x.stroke();
+    }
     x.strokeStyle = "#8b95a3"; x.lineWidth = 2;
     x.beginPath(); x.moveTo(64, 40); x.lineTo(92, 40); x.stroke();
     x.fillStyle = "#5a6472"; x.fillText("actual", 98, 45);
@@ -902,23 +910,26 @@ function renderKpis(key) {
 function renderForecastKpis() {
   var F = T.forecast;
   var errs = [], ape = [];
-  for (var i = 0; i < N; i++) {
+  // only steps that have actually happened by the clock - the forecast
+  // is 30-min-ahead, so stats must never see future actuals
+  for (var i = 0; i <= step; i++) {
     var f = F.solar_fc_kw[i];
     if (f != null && F.solar_actual_kw[i] > 20) {
       errs.push(f - F.solar_actual_kw[i]);
       ape.push(Math.abs(f - F.solar_actual_kw[i]) / F.solar_actual_kw[i]);
     }
   }
-  var mae = errs.length ? errs.reduce(function (a, b) { return a + Math.abs(b); }, 0) / errs.length : 0;
-  var mape = ape.length ? 100 * ape.reduce(function (a, b) { return a + b; }, 0) / ape.length : 0;
-  var peakSolar = Math.max.apply(null, F.solar_actual_kw);
-  var peakH = F.times[F.solar_actual_kw.indexOf(peakSolar)];
+  var mae = errs.length ? errs.reduce(function (a, b) { return a + Math.abs(b); }, 0) / errs.length : null;
+  var mape = ape.length ? 100 * ape.reduce(function (a, b) { return a + b; }, 0) / ape.length : null;
+  var peakSolar = -Infinity;
+  for (var j = 0; j <= step; j++) peakSolar = Math.max(peakSolar, F.solar_actual_kw[j]);
+  var peakH = peakSolar > -Infinity ? F.times[F.solar_actual_kw.indexOf(peakSolar)] : "&mdash;";
   document.getElementById("fc-kpis").innerHTML =
-    '<div class="kpi"><div class="lbl">Solar forecast MAE</div><div class="val">' + mae.toFixed(0) +
-    ' <span class="unit">kW</span></div><div class="dlt">30-min ahead, daylight hours</div></div>' +
-    '<div class="kpi"><div class="lbl">Mean abs error</div><div class="val">' + mape.toFixed(1) +
+    '<div class="kpi"><div class="lbl">Solar forecast MAE</div><div class="val">' + (mae == null ? "&mdash;" : mae.toFixed(1)) +
+    ' <span class="unit">kW</span></div><div class="dlt">30-min ahead, daylight so far</div></div>' +
+    '<div class="kpi"><div class="lbl">Mean abs error</div><div class="val">' + (mape == null ? "&mdash;" : mape.toFixed(1)) +
     '<span class="unit">%</span></div><div class="dlt">on meaningful output (&gt;20 kW)</div></div>' +
-    '<div class="kpi"><div class="lbl">Peak solar today</div><div class="val">' + Math.round(peakSolar) +
+    '<div class="kpi"><div class="lbl">Peak solar so far</div><div class="val">' + (peakSolar > -Infinity ? Math.round(peakSolar) : "&mdash;") +
     ' <span class="unit">kW</span></div><div class="dlt">at ' + peakH + '</div></div>' +
     '<div class="kpi"><div class="lbl">Demand MAE</div><div class="val">10.2 <span class="unit">kW</span></div><div class="dlt">walk-forward, held-out 60 days</div></div>';
 }
@@ -931,16 +942,22 @@ function renderOverview() {
     totBill += mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm;
     totSave += b.bill_dumb_rm - b.bill_wattwise_rm;
   });
-  var draw = 0, peak = 0;
+  var draw = 0, peakB = 0;
+  var townPk = 0, townPkT = 0;
+  for (var i = 0; i < N; i++) {
+    var s = 0;
+    ORDER.forEach(function (k) { s += T.buildings[k][mode].net_kw[i]; });
+    if (s > townPk) { townPk = s; townPkT = i; }
+  }
   ORDER.forEach(function (k) {
     var v = T.buildings[k][mode].net_kw[step];
-    draw += v; peak = Math.max(peak, v);
+    draw += v; peakB = Math.max(peakB, v);
   });
   document.getElementById("ov-totals").innerHTML =
     '<div class="kpi"><div class="lbl">Township draw now</div><div class="val">' + Math.round(draw) +
     ' <span class="unit">kW</span></div><div class="dlt">solar ' + Math.round(totSolar) + ' kW</div></div>' +
-    '<div class="kpi"><div class="lbl">Township peak</div><div class="val">' + Math.round(peak) +
-    ' <span class="unit">kW</span></div><div class="dlt">@ ' + TIMES[step] + '</div></div>' +
+    '<div class="kpi"><div class="lbl">Township coincident peak</div><div class="val">' + Math.round(townPk) +
+    ' <span class="unit">kW</span></div><div class="dlt">@ ' + TIMES[townPkT] + ' (sum of all buildings)</div></div>' +
     '<div class="kpi"><div class="lbl">Combined MD bill</div><div class="val">RM ' + Math.round(totBill).toLocaleString() +
     '</div><div class="dlt">per month</div></div>' +
     '<div class="kpi"><div class="lbl">WattWise saving</div><div class="val">RM ' + Math.round(totSave).toLocaleString() +
@@ -996,7 +1013,7 @@ function renderOverview() {
   var an = "";
   an += '<div class="side-kpi"><span>Draw now</span><b>' + Math.round(draw) + ' kW</b></div>';
   an += '<div class="side-kpi"><span>Solar now</span><b>' + Math.round(totSolar) + ' kW</b></div>';
-  an += '<div class="side-kpi"><span>Peak bldg</span><b>' + Math.round(peak) + ' kW</b></div>';
+  an += '<div class="side-kpi"><span>Coincident pk</span><b>' + Math.round(townPk) + ' kW</b></div>';
   an += '<div class="side-kpi"><span>MD bill</span><b>RM ' + Math.round(totBill).toLocaleString() + '</b></div>';
   an += '<div class="side-kpi"><span>Saving</span><b>RM ' + Math.round(totSave).toLocaleString() + '</b></div>';
   an += '<div class="side-kpi"><span>Mode</span><b>' + (mode === "dumb" ? "BASELINE" : "WATTWISE") + '</b></div>';
@@ -1018,6 +1035,7 @@ function renderScheduler() {
     var a = b.wattwise.action[step];
     var cls = a.split("-")[0];
     if (a === "night-min") cls = "night";
+    if (a === "essential-cooling") cls = "hold";
     rows += '<tr><td>' + b.label + '</td>' +
       '<td><span class="lamp ' + cls + '"><span class="pip"></span>' + a.replace(/-/g, " ") + '</span></td>' +
       '<td class="num">' + Math.round(b.wattwise.chiller_kw[step]) + '</td>' +
@@ -1029,10 +1047,11 @@ function renderScheduler() {
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
     var v = b.wattwise.stored_kwh[step];
-    var pct = Math.min(100, 100 * v / 900);
+    var cap = b.cap_kwh || 900;   // per-building capacity from the data
+    var pct = Math.min(100, 100 * v / cap);
     g += '<div class="gauge"><div class="g-label">' + b.label.replace("Elmina ", "") + '</div>' +
       '<div class="g-tube"><div class="g-fill" style="width:' + pct + '%"></div></div>' +
-      '<div class="g-val">' + Math.round(v) + ' / 900 kWh</div></div>';
+      '<div class="g-val">' + Math.round(v) + ' / ' + Math.round(cap) + ' kWh</div></div>';
   });
   document.getElementById("sch-gauges").innerHTML = g;
   var log = "";
@@ -1084,7 +1103,8 @@ function renderReports() {
       var b = T.buildings[k];
       var kwh = 0;
       b.wattwise.net_kw.forEach(function (v) { kwh += v * 0.5; });
-      return kwh * 3.6 * 365;
+      // kWh -> GJ: 1 kWh = 3.6 MJ = 0.0036 GJ, annualised x365
+      return kwh * 3.6 / 1000 * 365;
     });
     var maxG = Math.max(40000, Math.max.apply(null, gj) * 1.1);
     var bw = (W - 220) / ORDER.length;
@@ -1118,7 +1138,7 @@ function renderReports() {
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
     var total = mode === "dumb" ? b.bill_dumb_rm : b.bill_wattwise_rm;
-    var cap = Math.round(total * 0.3038);
+    var cap = Math.round(total * (TARIFF ? TARIFF.capacity_share : 0.311));
     var net = Math.round(total - cap);
     rows += '<tr><td>' + b.label + '</td>' +
       '<td class="num">' + Math.round(mode === "dumb" ? b.peak_dumb_kw : b.peak_wattwise_kw) + '</td>' +
@@ -1128,7 +1148,7 @@ function renderReports() {
       '<td class="num" style="color:var(--good);font-weight:600">RM ' + Math.round(b.bill_dumb_rm - b.bill_wattwise_rm).toLocaleString() + '</td></tr>';
   });
   document.getElementById("rep-md").innerHTML =
-    '<tr><th>Building</th><th class="num">Billed peak kW</th><th class="num">Capacity (31%)</th>' +
+      '<tr><th>Building</th><th class="num">Billed peak kW</th><th class="num">Capacity (' + (TARIFF ? Math.round(TARIFF.capacity_share * 100) : 31) + '%)</th>' +
     '<th class="num">Network (69%)</th><th class="num">Total MD/mo</th><th class="num">WattWise saves</th></tr>' + rows;
 }
 
@@ -1166,9 +1186,10 @@ function runCommand(raw) {
     else out = "no building matches '" + m[1] + "'";
   } else if ((m = cmd.match(/^set time (\d{1,2}):(\d{2})/))) {
     var hh = +m[1], mm = +m[2];
-    var idx = (hh * 60 + (mm >= 30 ? 30 : 0)) / 30;
-    playing = false; step = Math.min(47, idx); refresh();
-    out = "time set to " + TIMES[step];
+    // the grid is 30-minute; snap to the nearest half hour (report the snap)
+    var idx = Math.min(47, Math.round((hh * 60 + mm) / 30));
+    playing = false; step = idx; refresh();
+    out = "time set to " + TIMES[step] + (TIMES[step] !== (hh + ":" + ("0" + mm).slice(-2)) ? " (snapped to the 30-min grid)" : "");
   } else if ((m = cmd.match(/^mode (dumb|wattwise|baseline)/))) {
     setMode(m[1] === "baseline" ? "dumb" : m[1]);
     out = "mode = " + mode;
@@ -1272,6 +1293,8 @@ function loop(t) {
 /* ================= init ================= */
 fetch("./data/township.json").then(function (r) { return r.json(); }).then(function (json) {
   T = json;
+  TARIFF = T.tariff || null;       // tariff constants from the data pipeline
+  WINDOWS = T.windows || null;     // billed + charged windows, verified
   TIMES = T.buildings.office_tower.dumb.times;
   buildMap();
   renderRibbon();
