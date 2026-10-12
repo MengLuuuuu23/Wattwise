@@ -362,8 +362,10 @@ def resolve_building(app, name):
             return k
     return None
 
-def run_command(app, raw):
-    # returns "quit", "play", or None
+def run_command(app, raw, msgs):
+    # returns "quit", "play", or None; informational output goes into msgs
+    # so the caller can print it AFTER the screen refresh (otherwise the
+    # clear would wipe it before anyone can read it)
     cmd = raw.strip().lower()
     if not cmd:
         return None
@@ -371,7 +373,7 @@ def run_command(app, raw):
     head = parts[0]
     arg = parts[1] if len(parts) > 1 else ""
     if head == "help":
-        print(HELP)
+        msgs.append(HELP)
     elif head == "quit" or head == "exit":
         return "quit"
     elif head == "select":
@@ -380,7 +382,7 @@ def run_command(app, raw):
             app.selected = k
             app.tab = "buildings"
         else:
-            print(red("no building matches '%s'" % arg))
+            msgs.append(red("no building matches '%s'" % arg))
     elif head == "next" or head == "prev":
         i = app.order.index(app.selected)
         app.selected = app.order[(i + (1 if head == "next" else -1)) % len(app.order)]
@@ -391,17 +393,17 @@ def run_command(app, raw):
             idx = min(47, max(0, round((int(hh) * 60 + int(mm)) / 30)))
             app.step = idx
             snapped = app.times[idx] != "%02d:%02d" % (int(hh), int(mm))
-            print(dim("time set to %s%s" % (app.times[idx],
+            msgs.append(dim("time set to %s%s" % (app.times[idx],
                   " (snapped to 30-min grid)" if snapped else "")))
         except ValueError:
-            print(red("usage: set time HH:MM"))
+            msgs.append(red("usage: set time HH:MM"))
     elif head == "mode":
         if arg in ("dumb", "baseline"):
             app.mode = "dumb"
         elif arg == "wattwise" or arg == "wise":
             app.mode = "wattwise"
         else:
-            print(red("mode: dumb | wattwise"))
+            msgs.append(red("mode: dumb | wattwise"))
     elif head == "play":
         return "play"
     elif head == "pause":
@@ -420,9 +422,9 @@ def run_command(app, raw):
         elif arg == "reports":
             app.tab = "reports"
         else:
-            print(red("tab: overview | buildings | forecast | scheduler | reports"))
+            msgs.append(red("tab: overview | buildings | forecast | scheduler | reports"))
     else:
-        print(red("unknown command. type help"))
+        msgs.append(red("unknown command. type help"))
     return None
 
 def play_loop(app, speed):
@@ -494,13 +496,20 @@ def main():
         except (EOFError, KeyboardInterrupt):
             print()
             break
-        result = run_command(app, raw)
+        msgs = []
+        snap = (app.tab, app.mode, app.step, app.selected)
+        result = run_command(app, raw, msgs)
         if result == "quit":
             break
         if result == "play":
             play_loop(app, args.speed)
-        os.system("cls" if os.name == "nt" else "clear")
-        print(app.render())
+        # re-render only when the state actually changed; for help/errors
+        # the message alone is the point, don't scroll it away
+        if (app.tab, app.mode, app.step, app.selected) != snap:
+            os.system("cls" if os.name == "nt" else "clear")
+            print(app.render())
+        for m in msgs:
+            print(m)
 
 if __name__ == "__main__":
     main()
