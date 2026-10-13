@@ -671,7 +671,7 @@
 <main>
   <!-- activity bar -->
   <div class="activity">
-    <button class="act-btn on" data-panel="map" title="Site Map">
+    <button class="act-btn" data-panel="map" title="Site Map">
       <svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
     </button>
     <button class="act-btn" data-panel="layers" title="Layers">
@@ -1086,9 +1086,11 @@ function buildMap() {
     var townColor = T.buildings[key].town === "elmina" ? "#E88B33" : T.buildings[key].town === "bbr" ? "#2E7D6B" : "#8491A0";
     var r = el("rect", { x: P.x, y: P.y, width: P.w, height: P.h, rx: 7, fill: "#fff", stroke: "#d7dde2", "stroke-width": 1.2 }, g);
     el("rect", { x: P.x, y: P.y, width: 4, height: P.h, rx: 2, fill: townColor }, g);
-    var nm = el("text", { x: P.x + 14, y: P.y + 25, "text-anchor": "start", "font-size": 14, "font-weight": 650, fill: "#1f2937", "font-family": "Segoe UI, Arial, sans-serif" }, g);
-    var kw = el("text", { x: P.x + 14, y: P.y + 52, "text-anchor": "start", "font-size": 19, "font-weight": 700, fill: "#14171d", "font-family": "Segoe UI, Arial, sans-serif" }, g);
-    var badge = el("text", { x: P.x + 14, y: P.y + 73, "text-anchor": "start", "font-size": 11, fill: "#6b7280", "font-family": "Segoe UI, Arial, sans-serif" }, g);
+    el("rect", { x: P.x + 11, y: P.y + 13, width: 27, height: 27, rx: 6, fill: "#F5F7FA" }, g);
+    el("path", { d: "M5 21V5l7-3 7 3v16M9 9h.01M15 9h.01M9 13h.01M15 13h.01M10 21v-4h4v4", transform: "translate(" + (P.x + 13) + " " + (P.y + 15) + ") scale(.9)", fill: "none", stroke: townColor, "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
+    var nm = el("text", { x: P.x + 46, y: P.y + 25, "text-anchor": "start", "font-size": 13, "font-weight": 650, fill: "#1f2937", "font-family": "Segoe UI, Arial, sans-serif" }, g);
+    var kw = el("text", { x: P.x + 46, y: P.y + 52, "text-anchor": "start", "font-size": 19, "font-weight": 700, fill: "#14171d", "font-family": "Segoe UI, Arial, sans-serif" }, g);
+    var badge = el("text", { x: P.x + 46, y: P.y + 73, "text-anchor": "start", "font-size": 11, fill: "#6b7280", "font-family": "Segoe UI, Arial, sans-serif" }, g);
     loadEls[key] = el("rect", { x: P.x + 14, y: P.y + 84, width: 1, height: 3, rx: 1.5, fill: townColor }, g);
     g.addEventListener("click", function () { select(key); showPage("page-buildings"); });
     g.addEventListener("keydown", function (event) {
@@ -1096,7 +1098,7 @@ function buildMap() {
     });
     rectEls[key] = r; kWTexts[key] = kw;
     badge.textContent = T.buildings[key].town_label + (T.buildings[key].has_solar ? "  ·  PV" : "");
-    nm.textContent = T.buildings[key].label.length > 24 ? T.buildings[key].label.slice(0, 22) + "…" : T.buildings[key].label;
+    nm.textContent = T.buildings[key].label.length > 21 ? T.buildings[key].label.slice(0, 19) + "…" : T.buildings[key].label;
   });
 }
 function heat(s) { return s >= 0.8 ? "#f6cdcb" : s >= 0.5 ? "#fdecc8" : "#d9efe0"; }
