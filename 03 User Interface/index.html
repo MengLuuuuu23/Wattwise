@@ -6,13 +6,12 @@
 <title>WattWise - Township Energy Workstation</title>
 <style>
   :root {
-    --bg: #f3f5f8; --panel: #ffffff; --panel2: #f8fafc;
-    --border: #d5dbe3; --border2: #e4e9f0;
-    --text: #1f2430; --muted: #5a6472; --faint: #8b95a3;
-    --accent: #e88b33; --excel: #217346; --excel2: #1a5c38;
-    --good: #107c41; --bad: #d13438;
-    --blue: #2f6fbf; --solar: #e9a820;
-    --ribbon-h: 30px;
+    --bg: #F5F7FA; --panel: #FFFFFF; --panel2: #F5F7FA;
+    --border: #D0D7E2; --border2: #E9EDF2;
+    --text: #1F2937; --muted: #6B7280; --faint: #87909D;
+    --accent: #E88B33; --excel: #2E7D6B; --excel2: #245F53;
+    --good: #10B981; --bad: #EF4444; --blue: #2E7D6B; --solar: #FFBD59;
+    --charcoal: #14171D; --amber: #FFBD59; --ribbon-h: 50px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; width: 100%; }
@@ -268,6 +267,189 @@
   .tbtn:hover { background: #ffffff22; }
   #scrub { width: 150px; accent-color: #ffffff; height: 14px; }
   .st-clock { font-family: Consolas, "Courier New", monospace; font-weight: 700; font-size: 13px; color: #fff; }
+
+  /* WattWise visual system: quiet light workspace, charcoal brand rail, precise plots */
+  body { background:var(--bg); color:var(--text); font-family:"Segoe UI",Arial,sans-serif; font-size:13px; }
+  header { background:#fff; border-bottom:1px solid var(--border); }
+  .ribbon-tabs { height:var(--ribbon-h); align-items:center; padding:0 22px; gap:4px; background:var(--charcoal); border:0; }
+  .brand-mini { gap:9px; padding:0 22px 0 0; color:#fff; font-size:19px; letter-spacing:-.4px; }
+  .brand-mini b { color:var(--accent); }
+  .brand-mini .brand-mark { width:34px; height:34px; display:block; }
+  .rtab { align-self:stretch; display:flex; align-items:center; padding:0 14px; margin:0; border:0; border-bottom:2px solid transparent; border-radius:0; text-transform:none; letter-spacing:0; font-size:12px; font-weight:600; color:#d8dbe0; }
+  .rtab:hover { color:#fff; background:#ffffff10; }
+  .rtab.on { background:transparent; color:var(--amber); border:0; border-bottom:2px solid var(--accent); }
+  .esp-top { display:flex; align-items:center; gap:8px; border:1px solid #ffffff35; border-radius:20px; padding:7px 12px; color:#fff; background:#ffffff0d; font:600 11px "Segoe UI",sans-serif; cursor:pointer; white-space:nowrap; }
+  .esp-top:hover { border-color:var(--amber); background:#ffffff16; }
+  .esp-dot { width:8px; height:8px; border-radius:50%; background:#a8b0bb; box-shadow:0 0 0 3px #ffffff12; }
+  .esp-dot.connected { background:#10B981; }
+  .ribbon-toolbar { min-height:54px; padding:3px 14px; align-items:center; background:#fff; }
+  .rgroup { padding:2px 9px; }
+  .rgroup-label-wrap { color:#87909D!important; font-size:9px!important; }
+  .rbtn { min-width:58px; border-radius:4px; padding:4px 8px 14px; }
+  .rbtn:hover { border-color:#e6e9ed; background:#F5F7FA; }
+  .rbtn:active { background:#fff3e3; }
+  .rbtn.on { background:#fff3e3; border-color:#f5d5ac; color:#9b5613; }
+  .rbtn.on .lbl { color:#9b5613; }
+  .ribbon-toolbar select, select { font-family:inherit; }
+  nav { gap:12px; padding:6px 16px; background:#fff; border-bottom:1px solid var(--border); min-height:42px; }
+  .crumbs { font-family:"Segoe UI",sans-serif; font-size:11.5px; }
+  .crumbs b { font-weight:650; }
+  .scope-control { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:11px; white-space:nowrap; }
+  .scope-control select { max-width:190px; border:1px solid var(--border); background:#fff; border-radius:4px; color:var(--text); padding:5px 24px 5px 8px; font-size:11.5px; }
+  .cmd-wrap { border:1px solid var(--border2); border-radius:4px; padding:3px 8px; background:#FAFBFC; gap:7px; }
+  .cmd-prompt { color:var(--accent); }
+  #cmd { background:transparent; border:0; max-width:none; font-size:12px; }
+  #cmd:focus { border:0; box-shadow:none; }
+  .activity { background:#fff; width:42px; border-color:var(--border2); padding-top:9px; }
+  .act-btn { border-radius:4px; }
+  .act-btn:hover { background:#f1f3f5; }
+  .act-btn.on { color:var(--accent); background:#fff3e3; }
+  .act-btn.on::before { background:var(--accent); }
+  body.panel-map .side { width:348px; }
+  body.panel-layers .side, body.panel-analytics .side, body.panel-settings .side { width:294px; }
+  .side { background:#fff; border-color:var(--border2); }
+  .side-head { padding:10px 14px; font-size:10px; letter-spacing:.65px; }
+  .side-pad { padding:12px 14px; }
+  .chk { font-size:12px; padding:5px 0; }
+  .about-txt { font-size:11.5px; }
+  .esp-readout { display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid var(--border2); font-size:11px; color:var(--muted); }
+  .esp-readout b { text-align:right; color:var(--text); font-weight:650; }
+  .esp-disconnect { margin:10px 0; border:1px solid var(--border); border-radius:4px; background:#fff; padding:6px 10px; color:var(--text); font:600 11px "Segoe UI",sans-serif; cursor:pointer; }
+  .esp-disconnect:disabled { opacity:.45; cursor:default; }
+  .esp-note { border-left:2px solid var(--amber); padding-left:8px; margin-top:6px; }
+  .content { padding:18px 24px 24px; background:#fff; }
+  .bld-head { gap:9px; }
+  .bld-nav { width:30px; height:30px; border-color:var(--border); border-radius:50%; }
+  .bld-nav:hover { color:var(--accent); border-color:var(--accent); background:#fff8ef; }
+  .bld-title h1 { font-size:22px; font-weight:650; letter-spacing:-.5px; }
+  .bld-title .sub { font-size:11.5px; margin-top:3px; color:var(--muted); }
+  .headline { margin-top:12px; padding:9px 12px; border-radius:3px; background:#fff7ed; border:0; border-left:3px solid var(--accent); color:#6c481f; font-size:12px; }
+  .headline.flat { background:#f5f7fa; border-left-color:#aab2bd; color:var(--muted); }
+  .kpi-row { grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; margin-top:18px; border-top:1px solid var(--border2); border-bottom:1px solid var(--border2); }
+  .kpi { background:transparent; border:0; border-right:1px solid var(--border2); border-radius:0; }
+  .kpi:last-child { border-right:0; }
+  .kpi .lbl { padding:10px 12px 2px; background:transparent; border:0; font-size:9px; letter-spacing:.55px; color:var(--muted); }
+  .kpi .val { padding:2px 12px 0; font:650 21px "Segoe UI",sans-serif; color:var(--charcoal); }
+  .kpi .unit { font:500 11px "Segoe UI",sans-serif; color:var(--muted); }
+  .kpi .dlt { padding:2px 12px 9px; font-size:10.5px; }
+  .chart-card { margin-top:18px; background:#fff; border:0; border-top:1px solid var(--border); border-bottom:1px solid var(--border2); border-radius:0; }
+  .plot-head { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:42px; border-bottom:1px solid var(--border2); padding:0 2px; }
+  .chart-card .ttl { padding:9px 0; border:0; color:var(--text); font-size:11px; letter-spacing:.2px; text-transform:none; font-weight:650; }
+  .plot-controls { display:flex; align-items:center; gap:4px; }
+  .plot-toggle { border:1px solid transparent; border-radius:3px; padding:4px 7px; background:transparent; color:var(--muted); font:500 10px "Segoe UI",sans-serif; cursor:pointer; }
+  .plot-toggle:hover { border-color:var(--border); }
+  .plot-toggle.on { border-color:#efd4b5; background:#fff5e9; color:#965311; }
+  .chart-card canvas { width:100%; display:block; }
+  .plot-legend { display:flex; align-items:center; gap:18px; padding:0 0 8px; color:var(--muted); font-size:10px; }
+  .plot-legend span { display:inline-flex; align-items:center; gap:6px; }
+  .legend-line { width:18px; height:0; border-top:2px solid #6b7280; display:inline-block; }
+  .legend-line.orange { border-color:var(--accent); }
+  .legend-line.red { border-color:var(--bad); }
+  .legend-line.grey { border-color:#8491a0; }
+  .legend-line.dashed { border-top-style:dashed; }
+  .legend-area { width:14px; height:8px; border-radius:2px; background:#ffbd59; display:inline-block; }
+  .legend-area.green { background:#b7d8ce; }
+  .action-strip { gap:6px; margin-top:12px; }
+  .act { padding:4px 9px; border-radius:3px; background:#f7f8fa; font-size:10px; }
+  .act.now { border-color:#edca9e; color:#8a4d12; background:#fff5e9; }
+  .fc-intro, .sch-intro { max-width:880px; margin:0 0 14px; line-height:1.55; font-size:12px; }
+  .fc-intro b, .sch-intro b { color:var(--text); }
+  .fc-stats { margin-top:12px; }
+  .solar-summary { display:flex; gap:0; border-top:1px solid var(--border2); border-bottom:1px solid var(--border2); margin-top:16px; }
+  .solar-summary>div { min-width:160px; padding:10px 18px 10px 0; margin-right:20px; border-right:1px solid var(--border2); }
+  .solar-summary .big { font-size:20px; font-weight:650; color:#9b6418; font-variant-numeric:tabular-nums; }
+  .solar-summary .big.done { color:var(--excel); }
+  .solar-summary .lab { color:var(--muted); font-size:10px; margin-top:2px; }
+  .solar-card { margin-top:12px; border-top:1px solid var(--border2); border-bottom:1px solid var(--border2); }
+  .solar-card summary { padding:9px 2px; color:var(--text); cursor:pointer; font-size:11px; font-weight:600; }
+  .solar-cols { padding:7px 10px; font-size:9px; border-color:var(--border2); }
+  .srow { border-radius:0; border-bottom:1px solid #f0f2f4; margin:0; padding:5px 10px; }
+  .bar-fcst { background:linear-gradient(90deg,#E88B33,#FFBD59); }
+  .bar-act { background:#2E7D6B; }
+  .ov-table { font-size:12px; }
+  .ov-table th { background:#F5F7FA; color:var(--muted); font-size:9px; }
+  .ov-table td,.ov-table th { padding:8px 10px; }
+  .ov-table tr.clickable:hover,.ov-table tr.sel { background:#fff8ef; }
+  .badge { border-radius:3px; font-size:9px; }
+  .badge.ok { background:#e8f4ef; color:#246d5e; }
+  .badge.warn { background:#fff3dc; color:#8a5e19; }
+  .badge.alarm { background:#fce9e8; color:#a13c37; }
+  .alarms { font-size:11px; }
+  .alarms div { padding:6px 10px; }
+  .gauges { padding:12px 4px; gap:10px 14px; }
+  .gauge { width:min(145px,31%); }
+  .gauge .g-tube { height:10px; border-radius:2px; }
+  .gauge .g-fill { background:linear-gradient(90deg,#2E7D6B,#79b8a7); }
+  .rep-note { font-size:11px; line-height:1.5; }
+  .rep-actions .rbtn { display:flex; flex-direction:row; gap:8px; align-items:center; padding:7px 12px!important; border:1px solid var(--border); background:#fff; color:var(--text); }
+  footer { background:var(--charcoal); color:#d5d8de; padding:5px 14px; font-size:10px; border-top:1px solid #ffffff15; }
+  footer b { color:#fff; }
+  .st-word { color:var(--amber); }
+  .st-word.run { color:#64d4a1; }
+  .tbtn { border-color:#ffffff50; border-radius:3px; }
+  #scrub { accent-color:var(--accent); }
+  .st-clock { color:#fff; }
+  .planner { margin-top:22px; padding:0 0 2px; }
+  .planner-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; border-bottom:1px solid var(--border2); padding:0 0 10px; }
+  .planner-head h2 { font-size:16px; font-weight:650; letter-spacing:-.2px; }
+  .planner-head p { color:var(--muted); font-size:10.5px; margin-top:3px; }
+  .planner-controls { display:flex; align-items:center; gap:6px; }
+  .planner-controls label { display:flex; align-items:center; gap:5px; color:var(--muted); font-size:10px; white-space:nowrap; }
+  .planner-controls select { border:1px solid var(--border); border-radius:3px; background:#fff; color:var(--text); padding:5px 6px; font-size:10.5px; max-width:210px; }
+  #plan-week { max-width:140px; }
+  #plan-day { max-width:170px; }
+  .plan-nav { width:26px; height:26px; border:1px solid var(--border); border-radius:3px; color:var(--text); background:#fff; cursor:pointer; font-size:17px; line-height:1; }
+  .plan-nav:hover { border-color:var(--accent); color:var(--accent); }
+  .plan-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; padding:12px 0; border-bottom:1px solid var(--border2); }
+  .plan-summary>div { padding:0 12px; border-right:1px solid var(--border2); }
+  .plan-summary>div:first-child { padding-left:0; }
+  .plan-summary>div:last-child { border:0; }
+  .plan-summary span { display:block; color:var(--muted); font-size:9.5px; margin-bottom:4px; }
+  .plan-summary b { color:var(--charcoal); font-size:14px; font-weight:650; font-variant-numeric:tabular-nums; }
+  .plan-summary i { color:var(--muted); font-size:9px; font-style:normal; font-weight:500; }
+  .plan-summary b.good { color:var(--excel); font-size:11px; }
+  .plan-summary b.warn { color:var(--bad); font-size:11px; }
+  .plan-chart { margin-top:0; }
+  .legend-line.green { border-color:var(--excel); }
+  .plan-details { border-bottom:1px solid var(--border); margin-top:8px; }
+  .plan-details summary { padding:8px 2px; color:var(--muted); cursor:pointer; font-size:10.5px; font-weight:600; }
+  .plan-table-wrap { max-height:330px; overflow:auto; }
+  .plan-table-wrap .ov-table td { padding:5px 9px; font-size:10.5px; }
+  .plan-table-wrap .ov-table .peak-row { background:#fff7ed; }
+  button:focus-visible,select:focus-visible,input:focus-visible { outline:2px solid #E88B33; outline-offset:2px; }
+  @media (max-width:900px) {
+    .ribbon-tabs { padding:0 10px; overflow-x:auto; }
+    .brand-mini { padding-right:8px; font-size:16px; }
+    .brand-mark { width:29px!important; height:29px!important; }
+    .rtab { padding:0 9px; font-size:10.5px; }
+    .esp-top { padding:6px 8px; font-size:0; }
+    nav { flex-wrap:wrap; }
+    .crumbs { display:none; }
+    .cmd-wrap { flex-basis:100%; order:3; }
+    .scope-control { margin-left:auto; }
+    body.panel-map .side { width:280px; }
+    .content { padding:14px; }
+    .plot-head { align-items:flex-start; flex-direction:column; padding:6px 0; gap:2px; }
+    .plot-controls { flex-wrap:wrap; }
+  }
+  @media (max-width:600px) {
+    .ribbon-toolbar { overflow-x:auto; }
+    .planner-head { align-items:flex-start; flex-direction:column; }
+    .planner-controls { width:100%; flex-wrap:wrap; }
+    .planner-controls select { max-width:min(45vw,190px); }
+    .plan-summary { grid-template-columns:repeat(2,minmax(0,1fr)); row-gap:10px; }
+    .plan-summary>div:nth-child(2) { border-right:0; }
+    .plan-summary>div:nth-child(n+3) { border-top:1px solid var(--border2); padding-top:8px; }
+    .kpi-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .kpi:nth-child(2) { border-right:0; }
+    .kpi:nth-child(n+3) { border-top:1px solid var(--border2); }
+    body.panel-map .side,body.panel-layers .side,body.panel-analytics .side,body.panel-settings .side { position:absolute; z-index:5; top:146px; bottom:32px; left:42px; width:min(84vw,320px); box-shadow:8px 0 20px #14171d18; }
+    footer { gap:8px; }
+    footer>span:nth-of-type(n+4) { display:none; }
+    #scrub { width:92px; }
+    .solar-summary>div { min-width:0; flex:1; padding-right:8px; margin-right:8px; }
+    .plot-legend { flex-wrap:wrap; gap:8px; }
+  }
 </style>
 </head>
 <body>
@@ -275,13 +457,14 @@
 <!-- ============ RIBBON ============ -->
 <header>
   <div class="ribbon-tabs" id="ribbon-tabs">
-    <div class="brand-mini"><span class="sq"></span>WATT<b>WISE</b></div>
+    <div class="brand-mini"><svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><path d="M5 26a15 15 0 0 1 27-10" fill="none" stroke="#FFBD59" stroke-width="3.5" stroke-linecap="round"/><rect x="9" y="19" width="4" height="11" rx="1" fill="#E88B33"/><rect x="16" y="14" width="4" height="16" rx="1" fill="#E88B33"/><path d="M12 29C18 16 25 10 35 8c0 11-4 20-17 23" fill="#2E7D6B"/><path d="M12 29C19 21 26 15 35 8c-1 8-4 14-10 18-4 2-8 3-13 3" fill="#FFBD59"/></svg><span>Watt<b>Wise</b></span></div>
     <div class="rtab" data-page="page-overview">Home</div>
     <div class="rtab on" data-page="page-buildings">Buildings</div>
     <div class="rtab" data-page="page-forecast">Solar &amp; Forecast</div>
     <div class="rtab" data-page="page-scheduler">Scheduler</div>
     <div class="rtab" data-page="page-reports">Reports</div>
     <div class="spacer"></div>
+    <button class="esp-top" id="esp-connect" type="button"><span class="esp-dot" id="esp-dot"></span><span id="esp-connect-label">Connect ESP32</span></button>
   </div>
   <div class="ribbon-toolbar" id="ribbon-toolbar"></div>
 </header>
@@ -289,9 +472,10 @@
 <!-- ============ COMMAND BAR ============ -->
 <nav>
   <div class="crumbs" id="crumbs"><b>WattWise</b><span class="sep">&rsaquo;</span>Buildings<span class="sep">&rsaquo;</span><b id="crumb-bld">—</b></div>
+  <label class="scope-control"><span>Scope</span><select id="town-select" aria-label="Choose township scope"><option value="all">All townships</option></select></label>
   <div class="cmd-wrap">
     <span class="cmd-prompt">&gt;</span>
-    <input type="text" id="cmd" placeholder="type a command: select mall | set time 14:00 | mode wattwise | play | help" spellcheck="false">
+    <input type="text" id="cmd" placeholder="command: town elmina · select 1 · set time 09:00 · week 2 · day fri · help" spellcheck="false">
     <span class="cmd-out" id="cmd-out"></span>
   </div>
 </nav>
@@ -337,12 +521,14 @@
         <label class="chk"><input type="radio" name="spd" value="0.6" checked> Normal (0.6 s / step)</label>
         <label class="chk"><input type="radio" name="spd" value="0.25"> Fast (0.25 s / step)</label>
         <label class="chk"><input type="radio" name="spd" value="1.2"> Slow (1.2 s / step)</label>
-        <h4>About</h4>
-        <div class="about-txt">
-          WattWise demo workstation.<br>
-          Data: calibrated synthetic township (5 archetypes), WATTWISE-1 forecasts,
-          WATTWISE-2 rule scheduler. See <b>01 Prediction Module</b> / <b>02 Scheduler Module</b>.
-        </div>
+        <h4>ESP32 command link</h4>
+        <div class="about-txt">USB serial at 115200 baud. The browser sends the selected building's time, mode, scheduler state and commanded chiller kW.</div>
+        <div class="esp-readout"><span>Link</span><b id="esp-link-state">Not connected</b></div>
+        <div class="esp-readout"><span>Last command</span><b id="esp-last-command">—</b></div>
+        <button class="esp-disconnect" id="esp-disconnect" type="button" disabled>Disconnect device</button>
+        <div class="about-txt esp-note">The demo firmware receives commands but does not return sensor measurements. Dashboard values remain labelled as simulated or commanded.</div>
+        <h4>Data source</h4>
+        <div class="about-txt">Calibrated synthetic township data. WATTWISE-1 forecasts and WATTWISE-2 rule scheduler. See <b>01 Prediction Module</b> / <b>02 Scheduler Module</b>.</div>
       </div>
     </div>
     <div class="map-legend" id="map-legend">
@@ -378,35 +564,37 @@
       <div class="headline" id="headline"></div>
       <div class="kpi-row" id="kpis"></div>
       <div class="chart-card">
-        <div class="ttl">Net grid draw &mdash; full day (blue = current mode, grey = other)</div>
-        <canvas id="chart-day" height="180"></canvas>
+        <div class="plot-head"><div class="ttl">Grid demand &mdash; 30-minute interval</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-flag-control="peak">Billed window</button><button class="plot-toggle on" data-flag-control="solar">Solar area</button><button class="plot-toggle on" data-flag-control="other">Compare</button></div></div>
+        <canvas id="chart-day" height="210" aria-label="Building grid demand chart in kilowatts"></canvas>
+        <div class="plot-legend"><span><i class="legend-line orange"></i>Current scenario</span><span><i class="legend-line grey"></i>Other scenario</span><span><i class="legend-area amber"></i>Solar generation</span><span><i class="legend-line red"></i>Billed window</span></div>
       </div>
       <div class="chart-card">
-        <div class="ttl">Zone temperature vs comfort band 24&ndash;26&deg;C</div>
-        <canvas id="chart-zone" height="115"></canvas>
+        <div class="plot-head"><div class="ttl">Zone temperature &mdash; comfort range 24&ndash;26&deg;C</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-band-control>Comfort band</button></div></div>
+        <canvas id="chart-zone" height="150" aria-label="Building zone temperature chart in degrees Celsius"></canvas>
       </div>
       <div class="action-strip" id="actions"></div>
     </div>
 
     <div class="page" id="page-forecast">
       <div class="fc-intro">
-        <b>WATTWISE-1 live forecasts</b> &mdash; solar output and building demand, 30 minutes ahead,
-        on the 30-minute billing grid. Amber bar = forecast, thin bar underneath = actual so far
-        (green when the sun overdelivers, red when it lags).
+        <b>WATTWISE-1 forecasts</b> &mdash; modelled solar output and building demand, 30 minutes ahead,
+        on the 30-minute billing grid. Forecast and historical actual series use calibrated synthetic data.
       </div>
       <div class="fc-stats kpi-row" id="fc-kpis"></div>
-      <div class="solar-card">
-        <div class="solar-head">
-          <div><div class="big" id="sc-fcst">&mdash;</div><div class="lab">kWh forecast so far</div></div>
-          <div><div class="big done" id="sc-act">&mdash;</div><div class="lab">kWh generated so far</div></div>
-          <div><div class="big" id="sc-cov">&mdash;</div><div class="lab">day elapsed</div></div>
-        </div>
-        <div class="solar-cols"><span>Time</span><span>Power</span><span class="r">Fcst</span><span class="r">Act.</span></div>
-        <div class="solar-rows" id="solar-rows"></div>
+      <div class="solar-summary">
+        <div><div class="big" id="sc-fcst">&mdash;</div><div class="lab">Forecast energy to now (kWh)</div></div>
+        <div><div class="big done" id="sc-act">&mdash;</div><div class="lab">Generated to now (kWh)</div></div>
+        <div><div class="big" id="sc-cov">&mdash;</div><div class="lab">Day elapsed</div></div>
       </div>
+      <details class="solar-card">
+        <summary>Half-hour solar forecast and actuals</summary>
+        <div class="solar-cols"><span>Time</span><span>Power</span><span class="r">Fcst kW</span><span class="r">Act. kW</span></div>
+        <div class="solar-rows" id="solar-rows"></div>
+      </details>
       <div class="chart-card">
-        <div class="ttl">Building demand &mdash; forecast vs actual</div>
-        <canvas id="chart-demand-fc" height="190"></canvas>
+        <div class="plot-head"><div class="ttl">Demand &mdash; actual and 30-minute forecast</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-series-control="actual">Actual</button><button class="plot-toggle on" data-series-control="forecast">Forecast</button></div></div>
+        <canvas id="chart-demand-fc" height="210" aria-label="Demand forecast chart in kilowatts"></canvas>
+        <div class="plot-legend"><span><i class="legend-line grey"></i>Actual</span><span><i class="legend-line orange dashed"></i>WATTWISE-1 forecast</span></div>
       </div>
       <div class="fc-note">
         Model walk-forward test metrics (held-out final 60 days, never shuffled):
@@ -422,8 +610,27 @@
         Rules: precool before the 08:30&ndash;10:30 billed window, coast through it on banked cold,
         soak midday solar, comfort always wins. <i>(Scheduler runs only in WattWise mode.)</i>
       </div>
+      <section class="planner">
+        <div class="planner-head">
+          <div><h2>Dispatch planner</h2><p>WATTWISE-2 half-hour schedule · three-week demo horizon</p></div>
+          <div class="planner-controls">
+            <label>Scope <select id="plan-scope"><option value="selected">Selected building</option></select></label>
+            <label>Week <select id="plan-week"></select></label>
+            <button type="button" id="plan-prev" class="plan-nav" aria-label="Previous day">‹</button>
+            <select id="plan-day" aria-label="Schedule day"></select>
+            <button type="button" id="plan-next" class="plan-nav" aria-label="Next day">›</button>
+          </div>
+        </div>
+        <div class="plan-summary" id="plan-summary"></div>
+        <div class="chart-card plan-chart">
+          <div class="plot-head"><div class="ttl">Scheduled cooling dispatch &mdash; kW per 30-minute interval</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-plan-series="chiller">Cooling</button><button class="plot-toggle on" data-plan-series="grid">Grid draw</button><button class="plot-toggle on" data-plan-series="solar">Solar</button></div></div>
+          <canvas id="plan-chart" height="210" aria-label="Planned cooling, grid draw and solar output by half-hour"></canvas>
+          <div class="plot-legend"><span><i class="legend-line orange"></i>Cooling dispatch</span><span><i class="legend-line grey"></i>Grid draw</span><span><i class="legend-line green"></i>Solar generation</span></div>
+        </div>
+        <details class="plan-details"><summary>Half-hour schedule values</summary><div class="plan-table-wrap"><table class="ov-table" id="plan-table"></table></div></details>
+      </section>
       <div class="chart-card">
-        <div class="ttl">Rule state &mdash; current action per building</div>
+        <div class="ttl">Rule state &mdash; current simulation time</div>
         <table class="ov-table" id="sch-rules"></table>
       </div>
       <div class="chart-card">
@@ -431,8 +638,9 @@
         <div class="gauges" id="sch-gauges"></div>
       </div>
       <div class="chart-card">
-        <div class="ttl">Comfort monitor &mdash; all buildings vs the 24&ndash;26&deg;C band</div>
-        <canvas id="sch-comfort" height="165"></canvas>
+        <div class="plot-head"><div class="ttl">Comfort monitor &mdash; 24&ndash;26&deg;C setpoint band</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-band-control>Comfort band</button></div></div>
+        <canvas id="sch-comfort" height="190" aria-label="Comfort monitor chart in degrees Celsius"></canvas>
+        <div class="plot-legend"><span><i class="legend-area green"></i>Comfort band</span><span><i class="legend-line orange"></i>Selected building</span></div>
       </div>
       <div class="chart-card">
         <div class="ttl">Intervention log</div>
@@ -446,8 +654,8 @@
         EECA status, demand-charge breakdown, export.
       </div>
       <div class="chart-card">
-        <div class="ttl">EECA 2024 threshold check &mdash; annual consumption vs 21,600 GJ</div>
-        <canvas id="rep-eeca" height="145"></canvas>
+        <div class="plot-head"><div class="ttl">Annualised consumption &mdash; EECA threshold 21,600 GJ/year</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button></div></div>
+        <canvas id="rep-eeca" height="180" aria-label="Annualised building consumption against the EECA threshold"></canvas>
         <div class="rep-note" id="rep-eeca-note"></div>
       </div>
       <div class="chart-card">
@@ -484,20 +692,16 @@
 "use strict";
 
 var T = null, TIMES = null, N = 48;
-var mode = "dumb", step = 0, playing = false, selected = null;
+var mode = "dumb", step = 0, playing = false, selected = null, townScope = "all";
 var speed = 0.6;
-var FLAGS = { peak: true, solar: true, other: true };
-var ORDER = ["mall", "office_tower", "innovation_park", "data_centre", "warehouse"];
+var FLAGS = { peak: true, solar: true, other: true, band: true, actual: true, forecast: true };
+var PLOT = { grid: true }, PLAN_FLAGS = { chiller: true, grid: true, solar: true };
+var planWeekIdx = 1, planDay = null;
+var ALL_ORDER = [], ORDER = [];
 var TARIFF = null, WINDOWS = null;
+var espPort = null, espWriter = null, espLastLine = "", espBusy = false;
 
-var PLAN = {
-  mall:            { x: 40,  y: 60,  w: 170, h: 130 },
-  office_tower:    { x: 300, y: 50,  w: 80,  h: 80  },
-  innovation_park: { x: 440, y: 70,  w: 150, h: 110 },
-  data_centre:     { x: 340, y: 270, w: 130, h: 100 },
-  warehouse:       { x: 60,  y: 280, w: 160, h: 100 }
-};
-var FLOORS = { mall: "2F", office_tower: "17F", innovation_park: "3F", data_centre: "1F", warehouse: "1F" };
+var MAP = { cols: 4, left: 14, top: 20, cellW: 146, cellH: 112, gapX: 10, gapY: 6 };
 
 /* ================= ribbon ================= */
 var ICONS = {
@@ -607,8 +811,8 @@ function ribbonAction(act) {
     case "reset": playing = false; step = 0; refresh(); break;
     case "mode-dumb": setMode("dumb"); break;
     case "mode-wise": setMode("wattwise"); break;
-    case "bld-prev": stepSelect(-1); break;
-    case "bld-next": stepSelect(1); break;
+    case "bld-prev": if (ribbonPage === "page-scheduler") movePlannerDay(-1); else stepSelect(-1); break;
+    case "bld-next": if (ribbonPage === "page-scheduler") movePlannerDay(1); else stepSelect(1); break;
     case "csv": exportCsv(); break;
     case "panel-map": togglePanel("map"); break;
     case "panel-layers": togglePanel("layers"); break;
@@ -639,7 +843,8 @@ document.getElementById("ribbon-tabs").addEventListener("click", function (e) {
 
 function updateCrumbs() {
   var names = { "page-overview": "Home", "page-buildings": "Buildings", "page-forecast": "Solar & Forecast", "page-scheduler": "Scheduler", "page-reports": "Reports" };
-  document.getElementById("crumbs").innerHTML = "<b>WattWise</b><span class=\"sep\">&rsaquo;</span>" + names[ribbonPage] +
+  var scope = townScope === "all" ? "All townships" : T.towns[townScope].label;
+  document.getElementById("crumbs").innerHTML = "<b>WattWise</b><span class=\"sep\">&rsaquo;</span>" + scope + "<span class=\"sep\">&rsaquo;</span>" + names[ribbonPage] +
     (selected ? "<span class=\"sep\">&rsaquo;</span><b id=\"crumb-bld\">" + T.buildings[selected].label + "</b>" : "");
 }
 
@@ -663,11 +868,34 @@ document.querySelector(".activity").addEventListener("click", function (e) {
   if (b) togglePanel(b.dataset.panel);
 });
 document.querySelectorAll("[data-flag]").forEach(function (chk) {
-  chk.addEventListener("change", function () { FLAGS[this.dataset.flag] = this.checked; redrawVisible(); });
+  chk.addEventListener("change", function () { FLAGS[this.dataset.flag] = this.checked; syncPlotControls(); redrawVisible(); });
 });
 document.querySelectorAll("input[name=spd]").forEach(function (r) {
   r.addEventListener("change", function () { speed = +this.value; });
 });
+function syncPlotControls() {
+  document.querySelectorAll("[data-plot-grid]").forEach(function (b) { b.classList.toggle("on", PLOT.grid); b.setAttribute("aria-pressed", PLOT.grid); });
+  document.querySelectorAll("[data-flag-control]").forEach(function (b) { b.classList.toggle("on", !!FLAGS[b.dataset.flagControl]); b.setAttribute("aria-pressed", !!FLAGS[b.dataset.flagControl]); });
+  document.querySelectorAll("[data-series-control]").forEach(function (b) { b.classList.toggle("on", !!FLAGS[b.dataset.seriesControl]); b.setAttribute("aria-pressed", !!FLAGS[b.dataset.seriesControl]); });
+  document.querySelectorAll("[data-band-control]").forEach(function (b) { b.classList.toggle("on", FLAGS.band); b.setAttribute("aria-pressed", FLAGS.band); });
+  document.querySelectorAll("[data-plan-series]").forEach(function (b) { b.classList.toggle("on", !!PLAN_FLAGS[b.dataset.planSeries]); b.setAttribute("aria-pressed", !!PLAN_FLAGS[b.dataset.planSeries]); });
+}
+document.addEventListener("click", function (e) {
+  var grid = e.target.closest("[data-plot-grid]");
+  var flag = e.target.closest("[data-flag-control]");
+  var series = e.target.closest("[data-series-control]");
+  var band = e.target.closest("[data-band-control]");
+  var planSeries = e.target.closest("[data-plan-series]");
+  if (!grid && !flag && !series && !band && !planSeries) return;
+  if (grid) PLOT.grid = !PLOT.grid;
+  if (flag) FLAGS[flag.dataset.flagControl] = !FLAGS[flag.dataset.flagControl];
+  if (series) FLAGS[series.dataset.seriesControl] = !FLAGS[series.dataset.seriesControl];
+  if (band) FLAGS.band = !FLAGS.band;
+  if (planSeries) PLAN_FLAGS[planSeries.dataset.planSeries] = !PLAN_FLAGS[planSeries.dataset.planSeries];
+  syncPlotControls(); redrawVisible();
+});
+var townControl = document.getElementById("town-select");
+townControl.addEventListener("change", function () { setTown(this.value); });
 
 /* ================= map ================= */
 var svg = document.getElementById("sitemap");
@@ -680,27 +908,31 @@ function el(tag, attrs, parent) {
 }
 var rectEls = {}, kWTexts = {};
 function buildMap() {
-  el("rect", { x: 0, y: 0, width: 660, height: 500, fill: "#eef2ea" });
-  el("rect", { x: 0, y: 218, width: 660, height: 26, fill: "#d8dde4" });
-  el("rect", { x: 268, y: 0, width: 24, height: 500, fill: "#d8dde4" });
-  el("line", { x1: 0, y1: 231, x2: 660, y2: 231, stroke: "#fff", "stroke-width": 1.5, "stroke-dasharray": "10 8" });
-  el("line", { x1: 280, y1: 0, x2: 280, y2: 500, stroke: "#fff", "stroke-width": 1.5, "stroke-dasharray": "10 8" });
-  var treeXY = [[20,30],[220,40],[240,150],[420,30],[620,40],[630,180],[410,200],[30,200],[620,300],[420,420],[240,420],[100,430],[560,440],[30,430],[640,220]];
-  treeXY.forEach(function (p) {
-    el("circle", { cx: p[0], cy: p[1], r: 9, fill: "#c5deb6" });
-    el("circle", { cx: p[0], cy: p[1], r: 4.5, fill: "#a8c997" });
-  });
-  ORDER.forEach(function (key) {
-    var P = PLAN[key];
-    var g = el("g", { cursor: "pointer" });
-    var r = el("rect", { x: P.x, y: P.y, width: P.w, height: P.h, rx: 4, fill: "#d9efe0", stroke: "#b9c6d2", "stroke-width": 1.5 }, g);
-    var nm = el("text", { x: P.x + P.w / 2, y: P.y + P.h / 2 - 10, "text-anchor": "middle", "font-size": 12.5, "font-weight": 700, fill: "#2a3342", "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
-    var kw = el("text", { x: P.x + P.w / 2, y: P.y + P.h / 2 + 12, "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: "#1f2430", "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
-    var badge = el("text", { x: P.x + P.w / 2, y: P.y + P.h - 9, "text-anchor": "middle", "font-size": 10, fill: "#5a6472", "font-family": "Calibri, 'Segoe UI', Arial, sans-serif" }, g);
+  el("rect", { x: 0, y: 0, width: 660, height: 500, fill: "#f3f6f4" });
+  el("rect", { x: 0, y: 242, width: 660, height: 18, fill: "#dfe5e6" });
+  el("rect", { x: 321, y: 0, width: 18, height: 500, fill: "#dfe5e6" });
+  el("line", { x1: 0, y1: 251, x2: 660, y2: 251, stroke: "#fff", "stroke-width": 1.5, "stroke-dasharray": "8 7" });
+  el("line", { x1: 330, y1: 0, x2: 330, y2: 500, stroke: "#fff", "stroke-width": 1.5, "stroke-dasharray": "8 7" });
+  var treeXY = [[22,34],[215,42],[280,160],[420,34],[632,46],[620,185],[420,210],[34,202],[615,310],[420,420],[245,420],[95,434],[550,440],[32,435],[642,230]];
+  treeXY.forEach(function (p) { el("circle", { cx: p[0], cy: p[1], r: 8, fill: "#d9e8db" }); });
+  ORDER.forEach(function (key, index) {
+    var P = { x: MAP.left + (index % MAP.cols) * (MAP.cellW + MAP.gapX),
+      y: MAP.top + Math.floor(index / MAP.cols) * (MAP.cellH + MAP.gapY),
+      w: MAP.cellW, h: MAP.cellH };
+    var g = el("g", { cursor: "pointer", role: "button", tabindex: "0", "aria-label": "Open " + T.buildings[key].label });
+    var townColor = T.buildings[key].town === "elmina" ? "#E88B33" : T.buildings[key].town === "bbr" ? "#2E7D6B" : "#8491A0";
+    var r = el("rect", { x: P.x, y: P.y, width: P.w, height: P.h, rx: 5, fill: "#fff", stroke: "#d0d7e2", "stroke-width": 1.3 }, g);
+    el("rect", { x: P.x, y: P.y, width: 4, height: P.h, rx: 2, fill: townColor }, g);
+    var nm = el("text", { x: P.x + P.w / 2, y: P.y + 35, "text-anchor": "middle", "font-size": 11.5, "font-weight": 650, fill: "#1f2937", "font-family": "Segoe UI, Arial, sans-serif" }, g);
+    var kw = el("text", { x: P.x + P.w / 2, y: P.y + 60, "text-anchor": "middle", "font-size": 15, "font-weight": 700, fill: "#14171d", "font-family": "Segoe UI, Arial, sans-serif" }, g);
+    var badge = el("text", { x: P.x + P.w / 2, y: P.y + 86, "text-anchor": "middle", "font-size": 10, fill: "#6b7280", "font-family": "Segoe UI, Arial, sans-serif" }, g);
     g.addEventListener("click", function () { select(key); showPage("page-buildings"); });
+    g.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(key); showPage("page-buildings"); }
+    });
     rectEls[key] = r; kWTexts[key] = kw;
-    badge.textContent = FLOORS[key] + (T.buildings[key].has_solar ? "  \u2600 PV" : "");
-    nm.textContent = T.buildings[key].label.replace("Elmina ", "").replace("SDP ", "");
+    badge.textContent = T.buildings[key].town_label + (T.buildings[key].has_solar ? "  ·  PV" : "");
+    nm.textContent = T.buildings[key].label.length > 24 ? T.buildings[key].label.slice(0, 22) + "…" : T.buildings[key].label;
   });
 }
 function heat(s) { return s >= 0.8 ? "#f6cdcb" : s >= 0.5 ? "#fdecc8" : "#d9efe0"; }
@@ -724,16 +956,18 @@ function mkChart(canvasId, drawFn) {
   var W = c.width = c.clientWidth * 2;
   var H = c.height = parseInt(c.getAttribute("height")) * 2;
   var x = c.getContext("2d");
-  x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#fff"; x.fillRect(0, 0, W, H);
   drawFn(x, W, H);
 }
 function axes(x, W, H, maxV, unit) {
-  x.strokeStyle = "#eef1f5"; x.lineWidth = 1;
-  for (var g = 0; g <= 4; g++) {
-    var gy = 30 + (H - 76) * g / 4;
-    x.beginPath(); x.moveTo(52, gy); x.lineTo(W - 20, gy); x.stroke();
+  if (PLOT.grid) {
+    x.strokeStyle = "#e7ebf0"; x.lineWidth = 1;
+    for (var g = 0; g <= 4; g++) {
+      var gy = 30 + (H - 76) * g / 4;
+      x.beginPath(); x.moveTo(52, gy); x.lineTo(W - 20, gy); x.stroke();
+    }
   }
-  x.fillStyle = "#5a6472"; x.font = "600 15px Calibri"; x.textAlign = "right";
+  x.fillStyle = "#6b7280"; x.font = "600 14px Segoe UI"; x.textAlign = "right";
   x.fillText(Math.round(maxV) + " " + unit, 46, 44);
   x.fillText(Math.round(maxV / 2) + "", 46, 30 + (H - 76) * 2 / 4 + 5);
   x.fillText("0", 46, H - 46);
@@ -743,6 +977,13 @@ function axes(x, W, H, maxV, unit) {
   x.fillText("12:00", px(24) - 18, H - 18); x.fillText("18:00", px(36) - 18, H - 18);
   x.fillText("24:00", W - 70, H - 18);
   return px;
+}
+function drawTimeTicks(x, W, H, left, right, bottom) {
+  x.fillStyle = "#6b7280"; x.font = "12px Segoe UI"; x.textAlign = "center";
+  [0,12,24,36,47].forEach(function (i, n) {
+    var px = left + (right - left) * i / (N - 1);
+    x.fillText(["00:00","06:00","12:00","18:00","24:00"][n], px, bottom);
+  });
 }
 function dayChart(key) {
   mkChart("chart-day", function (x, W, H) {
@@ -766,11 +1007,11 @@ function dayChart(key) {
         i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
       }); x.stroke();
     }
-    x.strokeStyle = "#2f6fbf"; x.lineWidth = 3.5; x.beginPath();
+    x.strokeStyle = "#E88B33"; x.lineWidth = 3.5; x.beginPath();
     (mode === "dumb" ? b.dumb : b.wattwise).net_kw.forEach(function (v, i) {
       i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
     }); x.stroke();
-    x.strokeStyle = "#e88b33"; x.lineWidth = 2;
+    x.strokeStyle = "#E88B33"; x.lineWidth = 2;
     x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 46); x.stroke();
   });
 }
@@ -780,18 +1021,25 @@ function zoneChart(key) {
     var lo = 23.4, hi = 26.6;
     var px = function (i) { return 52 + (W - 72) * i / (N - 1); };
     var py = function (v) { return H - 40 - (H - 64) * (v - lo) / (hi - lo); };
-    x.fillStyle = "rgba(16,124,65,.08)"; x.fillRect(52, py(26), W - 72, py(24) - py(26));
-    x.strokeStyle = "#9fc3aa"; x.setLineDash([7, 7]); x.lineWidth = 1.5;
-    [24, 26].forEach(function (t) { x.beginPath(); x.moveTo(52, py(t)); x.lineTo(W - 20, py(t)); x.stroke(); });
-    x.setLineDash([]);
-    x.strokeStyle = "#e88b33"; x.lineWidth = 3; x.beginPath();
+    if (FLAGS.band) {
+      x.fillStyle = "rgba(46,125,107,.10)"; x.fillRect(52, py(26), W - 72, py(24) - py(26));
+      x.strokeStyle = "#2E7D6B"; x.setLineDash([7, 6]); x.lineWidth = 1.4;
+      [24, 26].forEach(function (t) { x.beginPath(); x.moveTo(52, py(t)); x.lineTo(W - 20, py(t)); x.stroke(); });
+      x.setLineDash([]);
+    }
+    if (PLOT.grid) {
+      x.strokeStyle = "#edf0f4"; x.lineWidth = 1;
+      for (var gy = 0; gy <= 4; gy++) { var y = 24 + (H - 56) * gy / 4; x.beginPath(); x.moveTo(52, y); x.lineTo(W - 20, y); x.stroke(); }
+    }
+    x.strokeStyle = "#E88B33"; x.lineWidth = 3; x.beginPath();
     b.wattwise.zone_c.forEach(function (v, i) { i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)); });
     x.stroke();
     x.strokeStyle = "#e88b3388"; x.lineWidth = 1.5;
     x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 40); x.stroke();
-    x.fillStyle = "#5a6472"; x.font = "600 14px Calibri"; x.textAlign = "right";
+    x.fillStyle = "#6b7280"; x.font = "600 13px Segoe UI"; x.textAlign = "right";
     x.fillText("26\u00B0", 46, py(26) + 5); x.fillText("24\u00B0", 46, py(24) + 5);
     x.textAlign = "left";
+    drawTimeTicks(x, W, H, 52, W - 20, H - 12);
     // caption reflects the data, not a promise
     var violations = b.wattwise.zone_c.filter(function (z) { return z > 26.01; }).length;
     x.fillStyle = violations ? "#9c2226" : "#5a6472";
@@ -805,32 +1053,38 @@ function forecastChart(canvasId, fcArr, actArr, color, unit) {
     var maxV = Math.max.apply(null, actArr.concat(fcArr)) * 1.06;
     var px = axes(x, W, H, maxV, unit);
     function py(v) { return H - 46 - (H - 76) * v / maxV; }
-    x.fillStyle = "rgba(47,111,191,.10)";
-    x.beginPath(); x.moveTo(px(0), py(0));
-    actArr.forEach(function (v, i) { x.lineTo(px(i), py(v)); });
-    x.lineTo(px(N - 1), py(0)); x.closePath(); x.fill();
-    x.strokeStyle = "#8b95a3"; x.lineWidth = 2; x.beginPath();
-    actArr.forEach(function (v, i) { i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)); });
-    x.stroke();
-    x.strokeStyle = color; x.lineWidth = 3; x.setLineDash([8, 5]); x.beginPath();
-    var started = false;
-    fcArr.forEach(function (v, i) {
-      if (v == null) { started = false; return; }
-      started ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
-      started = true;
-    });
-    x.stroke(); x.setLineDash([]);
+    if (FLAGS.actual) {
+      x.fillStyle = "rgba(107,114,128,.10)";
+      x.beginPath(); x.moveTo(px(0), py(0));
+      actArr.forEach(function (v, i) { x.lineTo(px(i), py(v)); });
+      x.lineTo(px(N - 1), py(0)); x.closePath(); x.fill();
+      x.strokeStyle = "#6B7280"; x.lineWidth = 2; x.beginPath();
+      actArr.forEach(function (v, i) { i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)); });
+      x.stroke();
+    }
+    if (FLAGS.forecast) {
+      x.strokeStyle = color; x.lineWidth = 3; x.setLineDash([8, 5]); x.beginPath();
+      var started = false;
+      fcArr.forEach(function (v, i) {
+        if (v == null) { started = false; return; }
+        started ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
+        started = true;
+      });
+      x.stroke(); x.setLineDash([]);
+    }
     if (step < N - 1) {
       // "now" line only while the day is still running
       x.strokeStyle = "#e88b33"; x.lineWidth = 2;
       x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 46); x.stroke();
     }
-    x.strokeStyle = "#8b95a3"; x.lineWidth = 2;
-    x.beginPath(); x.moveTo(64, 40); x.lineTo(92, 40); x.stroke();
-    x.fillStyle = "#5a6472"; x.fillText("actual", 98, 45);
-    x.strokeStyle = color; x.lineWidth = 3; x.setLineDash([8, 5]);
-    x.beginPath(); x.moveTo(170, 40); x.lineTo(198, 40); x.stroke(); x.setLineDash([]);
-    x.fillStyle = "#5a6472"; x.fillText("WATTWISE-1 forecast (30 min ahead)", 204, 45);
+    if (PLOT.legend) {
+      x.font = "600 14px Segoe UI"; x.textAlign = "left";
+      x.strokeStyle = "#6B7280"; x.lineWidth = 2; x.beginPath(); x.moveTo(64, 40); x.lineTo(92, 40); x.stroke();
+      x.fillStyle = "#6b7280"; x.fillText("Actual", 98, 45);
+      x.strokeStyle = color; x.lineWidth = 3; x.setLineDash([8, 5]);
+      x.beginPath(); x.moveTo(170, 40); x.lineTo(198, 40); x.stroke(); x.setLineDash([]);
+      x.fillStyle = "#6b7280"; x.fillText("WATTWISE-1 forecast (30 min ahead)", 204, 45);
+    }
   });
 }
 
@@ -943,6 +1197,7 @@ function renderOverview() {
     totSave += b.bill_dumb_rm - b.bill_wattwise_rm;
   });
   var draw = 0, peakB = 0;
+  var scopeName = townScope === "all" ? "Portfolio" : "Township";
   var townPk = 0, townPkT = 0;
   for (var i = 0; i < N; i++) {
     var s = 0;
@@ -954,14 +1209,14 @@ function renderOverview() {
     draw += v; peakB = Math.max(peakB, v);
   });
   document.getElementById("ov-totals").innerHTML =
-    '<div class="kpi"><div class="lbl">Township draw now</div><div class="val">' + Math.round(draw) +
+    '<div class="kpi"><div class="lbl">' + scopeName + ' draw now</div><div class="val">' + Math.round(draw) +
     ' <span class="unit">kW</span></div><div class="dlt">solar ' + Math.round(totSolar) + ' kW</div></div>' +
-    '<div class="kpi"><div class="lbl">Township coincident peak</div><div class="val">' + Math.round(townPk) +
-    ' <span class="unit">kW</span></div><div class="dlt">@ ' + TIMES[townPkT] + ' (sum of all buildings)</div></div>' +
+    '<div class="kpi"><div class="lbl">' + scopeName + ' coincident peak</div><div class="val">' + Math.round(townPk) +
+    ' <span class="unit">kW</span></div><div class="dlt">@ ' + TIMES[townPkT] + ' (coincident scope total)</div></div>' +
     '<div class="kpi"><div class="lbl">Combined MD bill</div><div class="val">RM ' + Math.round(totBill).toLocaleString() +
     '</div><div class="dlt">per month</div></div>' +
-    '<div class="kpi"><div class="lbl">WattWise saving</div><div class="val">RM ' + Math.round(totSave).toLocaleString() +
-    '</div><div class="dlt good">per month, zero capex</div></div>';
+    '<div class="kpi"><div class="lbl">Modeled WattWise saving</div><div class="val">RM ' + Math.round(totSave).toLocaleString() +
+    '</div><div class="dlt good">per month · synthetic scenario</div></div>';
   var rows = "";
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
@@ -1021,10 +1276,133 @@ function renderOverview() {
   if (anEl) anEl.innerHTML = an;
 }
 
+function planDayLabel(iso) {
+  var d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-GB", { weekday:"short", day:"2-digit", month:"short", year:"numeric" });
+}
+function initializePlanner() {
+  var weeks = document.getElementById("plan-week");
+  weeks.innerHTML = T.weeks.map(function (w, i) { return '<option value="' + i + '">' + w.label + '</option>'; }).join("");
+  var scopes = document.getElementById("plan-scope");
+  var html = '<option value="selected">Selected building · ' + T.buildings[selected].label + '</option><option value="portfolio">Portfolio · all buildings</option>';
+  Object.keys(T.towns).forEach(function (town) {
+    html += '<option value="town:' + town + '">Town · ' + T.towns[town].label + '</option>';
+  });
+  ALL_ORDER.forEach(function (key) {
+    html += '<option value="building:' + key + '">Building · ' + T.buildings[key].label + '</option>';
+  });
+  scopes.innerHTML = html; scopes.value = "portfolio";
+  planWeekIdx = T.weeks.findIndex(function (w) { return planDay >= w.monday && planDay <= addDaysIso(w.monday, 6); });
+  if (planWeekIdx < 0) planWeekIdx = 1;
+  weeks.value = planWeekIdx;
+  fillPlanDays();
+  document.getElementById("plan-day").value = planDay;
+  weeks.addEventListener("change", function () {
+    planWeekIdx = +this.value;
+    planDay = T.weeks[planWeekIdx].monday;
+    fillPlanDays(); document.getElementById("plan-day").value = planDay; renderPlanner();
+  });
+  document.getElementById("plan-day").addEventListener("change", function () { setPlannerDate(this.value); });
+  document.getElementById("plan-prev").addEventListener("click", function () { movePlannerDay(-1); });
+  document.getElementById("plan-next").addEventListener("click", function () { movePlannerDay(1); });
+  scopes.addEventListener("change", renderPlanner);
+}
+function addDaysIso(iso, days) {
+  var p = iso.split("-").map(Number);
+  return new Date(Date.UTC(p[0], p[1] - 1, p[2] + days)).toISOString().slice(0, 10);
+}
+function fillPlanDays() {
+  var monday = T.weeks[planWeekIdx].monday;
+  var html = "";
+  for (var i = 0; i < 7; i++) {
+    var date = addDaysIso(monday, i);
+    html += '<option value="' + date + '">' + planDayLabel(date) + '</option>';
+  }
+  document.getElementById("plan-day").innerHTML = html;
+}
+function setPlannerDate(date) {
+  var idx = T.weeks.findIndex(function (w) { return date >= w.monday && date <= addDaysIso(w.monday, 6); });
+  if (idx < 0) return;
+  planDay = date; planWeekIdx = idx;
+  document.getElementById("plan-week").value = idx;
+  fillPlanDays(); document.getElementById("plan-day").value = date;
+  renderPlanner();
+}
+function movePlannerDay(delta) {
+  var dates = T.week_schedule[ALL_ORDER[0]].days.map(function (d) { return d.date; });
+  var i = dates.indexOf(planDay), j = i + delta;
+  if (i >= 0 && j >= 0 && j < dates.length) setPlannerDate(dates[j]);
+}
+function plannerKeys() {
+  var value = document.getElementById("plan-scope").value;
+  if (value === "portfolio") return ALL_ORDER.slice();
+  if (value.indexOf("town:") === 0) return T.towns[value.slice(5)].buildings.slice();
+  if (value.indexOf("building:") === 0) return [value.slice(9)];
+  return selected ? [selected] : [];
+}
+function renderPlanner() {
+  if (!T || !planDay) return;
+  var keys = plannerKeys();
+  var records = keys.map(function (key) {
+    var days = T.week_schedule[key] && T.week_schedule[key].days;
+    return days ? days.find(function (d) { return d.date === planDay; }) : null;
+  }).filter(Boolean);
+  if (!records.length) {
+    document.getElementById("plan-summary").textContent = "No dispatch data for this scope and date.";
+    return;
+  }
+  var cooling = Array(N).fill(0), grid = Array(N).fill(0), solar = Array(N).fill(0);
+  var maxZone = 0, savings = 0;
+  records.forEach(function (r) {
+    for (var i = 0; i < N; i++) {
+      cooling[i] += r.chiller_kw[i] || 0;
+      grid[i] += r.net_kw[i] || 0;
+      solar[i] += r.solar_kw[i] || 0;
+      maxZone = Math.max(maxZone, r.zone_c[i] || 0);
+    }
+    savings += (r.bill_dumb_rm || 0) - (r.bill_wattwise_rm || 0);
+  });
+  var coolingKwh = cooling.reduce(function (a, b) { return a + b; }, 0) * 0.5;
+  var peakGrid = Math.max.apply(null, grid);
+  var comfort = maxZone <= 26.01;
+  document.getElementById("plan-summary").innerHTML =
+    '<div><span>Cooling dispatched</span><b>' + Math.round(coolingKwh).toLocaleString() + ' <i>kWh/day</i></b></div>' +
+    '<div><span>Peak grid draw</span><b>' + Math.round(peakGrid).toLocaleString() + ' <i>kW</i></b></div>' +
+    '<div><span>Modeled bill difference</span><b>RM ' + Math.round(savings).toLocaleString() + '</b></div>' +
+    '<div><span>Max zone temperature</span><b class="' + (comfort ? 'good' : 'warn') + '">' + maxZone.toFixed(1) + ' °C · ' + (comfort ? 'within range' : 'check comfort') + '</b></div>';
+  var table = '<tr><th>Time</th><th class="num">Cooling kW</th><th class="num">Grid kW</th><th class="num">Solar kW</th><th>Rule</th><th class="num">Max zone °C</th></tr>';
+  for (var j = 0; j < N; j++) {
+    var actions = [];
+    records.forEach(function (r) { if (actions.indexOf(r.action[j]) < 0) actions.push(r.action[j]); });
+    var zone = Math.max.apply(null, records.map(function (r) { return r.zone_c[j]; }));
+    table += '<tr' + (j >= 17 && j < 21 ? ' class="peak-row"' : '') + '><td>' + TIMES[j] + '</td><td class="num">' + cooling[j].toFixed(1) + '</td><td class="num">' + grid[j].toFixed(1) + '</td><td class="num">' + solar[j].toFixed(1) + '</td><td>' + (actions.length === 1 ? actions[0].replace(/-/g, " ") : "Mixed") + '</td><td class="num">' + zone.toFixed(1) + '</td></tr>';
+  }
+  document.getElementById("plan-table").innerHTML = table;
+  var c = document.getElementById("plan-chart");
+  if (!c || !c.clientWidth) return;
+  mkChart("plan-chart", function (x, W, H) {
+    var maxV = Math.max.apply(null, cooling.concat(grid, solar)) * 1.08 || 1;
+    var px = axes(x, W, H, maxV, "kW");
+    var py = function (v) { return H - 46 - (H - 76) * v / maxV; };
+    if (FLAGS.peak) {
+      var p0 = TIMES.indexOf("08:30"), p1 = TIMES.indexOf("10:30");
+      x.fillStyle = "rgba(232,139,51,.09)"; x.fillRect(px(p0), 26, px(p1) - px(p0), H - 72);
+    }
+    function line(values, color, dash) {
+      x.strokeStyle = color; x.lineWidth = 3; x.setLineDash(dash || []); x.beginPath();
+      values.forEach(function (v, i) { i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)); });
+      x.stroke(); x.setLineDash([]);
+    }
+    if (PLAN_FLAGS.chiller) line(cooling, "#E88B33");
+    if (PLAN_FLAGS.grid) line(grid, "#8491A0");
+    if (PLAN_FLAGS.solar) line(solar, "#2E7D6B", [7, 5]);
+  });
+}
 function renderScheduler() {
+  renderPlanner();
   if (mode !== "wattwise") {
     document.getElementById("sch-rules").innerHTML =
-      '<tr><td colspan="4" style="padding:14px;color:var(--muted)">Scheduler offline &mdash; switch the scenario to <b>WattWise</b> (Home tab or command bar: <span style="font-family:Consolas">mode wattwise</span>) to see live rule states.</td></tr>';
+      '<tr><td colspan="4" style="padding:14px;color:var(--muted)">Scheduler simulation paused &mdash; switch the scenario to <b>WattWise</b> (command: <span style="font-family:Consolas">mode wattwise</span>) to see rule states.</td></tr>';
     document.getElementById("sch-gauges").innerHTML = "";
     document.getElementById("sch-log").innerHTML = "";
     return;
@@ -1076,12 +1454,19 @@ function comfortChart() {
     var lo = 23.4, hi = 26.8;
     var px = function (i) { return 140 + (W - 170) * i / (N - 1); };
     var py = function (v) { return H - 46 - (H - 80) * (v - lo) / (hi - lo); };
-    x.fillStyle = "rgba(16,124,65,.08)"; x.fillRect(140, py(26), W - 170, py(24) - py(26));
-    x.strokeStyle = "#9fc3aa"; x.setLineDash([7, 7]); x.lineWidth = 1.5;
-    [24, 26].forEach(function (t) { x.beginPath(); x.moveTo(140, py(t)); x.lineTo(W - 30, py(t)); x.stroke(); });
-    x.setLineDash([]);
-    var colors = ["#d13438", "#2f6fbf", "#e88b33", "#8b5cf6", "#0ea5a0"];
-    ORDER.forEach(function (k, ki) {
+    if (FLAGS.band) {
+      x.fillStyle = "rgba(46,125,107,.10)"; x.fillRect(140, py(26), W - 170, py(24) - py(26));
+      x.strokeStyle = "#2E7D6B"; x.setLineDash([7, 6]); x.lineWidth = 1.4;
+      [24, 26].forEach(function (t) { x.beginPath(); x.moveTo(140, py(t)); x.lineTo(W - 30, py(t)); x.stroke(); });
+      x.setLineDash([]);
+    }
+    if (PLOT.grid) {
+      x.strokeStyle = "#edf0f4"; x.lineWidth = 1;
+      for (var gy = 0; gy <= 4; gy++) { var y = 28 + (H - 62) * gy / 4; x.beginPath(); x.moveTo(140, y); x.lineTo(W - 30, y); x.stroke(); }
+    }
+    var colors = ["#E88B33", "#2E7D6B", "#8491A0", "#D17A2D", "#437A70"];
+    var comfortKeys = selected ? [selected] : ORDER.slice(0, 4);
+    comfortKeys.forEach(function (k, ki) {
       x.strokeStyle = colors[ki % colors.length]; x.lineWidth = 3; x.beginPath();
       T.buildings[k].wattwise.zone_c.forEach(function (v, i) {
         i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v));
@@ -1092,8 +1477,9 @@ function comfortChart() {
     });
     x.strokeStyle = "#e88b33"; x.lineWidth = 2;
     x.beginPath(); x.moveTo(px(step), 30); x.lineTo(px(step), H - 46); x.stroke();
-    x.fillStyle = "#5a6472"; x.font = "600 14px Calibri";
+    x.fillStyle = "#6b7280"; x.font = "600 13px Segoe UI";
     x.fillText("24\u00B0", 100, py(24) + 5); x.fillText("26\u00B0", 100, py(26) + 5);
+    drawTimeTicks(x, W, H, 140, W - 30, H - 12);
   });
 }
 
@@ -1106,26 +1492,38 @@ function renderReports() {
       // kWh -> GJ: 1 kWh = 3.6 MJ = 0.0036 GJ, annualised x365
       return kwh * 3.6 / 1000 * 365;
     });
-    var maxG = Math.max(40000, Math.max.apply(null, gj) * 1.1);
-    var bw = (W - 220) / ORDER.length;
-    var py = function (v) { return H - 60 - (H - 100) * v / maxG; };
-    x.strokeStyle = "#d13438"; x.lineWidth = 2; x.setLineDash([8, 5]);
-    x.beginPath(); x.moveTo(180, py(21600)); x.lineTo(W - 30, py(21600)); x.stroke();
+    var maxG = Math.max(24000, Math.max.apply(null, gj) * 1.12);
+    var left = 112, right = W - 28, top = 30, bottom = H - 60;
+    var bw = (right - left) / Math.max(ORDER.length, 1);
+    var py = function (v) { return bottom - (bottom - top) * v / maxG; };
+    if (PLOT.grid) {
+      x.strokeStyle = "#e7ebf0"; x.lineWidth = 1;
+      for (var g = 0; g <= 4; g++) {
+        var value = maxG * (4 - g) / 4, y = top + (bottom - top) * g / 4;
+        x.beginPath(); x.moveTo(left, y); x.lineTo(right, y); x.stroke();
+        x.fillStyle = "#6b7280"; x.font = "12px Segoe UI"; x.textAlign = "right";
+        x.fillText(Math.round(value).toLocaleString(), left - 8, y + 4);
+      }
+    }
+    x.strokeStyle = "#EF4444"; x.lineWidth = 2; x.setLineDash([8, 5]);
+    x.beginPath(); x.moveTo(left, py(21600)); x.lineTo(right, py(21600)); x.stroke();
     x.setLineDash([]);
-    x.fillStyle = "#d13438"; x.font = "700 15px Calibri";
-    x.fillText("EECA threshold 21,600 GJ/yr", 190, py(21600) - 8);
+    x.fillStyle = "#b44942"; x.font = "600 12px Segoe UI"; x.textAlign = "left";
+    x.fillText("EECA threshold · 21,600 GJ/year", left + 4, py(21600) - 7);
     ORDER.forEach(function (k, i) {
-      var X = 200 + i * bw;
-      x.fillStyle = gj[i] > 21600 ? "#f0b8b5" : "#cfe8d8";
-      x.fillRect(X, py(gj[i]), bw * 0.55, H - 60 - py(gj[i]));
-      x.strokeStyle = gj[i] > 21600 ? "#d13438" : "#107c41"; x.lineWidth = 1.5;
-      x.strokeRect(X, py(gj[i]), bw * 0.55, H - 60 - py(gj[i]));
-      x.fillStyle = "#1f2430"; x.font = "600 13.5px Calibri";
-      x.save(); x.translate(X + bw * 0.28, H - 46); x.rotate(-0.32);
-      x.fillText(T.buildings[k].label.replace("Elmina ", "").replace("SDP ", ""), 0, 0);
-      x.restore();
-      x.font = "700 14px Consolas";
-      x.fillText(Math.round(gj[i]).toLocaleString() + " GJ", X + bw * 0.6, py(gj[i]) + 5);
+      var X = left + i * bw + bw * 0.2, barW = Math.max(8, bw * 0.55);
+      var barTop = py(gj[i]), barH = bottom - barTop;
+      x.fillStyle = gj[i] > 21600 ? "#efb8ae" : "#a9d0c4";
+      x.fillRect(X, barTop, barW, barH);
+      x.strokeStyle = gj[i] > 21600 ? "#EF4444" : "#2E7D6B"; x.lineWidth = 1.3;
+      x.strokeRect(X, barTop, barW, barH);
+      x.fillStyle = "#1f2937"; x.font = "600 11px Segoe UI"; x.textAlign = "center";
+      var label = T.buildings[k].label.replace("Elmina ", "").replace("SDP ", "");
+      if (label.length > 13) label = label.slice(0, 12) + "…";
+      x.save(); x.translate(X + barW / 2, bottom + 28); x.rotate(-0.38);
+      x.fillText(label, 0, 0); x.restore();
+      x.fillStyle = "#1f2937"; x.font = "600 11px Consolas,monospace"; x.textAlign = "center";
+      x.fillText(Math.round(gj[i]).toLocaleString(), X + barW / 2, Math.max(top + 12, barTop - 5));
     });
     var over = gj.filter(function (v) { return v > 21600; }).length;
     document.getElementById("rep-eeca-note").textContent =
@@ -1154,12 +1552,12 @@ function renderReports() {
 
 /* ================= csv export ================= */
 function exportCsv() {
-  var lines = ["building,time,mode,net_grid_kw,chiller_kw,zone_c,stored_kwh,solar_kw,action"];
+  var lines = ["town,building,time,mode,net_grid_kw,chiller_kw,zone_c,stored_kwh,solar_kw,action"];
   ORDER.forEach(function (k) {
     var b = T.buildings[k];
     ["dumb", "wattwise"].forEach(function (m) {
       for (var i = 0; i < N; i++) {
-        lines.push([b.label, TIMES[i], m, b[m].net_kw[i], b[m].chiller_kw[i],
+        lines.push([b.town_label, b.label, TIMES[i], m, b[m].net_kw[i], b[m].chiller_kw[i],
           b[m].zone_c[i], b[m].stored_kwh[i], b[m].solar_kw[i], b[m].action[i]].join(","));
       }
     });
@@ -1167,46 +1565,109 @@ function exportCsv() {
   var blob = new Blob([lines.join("\n")], { type: "text/csv" });
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "wattwise_township_demo.csv";
+  a.download = "wattwise_" + (townScope === "all" ? "portfolio" : townScope) + "_demo.csv";
   a.click();
 }
 
 /* ================= command bar ================= */
 function runCommand(raw) {
-  var out = "";
-  var cmd = raw.trim().toLowerCase();
-  var m;
+  var out = "", cmd = raw.trim().toLowerCase(), m;
   if (cmd === "help") {
-    out = "commands: select <building> | set time HH:MM | mode dumb|wattwise | play | pause | reset | tab <name> | panel <map|layers|analytics|settings>";
+    out = "town <name|1-3> · select <building|#> · back · next/prev · week <1-3> · day <mon-sun|date> · set time HH:MM · mode dumb|wattwise · play/pause/reset · tab <name> · panel <name> · export";
+  } else if ((m = cmd.match(/^town (.+)/))) {
+    var town = resolveTownUi(m[1]);
+    if (town) {
+      setTown(town);
+      if (ribbonPage === "page-scheduler") { document.getElementById("plan-scope").value = "town:" + town; renderPlanner(); }
+      else if (ribbonPage !== "page-forecast") showPage("page-overview");
+      out = "town = " + T.towns[town].label;
+    }
+    else out = "no town matches '" + m[1] + "'";
+  } else if (/^[1-5]$/.test(cmd)) {
+    var shortcutPages = ["page-overview","page-buildings","page-forecast","page-scheduler","page-reports"];
+    showPage(shortcutPages[+cmd - 1]); out = "tab = " + cmd;
+  } else if (cmd === "back") {
+    var planScopeValue = document.getElementById("plan-scope").value;
+    if (ribbonPage === "page-scheduler" && (planScopeValue.indexOf("building:") === 0 || planScopeValue === "selected")) {
+      var fromBuilding = planScopeValue === "selected" ? selected : planScopeValue.slice(9), townId = T.buildings[fromBuilding].town;
+      document.getElementById("plan-scope").value = "town:" + townId; renderPlanner(); out = "back to " + T.towns[townId].label;
+    } else if (ribbonPage === "page-scheduler" && planScopeValue.indexOf("town:") === 0) {
+      document.getElementById("plan-scope").value = "portfolio"; renderPlanner(); out = "back to portfolio dispatch";
+    } else if (ribbonPage === "page-buildings" && townScope !== "all") { showPage("page-overview"); out = "back to " + T.towns[townScope].label; }
+    else if (townScope !== "all") { setTown("all"); showPage("page-overview"); out = "back to all townships"; }
+    else { showPage("page-overview"); out = "at portfolio overview"; }
   } else if ((m = cmd.match(/^select (.+)/))) {
-    var key = null;
-    ORDER.forEach(function (k) { if (k.indexOf(m[1]) === 0 || m[1] === k) key = k; });
-    if (!key) ORDER.forEach(function (k) { if (T.buildings[k].label.toLowerCase().indexOf(m[1]) >= 0) key = k; });
-    if (key) { select(key); showPage("page-buildings"); out = "selected " + T.buildings[key].label; }
-    else out = "no building matches '" + m[1] + "'";
-  } else if ((m = cmd.match(/^set time (\d{1,2}):(\d{2})/))) {
+    var arg = m[1], key = null;
+    if (townScope === "all") {
+      var townPick = resolveTownUi(arg);
+      if (townPick) {
+        setTown(townPick);
+        if (ribbonPage === "page-scheduler") { document.getElementById("plan-scope").value = "town:" + townPick; renderPlanner(); }
+        else if (ribbonPage !== "page-forecast") showPage("page-overview");
+        out = "town = " + T.towns[townPick].label;
+      }
+    }
+    if (!out) {
+      ORDER.forEach(function (k, i) { if (arg === k || arg === String(i + 1) || k.indexOf(arg) === 0) key = k; });
+      if (!key) ORDER.forEach(function (k) { if (T.buildings[k].label.toLowerCase().indexOf(arg) >= 0) key = k; });
+      if (key) {
+        select(key);
+        if (ribbonPage === "page-scheduler") { document.getElementById("plan-scope").value = "building:" + key; renderPlanner(); }
+        else if (ribbonPage !== "page-buildings" && ribbonPage !== "page-forecast") showPage("page-buildings");
+        out = "selected " + T.buildings[key].label;
+      }
+      else out = "no building matches '" + arg + "'";
+    }
+  } else if ((m = cmd.match(/^set time (\d{1,2}):(\d{2})$/))) {
     var hh = +m[1], mm = +m[2];
-    // the grid is 30-minute; snap to the nearest half hour (report the snap)
-    var idx = Math.min(47, Math.round((hh * 60 + mm) / 30));
-    playing = false; step = idx; refresh();
-    out = "time set to " + TIMES[step] + (TIMES[step] !== (hh + ":" + ("0" + mm).slice(-2)) ? " (snapped to the 30-min grid)" : "");
-  } else if ((m = cmd.match(/^mode (dumb|wattwise|baseline)/))) {
-    setMode(m[1] === "baseline" ? "dumb" : m[1]);
-    out = "mode = " + mode;
-  } else if (cmd === "play") { playing = true; out = "playing"; }
+    if (hh > 23 || mm > 59) out = "time must be between 00:00 and 23:59";
+    else {
+      var idx = Math.min(47, Math.max(0, Math.round((hh * 60 + mm) / 30)));
+      playing = false; step = idx; refresh();
+      out = "time set to " + TIMES[step] + (TIMES[step] !== (("0" + hh).slice(-2) + ":" + ("0" + mm).slice(-2)) ? " (snapped to the 30-minute grid)" : "");
+    }
+  } else if ((m = cmd.match(/^mode (dumb|wattwise|baseline|wise)$/))) {
+    setMode(m[1] === "baseline" || m[1] === "dumb" ? "dumb" : "wattwise"); out = "mode = " + mode;
+  } else if ((m = cmd.match(/^week ([1-3])$/))) {
+    document.getElementById("plan-week").value = +m[1] - 1;
+    planWeekIdx = +m[1] - 1; planDay = T.weeks[planWeekIdx].monday;
+    fillPlanDays(); document.getElementById("plan-day").value = planDay;
+    renderPlanner(); showPage("page-scheduler"); out = "planner week = " + m[1];
+  } else if ((m = cmd.match(/^day (.+)$/))) {
+    var argDay = m[1], dayIndex = {mon:0,monday:0,tue:1,tuesday:1,wed:2,wednesday:2,thu:3,thursday:3,fri:4,friday:4,sat:5,saturday:5,sun:6,sunday:6};
+    var dayDate = Object.prototype.hasOwnProperty.call(dayIndex, argDay) ? addDaysIso(T.weeks[planWeekIdx].monday, dayIndex[argDay]) : argDay;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dayDate) && T.week_schedule[ALL_ORDER[0]].days.some(function (d) { return d.date === dayDate; })) {
+      setPlannerDate(dayDate); showPage("page-scheduler"); out = "planner day = " + planDayLabel(dayDate);
+    } else out = "day: use mon|tue|wed|thu|fri|sat|sun or a date in the three-week schedule";
+  } else if (cmd === "prev" || cmd === "next") {
+    if (ribbonPage === "page-scheduler") { movePlannerDay(cmd === "prev" ? -1 : 1); out = "planner day = " + planDayLabel(planDay); }
+    else { stepSelect(cmd === "prev" ? -1 : 1); out = "selected " + T.buildings[selected].label; }
+  } else if (cmd === "set time" || cmd === "set") out = "usage: set time HH:MM";
+  else if (cmd === "play") { playing = true; out = "playing"; }
   else if (cmd === "pause") { playing = false; out = "paused"; }
   else if (cmd === "reset") { playing = false; step = 0; refresh(); out = "reset to 00:00"; }
+  else if (cmd === "export") { exportCsv(); out = "township CSV exported"; }
   else if ((m = cmd.match(/^tab (.+)/))) {
-    var pages = { overview: "page-overview", home: "page-overview", buildings: "page-buildings", forecast: "page-forecast", scheduler: "page-scheduler", reports: "page-reports" };
+    var pages = {overview:"page-overview",home:"page-overview",buildings:"page-buildings",building:"page-buildings",forecast:"page-forecast","solar":"page-forecast",scheduler:"page-scheduler",reports:"page-reports"};
     if (pages[m[1]]) { showPage(pages[m[1]]); out = "tab = " + m[1]; }
     else out = "no tab '" + m[1] + "'";
   } else if ((m = cmd.match(/^panel (.+)/))) {
-    if (["map", "layers", "analytics", "settings"].indexOf(m[1]) >= 0) { togglePanel(m[1]); out = "panel = " + m[1]; }
+    if (["map","layers","analytics","settings"].indexOf(m[1]) >= 0) { togglePanel(m[1]); out = "panel = " + m[1]; }
     else out = "no panel '" + m[1] + "'";
-  } else if (cmd === "") { out = ""; }
+  } else if (cmd === "") out = "";
   else out = "unknown command. type help";
   document.getElementById("cmd-out").textContent = out;
   updateStatusWord();
+}
+function resolveTownUi(value) {
+  value = value.toLowerCase();
+  var townKeys = Object.keys(T.towns);
+  if (/^\d+$/.test(value)) return townKeys[+value - 1] || null;
+  for (var i = 0; i < townKeys.length; i++) {
+    var k = townKeys[i], label = T.towns[k].label.toLowerCase();
+    if (k.indexOf(value) === 0 || label.indexOf(value) >= 0) return k;
+  }
+  return null;
 }
 document.getElementById("cmd").addEventListener("keydown", function (e) {
   if (e.key === "Enter") { runCommand(this.value); this.value = ""; }
@@ -1218,6 +1679,7 @@ function updateStatusWord() {
   w.textContent = playing ? "RUNNING" : "READY";
   w.className = "st-word" + (playing ? " run" : "");
   document.getElementById("st-mode").textContent = mode === "dumb" ? "BASELINE" : "WATTWISE";
+  syncPlotControls();
 }
 function refreshTown() {
   var peak = 0, billD = 0, billW = 0;
@@ -1233,11 +1695,11 @@ function refreshTown() {
 
 /* ================= refresh ================= */
 function refresh() {
-  refreshTown(); refreshMap(); updateStatusWord();
+  refreshTown(); refreshMap(); updateStatusWord(); pushEspCommand();
   if (selected) { renderKpis(selected); dayChart(selected); zoneChart(selected); }
   renderForecastKpis();
   renderSolarTable();
-  forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
+  forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#E88B33", "kW");
   renderOverview();
   renderScheduler();
   comfortChart();
@@ -1250,7 +1712,7 @@ function redrawVisible() {
   if (selected) { dayChart(selected); zoneChart(selected); }
   renderForecastKpis();
   renderSolarTable();
-  forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#2f6fbf", "kW");
+  forecastChart("chart-demand-fc", T.forecast.demand_fc_kw, T.forecast.demand_actual_kw, "#E88B33", "kW");
   renderOverview();
   renderScheduler();
   comfortChart();
@@ -1259,6 +1721,8 @@ function redrawVisible() {
 
 function select(key) {
   selected = key;
+  var option = document.querySelector('#plan-scope option[value="selected"]');
+  if (option) option.textContent = "Selected building · " + T.buildings[key].label;
   var b = T.buildings[key];
   document.getElementById("sel-name").textContent = b.label;
   document.getElementById("sel-sub").textContent =
@@ -1272,6 +1736,79 @@ function setMode(m) {
   renderRibbon();
   refresh();
 }
+function setTown(town) {
+  townScope = town || "all";
+  townControl.value = townScope;
+  ORDER = townScope === "all" ? ALL_ORDER.slice() : T.towns[townScope].buildings.slice();
+  if (ORDER.indexOf(selected) < 0) selected = ORDER[0];
+  var b = T.buildings[selected];
+  document.getElementById("sel-name").textContent = b.label;
+  document.getElementById("sel-sub").textContent = "peak " + Math.round(b.peak_dumb_kw) + " → " + Math.round(b.peak_wattwise_kw) + " kW · shave " + b.shave_pct + "%";
+  var planSelectedOption = document.querySelector('#plan-scope option[value="selected"]');
+  if (planSelectedOption) planSelectedOption.textContent = "Selected building · " + b.label;
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  rectEls = {}; kWTexts = {};
+  buildMap(); renderRibbon(); refresh();
+}
+function espSetStatus(connected, message) {
+  document.getElementById("esp-dot").classList.toggle("connected", connected);
+  document.getElementById("esp-connect-label").textContent = connected ? "ESP32 connected" : "Connect ESP32";
+  document.getElementById("esp-link-state").textContent = message;
+  document.getElementById("esp-disconnect").disabled = !connected;
+}
+async function connectEsp32() {
+  if (!navigator.serial) {
+    espSetStatus(false, "Unavailable in this browser");
+    document.getElementById("cmd-out").textContent = "Web Serial needs Chrome or Edge on localhost or HTTPS.";
+    return;
+  }
+  if (espPort) { await disconnectEsp32(); return; }
+  try {
+    espSetStatus(false, "Choose the WattWise USB serial port…");
+    espPort = await navigator.serial.requestPort();
+    await espPort.open({ baudRate: 115200 });
+    espWriter = espPort.writable.getWriter();
+    espLastLine = "";
+    espSetStatus(true, "Connected · starting device…");
+    await new Promise(function (resolve) { setTimeout(resolve, 1300); });
+    await pushEspCommand();
+  } catch (err) {
+    var failedPort = espPort;
+    espPort = null; espWriter = null;
+    try { if (failedPort) await failedPort.close(); } catch (closeErr) {}
+    espSetStatus(false, err && err.name === "NotFoundError" ? "Connection cancelled" : "Connection failed");
+    document.getElementById("cmd-out").textContent = "ESP32 connection: " + (err && err.message ? err.message : "check the USB port and browser permissions");
+  }
+}
+async function disconnectEsp32() {
+  var writer = espWriter, port = espPort;
+  espWriter = null; espPort = null; espBusy = false; espLastLine = "";
+  try { if (writer) writer.releaseLock(); } catch (err) {}
+  try { if (port) await port.close(); } catch (err) {}
+  espSetStatus(false, "Not connected");
+  document.getElementById("esp-last-command").textContent = "—";
+}
+async function pushEspCommand() {
+  if (!espWriter || espBusy) return;
+  var keys = selected ? [selected] : (townScope !== "all" ? T.towns[townScope].buildings : ALL_ORDER);
+  var kw = keys.reduce(function (sum, key) { return sum + T.buildings[key][mode].chiller_kw[step]; }, 0);
+  var hour = step / 2, state = "NORMAL";
+  if (mode !== "wattwise") state = "DUMB";
+  else if (hour >= 8.5 && hour < 10.5) state = "PEAK";
+  else if (hour >= 5.5 && hour < 8) state = "PRECOOL";
+  var line = "S," + TIMES[step] + "," + mode + "," + state + "," + Math.round(kw);
+  if (line === espLastLine) return;
+  espBusy = true;
+  try {
+    await espWriter.write(new TextEncoder().encode(line + "\n"));
+    espLastLine = line;
+    document.getElementById("esp-last-command").textContent = TIMES[step] + " · " + state + " · " + Math.round(kw) + " kW";
+    espSetStatus(true, "Connected · command stream");
+  } catch (err) {
+    await disconnectEsp32();
+    document.getElementById("esp-link-state").textContent = "Disconnected · write failed";
+  } finally { espBusy = false; }
+}
 
 /* ================= transport ================= */
 document.getElementById("btn-play").onclick = function () { playing = !playing; updateStatusWord(); };
@@ -1281,6 +1818,8 @@ document.getElementById("bld-prev").onclick = function () { stepSelect(-1); };
 document.getElementById("bld-next").onclick = function () { stepSelect(1); };
 document.getElementById("rep-csv").onclick = exportCsv;
 window.addEventListener("resize", redrawVisible);
+document.getElementById("esp-connect").addEventListener("click", connectEsp32);
+document.getElementById("esp-disconnect").addEventListener("click", disconnectEsp32);
 
 /* ================= loop ================= */
 var last = 0, acc = 0;
@@ -1295,17 +1834,25 @@ fetch("./data/township.json").then(function (r) { return r.json(); }).then(funct
   T = json;
   TARIFF = T.tariff || null;       // tariff constants from the data pipeline
   WINDOWS = T.windows || null;     // billed + charged windows, verified
-  TIMES = T.buildings.office_tower.dumb.times;
+  ALL_ORDER = Object.keys(T.buildings);
+  townScope = Object.keys(T.towns)[0]; ORDER = T.towns[townScope].buildings.slice();
+  TIMES = T.buildings[ALL_ORDER[0]].dumb.times;
+  townControl.innerHTML = '<option value="all">All townships</option>' +
+    Object.keys(T.towns).map(function (id) { return '<option value="' + id + '">' + T.towns[id].label + '</option>'; }).join("");
+  townControl.value = townScope;
+  planDay = T.demo_date || T.weeks[1].monday;
   buildMap();
   renderRibbon();
   togglePanel("map");
-  select("mall");
+  select(ALL_ORDER[0]);
+  initializePlanner();
   showPage("page-buildings");
   refresh();
   updateStatusWord();
   requestAnimationFrame(loop);
 }).catch(function () {
-  document.getElementById("sel-name").textContent = "Failed to load township.json - run generate_ui_data.py";
+  document.getElementById("sel-name").textContent = "Township data did not load";
+  document.getElementById("sel-sub").textContent = "Start the dashboard with START-DASHBOARD.bat so its local data file can load.";
 });
 
 })();
