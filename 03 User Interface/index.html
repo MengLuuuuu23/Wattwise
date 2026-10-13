@@ -953,8 +953,11 @@ function refreshMap() {
 function mkChart(canvasId, drawFn) {
   var c = document.getElementById(canvasId);
   if (!c || !c.clientWidth) return;
+  // Canvas height is a backing-store attribute and changes when c.height is set.
+  // Keep the original display height so repeated redraws never grow the plot.
+  if (!c.dataset.chartHeight) c.dataset.chartHeight = c.getAttribute("height") || "180";
   var W = c.width = c.clientWidth * 2;
-  var H = c.height = parseInt(c.getAttribute("height")) * 2;
+  var H = c.height = parseInt(c.dataset.chartHeight, 10) * 2;
   var x = c.getContext("2d");
   x.fillStyle = "#fff"; x.fillRect(0, 0, W, H);
   drawFn(x, W, H);
@@ -1859,3 +1862,4 @@ fetch("./data/township.json").then(function (r) { return r.json(); }).then(funct
 </script>
 </body>
 </html>
+
