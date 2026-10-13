@@ -971,9 +971,10 @@ function axes(x, W, H, maxV, unit) {
     }
   }
   x.fillStyle = "#6b7280"; x.font = "600 14px Segoe UI"; x.textAlign = "right";
-  x.fillText(Math.round(maxV) + " " + unit, 46, 44);
-  x.fillText(Math.round(maxV / 2) + "", 46, 30 + (H - 76) * 2 / 4 + 5);
-  x.fillText("0", 46, H - 46);
+  var maxLabel = unit === "kW" && maxV >= 1000 ? (maxV / 1000).toFixed(1) + " MW" : Math.round(maxV).toLocaleString() + " " + unit;
+  x.fillText(maxLabel, 50, 44);
+  x.fillText(Math.round(maxV / 2).toLocaleString(), 50, 30 + (H - 76) * 2 / 4 + 5);
+  x.fillText("0", 50, H - 46);
   x.textAlign = "left";
   var px = function (i) { return 52 + (W - 72) * i / (N - 1); };
   x.fillText("00:00", 52, H - 18); x.fillText("06:00", px(12) - 18, H - 18);
@@ -1862,4 +1863,5 @@ fetch("./data/township.json").then(function (r) { return r.json(); }).then(funct
 </script>
 </body>
 </html>
+
 
