@@ -450,6 +450,198 @@
     .solar-summary>div { min-width:0; flex:1; padding-right:8px; margin-right:8px; }
     .plot-legend { flex-wrap:wrap; gap:8px; }
   }
+
+  /* WattWise operations workspace, 2026 visual refresh */
+  :root {
+    --bg:#F5F7FA; --panel:#fff; --panel2:#F5F7FA; --border:#D0D7E2; --border2:#E9EDF2;
+    --text:#1F2937; --muted:#6B7280; --faint:#87909D; --accent:#E88B33; --amber:#FFBD59;
+    --excel:#2E7D6B; --excel2:#245F53; --charcoal:#14171D; --good:#10B981; --bad:#EF4444;
+  }
+  body { background:var(--bg); color:var(--text); font-family:Inter,"Segoe UI",Arial,sans-serif; font-size:14px; }
+  header { background:#fff; border-bottom:1px solid var(--border); }
+  .ribbon-tabs { height:98px; padding:0 30px; gap:7px; background:#0B1721; align-items:center; }
+  .brand-mini { width:154px; height:96px; flex:none; padding:0 18px 0 0; }
+  .brand-lockup { display:block; width:146px; height:96px; object-fit:contain; border-radius:4px; }
+  .rtab { height:100%; padding:0 17px; font-size:14px; font-weight:550; color:#D5D9DE; }
+  .rtab:hover { color:#fff; background:#ffffff0a; }
+  .rtab.on { color:#fff; border-bottom:2px solid var(--accent); }
+  .esp-top { border-radius:7px; padding:9px 13px; font-size:12px; background:#ffffff0c; }
+  .esp-dot { box-shadow:none; }
+  .ribbon-toolbar { min-height:42px; height:42px; padding:2px 26px; gap:10px; overflow:hidden; background:#fff; border-bottom:1px solid var(--border2); }
+  .rgroup { position:relative; align-items:center; gap:4px; padding:0 11px 0 0; border-right:1px solid var(--border2); }
+  .rgroup-label-wrap { display:none!important; }
+  .rbtn-wrap { display:flex; }
+  .rbtn { min-width:0; height:30px; padding:0 9px; flex-direction:row; gap:6px; border-radius:6px; }
+  .rbtn svg { width:15px; height:15px; }
+  .rbtn .lbl { font-size:11px; color:#555f6c; white-space:nowrap; }
+  .rbtn.on { background:#FFF4E7; border-color:#F2D7B8; color:#9B5613; }
+  .rbtn.on .lbl { color:#9B5613; }
+  .rgroup-label { display:none!important; }
+  .ribbon-toolbar select { height:29px; border-radius:6px; font-size:11px; }
+  nav { min-height:42px; height:42px; padding:0 28px; gap:18px; background:#fff; border-bottom:1px solid var(--border); }
+  .crumbs { font-size:11.5px; color:#7C8591; }
+  .crumbs b { color:#343D48; font-weight:600; }
+  .scope-control { font-size:11px; }
+  .scope-control select { min-width:150px; max-width:220px; border-radius:6px; padding:6px 9px; font-size:12px; }
+  .cmd-wrap { max-width:360px; padding:4px 9px; background:#F7F8FA; border:1px solid #E5E9EE; border-radius:6px; }
+  #cmd { font-size:11px; }
+  #cmd::placeholder { color:#87909D; }
+  .cmd-out { max-width:200px; font-size:10px; }
+  main { position:relative; background:var(--bg); }
+  .activity { width:48px; padding-top:12px; background:#F5F7FA; border-color:#E4E8ED; }
+  .act-btn { width:36px; height:36px; border-radius:8px; }
+  .act-btn.on { color:var(--charcoal); background:#E9EDF2; }
+  .act-btn.on::before { left:-6px; top:8px; bottom:8px; width:2px; background:var(--accent); }
+  body.panel-map .side, body.panel-layers .side, body.panel-analytics .side, body.panel-settings .side {
+    position:absolute; z-index:8; top:12px; bottom:12px; left:60px; width:420px; max-width:calc(100vw - 84px);
+    border:1px solid #E1E5E9; border-radius:11px; box-shadow:0 18px 48px #14171d20; overflow:hidden;
+  }
+  .side { border:0; background:#fff; }
+  .side-head { min-height:48px; padding:13px 17px; font-size:11px; letter-spacing:.35px; color:#3C4652; }
+  #sitemap { height:100%; min-height:500px; }
+  .side-pad { padding:16px 18px; }
+  .side-pad h4 { margin:18px 0 8px; font-size:10px; letter-spacing:.55px; color:#586372; }
+  .chk { padding:7px 0; font-size:12px; }
+  .chk input { accent-color:var(--accent); }
+  .about-txt { font-size:12px; line-height:1.55; }
+  .command-drawer { margin-top:20px; padding-top:12px; border-top:1px solid #E7EAEE; }
+  .command-drawer summary { color:#65707D; font-size:11px; font-weight:600; cursor:pointer; }
+  .command-drawer p { margin:7px 0; color:#7A8490; font-size:10px; line-height:1.45; }
+  .command-drawer .cmd-wrap { max-width:none; width:100%; margin-top:8px; }
+  .command-drawer #cmd { min-width:0; width:100%; }
+  .map-legend { padding:10px 16px; background:#fff; font-size:10px; }
+  .content { padding:25px clamp(22px,3vw,48px) 34px; background:var(--bg); }
+  .page { max-width:1580px; margin:0 auto; }
+  .portfolio-head { display:flex; align-items:flex-end; justify-content:space-between; margin:0 0 3px; }
+  .portfolio-head h1 { margin-top:6px; font-size:29px; line-height:1.15; font-weight:620; letter-spacing:-.8px; color:var(--charcoal); }
+  .portfolio-head p { margin-top:7px; color:#697381; font-size:13px; }
+  .eyebrow { color:#7A8490; font-size:10px; font-weight:650; letter-spacing:1.2px; }
+  .data-note { color:#7A8490; font-size:11px; }
+  .bld-head { gap:12px; align-items:center; }
+  .bld-nav { width:34px; height:34px; border-radius:8px; background:#fff; color:#525d69; }
+  .bld-title h1 { font-size:28px; font-weight:620; letter-spacing:-.7px; }
+  .bld-title .sub { margin-top:5px; font-size:12px; color:#75808d; }
+  .headline { margin-top:13px; padding:9px 12px; background:#FFF5E8; border:0; border-left:3px solid var(--accent); border-radius:0 6px 6px 0; color:#744b1f; font-size:12px; }
+  .headline.flat { background:#EEF1F4; border-left-color:#9AA3AE; }
+  .kpi-row { margin-top:20px; grid-template-columns:repeat(4,minmax(0,1fr)); border-top:1px solid #DDE2E7; border-bottom:1px solid #DDE2E7; }
+  .kpi { min-height:82px; }
+  .kpi .lbl { padding:12px 14px 3px; color:#717C89; font-size:9px; letter-spacing:.65px; }
+  .kpi .val { padding:1px 14px 0; font-size:23px; letter-spacing:-.4px; font-variant-numeric:tabular-nums; }
+  .kpi .unit { font-size:12px; }
+  .kpi .dlt { padding:2px 14px 10px; color:#697381; font-size:11px; }
+  .chart-card { margin-top:22px; background:transparent; border:0; border-radius:0; }
+  .trend-workspace { margin-top:23px; padding:0 17px 10px; background:#fff; border:1px solid #DDE2E7; border-radius:11px; box-shadow:0 2px 7px #14171d08; }
+  .comfort-workspace { margin-top:26px; padding-top:5px; border-top:1px solid #DDE2E7; }
+  .plot-head { min-height:58px; padding:7px 0; gap:14px; border-bottom:1px solid #E8EBEF; }
+  .chart-card .ttl { padding:0; color:#26313D; font-size:14px; font-weight:620; letter-spacing:-.1px; }
+  .plot-subtitle { margin-top:4px; color:#78828E; font-size:10.5px; }
+  .plot-controls { gap:3px; flex-wrap:nowrap; }
+  .plot-toggle { border:1px solid transparent; border-radius:5px; padding:5px 8px; color:#65707D; font-size:10px; }
+  .plot-toggle:hover { border-color:#D5DBE1; background:#FAFBFC; }
+  .plot-toggle.on { border-color:#EDD1AE; background:#FFF5EA; color:#925115; }
+  .tool-divider { height:20px; margin:0 4px; border-left:1px solid #E1E5E9; }
+  .plot-tool { width:25px; height:25px; padding:0; border:1px solid #E0E4E8; border-radius:5px; background:#fff; color:#586472; font:500 16px/1 "Segoe UI",sans-serif; cursor:pointer; }
+  .plot-tool:hover { border-color:#C5CDD5; background:#F7F8FA; }
+  .plot-tool.fit { width:auto; padding:0 8px; font-size:10px; }
+  .chart-card canvas { width:100%; display:block; }
+  #chart-day { height:270px; }
+  #chart-zone { height:185px; }
+  .plot-legend { gap:17px; padding:3px 2px 2px; color:#707B87; font-size:10px; }
+  .legend-line { border-width:2px; }
+  .action-strip { display:flex; align-items:center; gap:7px; padding-top:12px; border-top:1px solid #E2E6EA; }
+  .action-strip::before { content:"SEQUENCE"; margin-right:5px; color:#77818D; font-size:9px; font-weight:650; letter-spacing:.75px; }
+  .act { border-radius:5px; padding:5px 9px; font-size:10px; }
+  .act.now { background:#FFF4E7; border-color:#EBCDA8; color:#895014; }
+  .fc-intro,.sch-intro { max-width:900px; margin:0 auto 18px 0; font-size:12.5px; line-height:1.6; }
+  .fc-intro b,.sch-intro b { color:var(--charcoal); font-weight:650; }
+  .fc-stats { margin-top:17px; }
+  .solar-summary { margin-top:19px; padding:11px 0; border-color:#DDE2E7; }
+  .solar-summary .big { font-size:23px; }
+  .solar-summary .lab { font-size:10px; }
+  .solar-card { margin-top:16px; border-color:#DDE2E7; }
+  .solar-card summary,.plan-details summary { padding:11px 3px; font-size:11px; }
+  .srow { min-height:32px; }
+  .ov-table { border-collapse:separate; border-spacing:0; font-size:12px; }
+  .ov-table th { background:#F1F3F6; color:#66717D; font-size:9px; letter-spacing:.5px; }
+  .ov-table td,.ov-table th { padding:10px 12px; }
+  .ov-table td { border-color:#E7EAEE; }
+  .ov-table tr.clickable:hover,.ov-table tr.sel { background:#FFF6EC; }
+  .badge { padding:4px 7px; border-radius:4px; font-size:9px; letter-spacing:.3px; }
+  .alarms { font-size:11px; }
+  .alarms div { padding:8px 11px; }
+  .secondary-detail { margin-top:16px; border-top:1px solid #DDE2E7; }
+  .secondary-detail>summary { padding:13px 2px; cursor:pointer; color:#45505D; font-size:12px; font-weight:600; list-style-position:inside; }
+  .secondary-detail[open]>summary { border-bottom:1px solid #E8EBEF; }
+  .secondary-detail .chart-card { margin:0; padding:10px 0 14px; }
+  .planner { margin-top:23px; }
+  .planner-head { align-items:center; border-color:#DDE2E7; }
+  .planner-head h2 { font-size:17px; }
+  .planner-head p { font-size:11px; }
+  .planner-controls { gap:7px; }
+  .planner-controls label { font-size:11px; }
+  .planner-controls select,.plan-nav { border-radius:6px; font-size:11px; }
+  .plan-summary { padding:15px 0; border-color:#DDE2E7; }
+  .plan-summary span { font-size:10px; }
+  .plan-summary b { font-size:16px; }
+  .plan-chart { margin-top:4px!important; }
+  .plan-chart canvas { height:250px; }
+  .gauges { padding:15px 2px; }
+  .gauge { width:min(175px,30%); }
+  .gauge .g-tube { border-radius:5px; }
+  .rep-note { padding:10px 2px; }
+  .rep-actions .rbtn { border-radius:6px; }
+  footer { min-height:40px; padding:5px 22px; gap:17px; background:#fff; color:#6C7682; border-top:1px solid #DDE2E7; font-size:10.5px; }
+  footer b { color:#303A45; }
+  .st-word { color:#9C641F; }
+  .st-word.run { color:#14815F; }
+  .st-sep { opacity:.3; }
+  .transport { gap:7px; }
+  .tbtn { width:27px; height:25px; border-color:#D5DBE1; border-radius:6px; color:#485360; font-size:11px; }
+  .tbtn:hover { background:#F3F5F7; }
+  #scrub { width:min(260px,20vw); accent-color:var(--accent); }
+  .st-clock { color:#28323D; font-size:12px; }
+  button,select,input { font-family:inherit; }
+  button:focus-visible,select:focus-visible,input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  @media(max-width:1050px) {
+    .ribbon-tabs { padding:0 14px; }
+    nav { padding:0 16px; gap:10px; }
+    .cmd-wrap { max-width:280px; }
+    .content { padding:20px 20px 28px; }
+    .plot-head { align-items:flex-start; flex-direction:column; }
+    .plot-controls { flex-wrap:wrap; }
+    .kpi-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .kpi:nth-child(2) { border-right:0; }
+    .kpi:nth-child(n+3) { border-top:1px solid var(--border2); }
+  }
+  @media(max-width:650px) {
+    .ribbon-tabs { height:auto; min-height:76px; padding:0 10px; overflow-x:auto; }
+    .brand-mini { width:116px; height:74px; padding-right:8px; }
+    .brand-lockup { width:108px; height:74px; }
+    .rtab { min-height:76px; padding:0 9px; font-size:11px; white-space:nowrap; }
+    .esp-top { padding:7px 9px; font-size:0; }
+    .ribbon-toolbar { padding-left:8px; overflow-x:auto; }
+    nav { height:auto; min-height:42px; padding:7px 12px; flex-wrap:wrap; }
+    .crumbs { display:none; }
+    .scope-control { margin-left:0; }
+    .cmd-wrap { order:3; flex-basis:100%; max-width:none; }
+    .activity { width:40px; }
+    .content { padding:17px 14px 24px; }
+    .portfolio-head h1,.bld-title h1 { font-size:23px; }
+    .kpi-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .plot-head { gap:8px; }
+    .plot-controls { max-width:100%; }
+    #chart-day { height:235px; }
+    .trend-workspace { padding:0 10px 9px; }
+    body.panel-map .side,body.panel-layers .side,body.panel-analytics .side,body.panel-settings .side { left:46px; width:min(88vw,420px); }
+    .planner-head { align-items:flex-start; flex-direction:column; }
+    .planner-controls { flex-wrap:wrap; }
+    .plan-summary { grid-template-columns:repeat(2,minmax(0,1fr)); row-gap:10px; }
+    .plan-summary>div:nth-child(2) { border-right:0; }
+    .plan-summary>div:nth-child(n+3) { border-top:1px solid var(--border2); padding-top:8px; }
+    footer { gap:8px; padding:5px 8px; }
+    footer>span:nth-of-type(n+4) { display:none; }
+    #scrub { width:80px; }
+  }
 </style>
 </head>
 <body>
@@ -457,11 +649,11 @@
 <!-- ============ RIBBON ============ -->
 <header>
   <div class="ribbon-tabs" id="ribbon-tabs">
-    <div class="brand-mini"><svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><path d="M5 26a15 15 0 0 1 27-10" fill="none" stroke="#FFBD59" stroke-width="3.5" stroke-linecap="round"/><rect x="9" y="19" width="4" height="11" rx="1" fill="#E88B33"/><rect x="16" y="14" width="4" height="16" rx="1" fill="#E88B33"/><path d="M12 29C18 16 25 10 35 8c0 11-4 20-17 23" fill="#2E7D6B"/><path d="M12 29C19 21 26 15 35 8c-1 8-4 14-10 18-4 2-8 3-13 3" fill="#FFBD59"/></svg><span>Watt<b>Wise</b></span></div>
-    <div class="rtab" data-page="page-overview">Home</div>
+    <div class="brand-mini"><img class="brand-lockup" src="./assets/wattwise-logo.png" alt="WattWise"></div>
+    <div class="rtab" data-page="page-overview">Portfolio</div>
     <div class="rtab on" data-page="page-buildings">Buildings</div>
     <div class="rtab" data-page="page-forecast">Solar &amp; Forecast</div>
-    <div class="rtab" data-page="page-scheduler">Scheduler</div>
+    <div class="rtab" data-page="page-scheduler">Dispatch</div>
     <div class="rtab" data-page="page-reports">Reports</div>
     <div class="spacer"></div>
     <button class="esp-top" id="esp-connect" type="button"><span class="esp-dot" id="esp-dot"></span><span id="esp-connect-label">Connect ESP32</span></button>
@@ -473,11 +665,6 @@
 <nav>
   <div class="crumbs" id="crumbs"><b>WattWise</b><span class="sep">&rsaquo;</span>Buildings<span class="sep">&rsaquo;</span><b id="crumb-bld">—</b></div>
   <label class="scope-control"><span>Scope</span><select id="town-select" aria-label="Choose township scope"><option value="all">All townships</option></select></label>
-  <div class="cmd-wrap">
-    <span class="cmd-prompt">&gt;</span>
-    <input type="text" id="cmd" placeholder="command: town elmina · select 1 · set time 09:00 · week 2 · day fri · help" spellcheck="false">
-    <span class="cmd-out" id="cmd-out"></span>
-  </div>
 </nav>
 
 <!-- ============ WORKSPACE ============ -->
@@ -503,7 +690,7 @@
   <section class="side" id="side">
     <div class="side-head"><span id="side-title">Site Map</span></div>
     <div class="side-body" id="side-body">
-      <svg id="sitemap" viewBox="0 0 660 500" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg id="sitemap" viewBox="0 0 660 620" preserveAspectRatio="xMidYMin meet"></svg>
       <div class="side-pad" id="panel-layers" style="display:none">
         <h4>Chart overlays</h4>
         <label class="chk"><input type="checkbox" checked data-flag="peak"> Billed window 8:30–10:30</label>
@@ -529,6 +716,7 @@
         <div class="about-txt esp-note">The demo firmware receives commands but does not return sensor measurements. Dashboard values remain labelled as simulated or commanded.</div>
         <h4>Data source</h4>
         <div class="about-txt">Calibrated synthetic township data. WATTWISE-1 forecasts and WATTWISE-2 rule scheduler. See <b>01 Prediction Module</b> / <b>02 Scheduler Module</b>.</div>
+        <details class="command-drawer"><summary>Engineering command line</summary><p>Optional keyboard shortcuts for operators familiar with the demo commands.</p><div class="cmd-wrap"><span class="cmd-prompt">&gt;</span><input type="text" id="cmd" placeholder="Type a command · help" spellcheck="false"><span class="cmd-out" id="cmd-out"></span></div></details>
       </div>
     </div>
     <div class="map-legend" id="map-legend">
@@ -541,15 +729,16 @@
   <!-- central canvas -->
   <section class="content">
     <div class="page" id="page-overview">
+      <div class="portfolio-head"><div><span class="eyebrow">OPERATIONS</span><h1>Portfolio overview</h1><p>Live modeled demand across the selected sites.</p></div><span class="data-note">Synthetic demo data</span></div>
       <div class="ov-totals kpi-row" id="ov-totals"></div>
       <div class="chart-card">
         <div class="ttl">Building register &mdash; click a row to inspect</div>
         <table class="ov-table" id="ov-table"></table>
       </div>
-      <div class="chart-card">
+      <details class="secondary-detail"><summary>Recent events</summary><div class="chart-card">
         <div class="ttl">Alarm feed</div>
         <div class="alarms" id="alarms"></div>
-      </div>
+      </div></details>
     </div>
 
     <div class="page on" id="page-buildings">
@@ -563,14 +752,14 @@
       </div>
       <div class="headline" id="headline"></div>
       <div class="kpi-row" id="kpis"></div>
-      <div class="chart-card">
-        <div class="plot-head"><div class="ttl">Grid demand &mdash; 30-minute interval</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-flag-control="peak">Billed window</button><button class="plot-toggle on" data-flag-control="solar">Solar area</button><button class="plot-toggle on" data-flag-control="other">Compare</button></div></div>
-        <canvas id="chart-day" height="210" aria-label="Building grid demand chart in kilowatts"></canvas>
+      <div class="chart-card trend-workspace">
+        <div class="plot-head"><div><div class="ttl">Electrical demand</div><div class="plot-subtitle">30-minute intervals · kW · billed window 08:30–10:30</div></div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-flag-control="peak">Billed window</button><button class="plot-toggle on" data-flag-control="solar">Solar area</button><button class="plot-toggle on" data-flag-control="other">Compare</button><span class="tool-divider"></span><button class="plot-tool" data-view-action="out" title="Zoom out" aria-label="Zoom out">−</button><button class="plot-tool" data-view-action="in" title="Zoom in" aria-label="Zoom in">+</button><button class="plot-tool" data-view-action="left" title="Pan earlier" aria-label="Pan earlier">‹</button><button class="plot-tool" data-view-action="right" title="Pan later" aria-label="Pan later">›</button><button class="plot-tool fit" data-view-action="fit">24 h</button></div></div>
+        <canvas id="chart-day" height="270" aria-label="Building grid demand chart in kilowatts"></canvas>
         <div class="plot-legend"><span><i class="legend-line orange"></i>Current scenario</span><span><i class="legend-line grey"></i>Other scenario</span><span><i class="legend-area amber"></i>Solar generation</span><span><i class="legend-line red"></i>Billed window</span></div>
       </div>
-      <div class="chart-card">
-        <div class="plot-head"><div class="ttl">Zone temperature &mdash; comfort range 24&ndash;26&deg;C</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-band-control>Comfort band</button></div></div>
-        <canvas id="chart-zone" height="150" aria-label="Building zone temperature chart in degrees Celsius"></canvas>
+      <div class="chart-card comfort-workspace">
+        <div class="plot-head"><div><div class="ttl">Thermal comfort</div><div class="plot-subtitle">Zone temperature · target 24–26 °C</div></div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-band-control>Comfort band</button></div></div>
+        <canvas id="chart-zone" height="185" aria-label="Building zone temperature chart in degrees Celsius"></canvas>
       </div>
       <div class="action-strip" id="actions"></div>
     </div>
@@ -624,28 +813,26 @@
         <div class="plan-summary" id="plan-summary"></div>
         <div class="chart-card plan-chart">
           <div class="plot-head"><div class="ttl">Scheduled cooling dispatch &mdash; kW per 30-minute interval</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-plan-series="chiller">Cooling</button><button class="plot-toggle on" data-plan-series="grid">Grid draw</button><button class="plot-toggle on" data-plan-series="solar">Solar</button></div></div>
-          <canvas id="plan-chart" height="210" aria-label="Planned cooling, grid draw and solar output by half-hour"></canvas>
+          <canvas id="plan-chart" height="250" aria-label="Planned cooling, grid draw and solar output by half-hour"></canvas>
           <div class="plot-legend"><span><i class="legend-line orange"></i>Cooling dispatch</span><span><i class="legend-line grey"></i>Grid draw</span><span><i class="legend-line green"></i>Solar generation</span></div>
         </div>
         <details class="plan-details"><summary>Half-hour schedule values</summary><div class="plan-table-wrap"><table class="ov-table" id="plan-table"></table></div></details>
       </section>
-      <div class="chart-card">
+      <details class="secondary-detail"><summary>Half-hour dispatch detail</summary><div class="chart-card">
         <div class="ttl">Rule state &mdash; current simulation time</div>
         <table class="ov-table" id="sch-rules"></table>
-      </div>
-      <div class="chart-card">
+      </div></details>
+      <details class="secondary-detail"><summary>Thermal storage by building</summary><div class="chart-card">
         <div class="ttl">Cold bank &mdash; stored thermal energy (per-building capacity)</div>
         <div class="gauges" id="sch-gauges"></div>
-      </div>
-      <div class="chart-card">
+      </div></details>
+      <details class="secondary-detail"><summary>Comfort and intervention history</summary><div class="chart-card">
         <div class="plot-head"><div class="ttl">Comfort monitor &mdash; 24&ndash;26&deg;C setpoint band</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-band-control>Comfort band</button></div></div>
         <canvas id="sch-comfort" height="190" aria-label="Comfort monitor chart in degrees Celsius"></canvas>
         <div class="plot-legend"><span><i class="legend-area green"></i>Comfort band</span><span><i class="legend-line orange"></i>Selected building</span></div>
-      </div>
-      <div class="chart-card">
         <div class="ttl">Intervention log</div>
         <div class="alarms" id="sch-log"></div>
-      </div>
+      </div></details>
     </div>
 
     <div class="page" id="page-reports">
@@ -673,11 +860,8 @@
 <footer>
   <span class="st-word" id="st-word">READY</span>
   <span class="st-sep">|</span>
-  <span>Peak <b id="t-peak">&mdash;</b></span>
-  <span>MD bill <b id="t-bill">&mdash;</b>/mo</span>
-  <span>Saves <b id="t-save">&mdash;</b>/mo</span>
   <span>Mode <b id="st-mode">BASELINE</b></span>
-  <span style="margin-left:auto">Synthetic demo data &middot; WATTWISE-1/2</span>
+  <span style="margin-left:auto">SIMULATED DATA &middot; WATTWISE-1/2</span>
   <span class="st-sep">|</span>
   <div class="transport">
     <button class="tbtn" id="btn-play" title="play / pause">&#9654;</button>
@@ -685,6 +869,7 @@
     <input type="range" id="scrub" min="0" max="47" value="0">
     <span class="st-clock" id="clock">00:00</span>
   </div>
+  <div hidden><span id="t-peak">&mdash;</span><span id="t-bill">&mdash;</span><span id="t-save">&mdash;</span></div>
 </footer>
 
 <script>
@@ -701,7 +886,8 @@ var ALL_ORDER = [], ORDER = [];
 var TARIFF = null, WINDOWS = null;
 var espPort = null, espWriter = null, espLastLine = "", espBusy = false;
 
-var MAP = { cols: 4, left: 14, top: 20, cellW: 146, cellH: 112, gapX: 10, gapY: 6 };
+var MAP = { cols: 3, left: 18, top: 22, cellW: 200, cellH: 94, gapX: 10, gapY: 12 };
+var VIEW = { start: 0, span: N - 1 };
 
 /* ================= ribbon ================= */
 var ICONS = {
@@ -722,60 +908,29 @@ var ICONS = {
 
 var RIBBON = {
   "page-overview": [
-    { name: "Simulation", btns: [
-      { act: "play", icon: "play", label: "Play" },
-      { act: "pause", icon: "pause", label: "Pause" },
-      { act: "reset", icon: "reset", label: "Reset" } ] },
     { name: "Scenario", btns: [
       { act: "mode-dumb", icon: "grid", label: "Baseline", toggle: "dumb" },
       { act: "mode-wise", icon: "zap", label: "WattWise", toggle: "wise" } ] },
-    { name: "Workspace", btns: [
-      { act: "panel-map", icon: "bld", label: "Site Map" },
-      { act: "panel-analytics", icon: "gauge", label: "Analytics" } ] },
     { name: "Export", btns: [
       { act: "csv", icon: "download", label: "CSV" } ] }
   ],
   "page-buildings": [
-    { name: "Simulation", btns: [
-      { act: "play", icon: "play", label: "Play" },
-      { act: "reset", icon: "reset", label: "Reset" } ] },
     { name: "Scenario", btns: [
       { act: "mode-dumb", icon: "grid", label: "Baseline", toggle: "dumb" },
       { act: "mode-wise", icon: "zap", label: "WattWise", toggle: "wise" } ] },
-    { name: "Navigate", btns: [
-      { act: "bld-prev", icon: "prev", label: "Prev" },
-      { act: "bld-next", icon: "next", label: "Next" } ], extra: "bld-select" },
-    { name: "Workspace", btns: [
-      { act: "panel-map", icon: "bld", label: "Site Map" } ] }
+    { name: "Building", btns: [], extra: "bld-select" }
   ],
-  "page-forecast": [
-    { name: "Model", btns: [
-      { act: "tab-forecast", icon: "sun", label: "Solar" },
-      { act: "tab-forecast", icon: "clock", label: "Demand" } ] },
-    { name: "Overlays", btns: [
-      { act: "panel-layers", icon: "grid", label: "Layers" } ] },
-    { name: "Simulation", btns: [
-      { act: "play", icon: "play", label: "Play" },
-      { act: "reset", icon: "reset", label: "Reset" } ] }
-  ],
+  "page-forecast": [],
   "page-scheduler": [
     { name: "Scenario", btns: [
       { act: "mode-wise", icon: "zap", label: "Run WattWise", toggle: "wise" } ] },
-    { name: "Monitor", btns: [
-      { act: "panel-analytics", icon: "gauge", label: "Analytics" },
-      { act: "panel-map", icon: "bld", label: "Site Map" } ] },
-    { name: "Simulation", btns: [
-      { act: "play", icon: "play", label: "Play" },
-      { act: "reset", icon: "reset", label: "Reset" } ] }
   ],
   "page-reports": [
     { name: "Export", btns: [
       { act: "csv", icon: "download", label: "CSV" } ] },
     { name: "Scenario", btns: [
       { act: "mode-dumb", icon: "grid", label: "Baseline", toggle: "dumb" },
-      { act: "mode-wise", icon: "zap", label: "WattWise", toggle: "wise" } ] },
-    { name: "Simulation", btns: [
-      { act: "reset", icon: "reset", label: "Reset" } ] }
+      { act: "mode-wise", icon: "zap", label: "WattWise", toggle: "wise" } ] }
   ]
 };
 
@@ -799,7 +954,9 @@ function renderRibbon() {
     html += '<div class="rgroup-label-wrap" style="align-self:flex-end;font-size:9.5px;font-weight:700;letter-spacing:.7px;color:var(--faint);text-transform:uppercase;padding:2px 4px 1px">' + g.name + "</div>";
     html += "</div>";
   });
-  document.getElementById("ribbon-toolbar").innerHTML = html;
+  var toolbar = document.getElementById("ribbon-toolbar");
+  toolbar.innerHTML = html;
+  toolbar.hidden = groups.length === 0;
   var sel = document.getElementById("bld-select");
   if (sel) sel.onchange = function () { if (this.value) { select(this.value); this.value = ""; } };
 }
@@ -842,14 +999,14 @@ document.getElementById("ribbon-tabs").addEventListener("click", function (e) {
 });
 
 function updateCrumbs() {
-  var names = { "page-overview": "Home", "page-buildings": "Buildings", "page-forecast": "Solar & Forecast", "page-scheduler": "Scheduler", "page-reports": "Reports" };
+  var names = { "page-overview": "Portfolio", "page-buildings": "Buildings", "page-forecast": "Solar & Forecast", "page-scheduler": "Dispatch", "page-reports": "Reports" };
   var scope = townScope === "all" ? "All townships" : T.towns[townScope].label;
   document.getElementById("crumbs").innerHTML = "<b>WattWise</b><span class=\"sep\">&rsaquo;</span>" + scope + "<span class=\"sep\">&rsaquo;</span>" + names[ribbonPage] +
     (selected ? "<span class=\"sep\">&rsaquo;</span><b id=\"crumb-bld\">" + T.buildings[selected].label + "</b>" : "");
 }
 
 /* ================= activity bar / panels ================= */
-var activePanel = "map";
+var activePanel = null;
 function togglePanel(name) {
   if (activePanel === name) { document.body.className = document.body.className.replace(/panel-\w+/g, "").trim(); activePanel = null; }
   else { activePanel = name; document.body.className = "panel-" + name; }
@@ -881,6 +1038,17 @@ function syncPlotControls() {
   document.querySelectorAll("[data-plan-series]").forEach(function (b) { b.classList.toggle("on", !!PLAN_FLAGS[b.dataset.planSeries]); b.setAttribute("aria-pressed", !!PLAN_FLAGS[b.dataset.planSeries]); });
 }
 document.addEventListener("click", function (e) {
+  var viewControl = e.target.closest("[data-view-action]");
+  if (viewControl) {
+    var act = viewControl.dataset.viewAction;
+    if (act === "fit") { VIEW.start = 0; VIEW.span = N - 1; }
+    else if (act === "in") { VIEW.span = Math.max(6, Math.floor(VIEW.span * 0.75)); VIEW.start = Math.min(N - 1 - VIEW.span, Math.max(0, step - Math.floor(VIEW.span / 2))); }
+    else if (act === "out") { VIEW.span = Math.min(N - 1, Math.ceil(VIEW.span / 0.75)); VIEW.start = Math.max(0, Math.min(N - 1 - VIEW.span, VIEW.start - Math.floor((VIEW.span - VIEW.span * 0.75) / 2))); }
+    else if (act === "left") VIEW.start = Math.max(0, VIEW.start - Math.max(2, Math.floor(VIEW.span / 4)));
+    else if (act === "right") VIEW.start = Math.min(N - 1 - VIEW.span, VIEW.start + Math.max(2, Math.floor(VIEW.span / 4)));
+    if (selected) dayChart(selected);
+    return;
+  }
   var grid = e.target.closest("[data-plot-grid]");
   var flag = e.target.closest("[data-flag-control]");
   var series = e.target.closest("[data-series-control]");
@@ -906,26 +1074,22 @@ function el(tag, attrs, parent) {
   (parent || svg).appendChild(e);
   return e;
 }
-var rectEls = {}, kWTexts = {};
+var rectEls = {}, kWTexts = {}, loadEls = {};
 function buildMap() {
-  el("rect", { x: 0, y: 0, width: 660, height: 500, fill: "#f3f6f4" });
-  el("rect", { x: 0, y: 242, width: 660, height: 18, fill: "#dfe5e6" });
-  el("rect", { x: 321, y: 0, width: 18, height: 500, fill: "#dfe5e6" });
-  el("line", { x1: 0, y1: 251, x2: 660, y2: 251, stroke: "#fff", "stroke-width": 1.5, "stroke-dasharray": "8 7" });
-  el("line", { x1: 330, y1: 0, x2: 330, y2: 500, stroke: "#fff", "stroke-width": 1.5, "stroke-dasharray": "8 7" });
-  var treeXY = [[22,34],[215,42],[280,160],[420,34],[632,46],[620,185],[420,210],[34,202],[615,310],[420,420],[245,420],[95,434],[550,440],[32,435],[642,230]];
-  treeXY.forEach(function (p) { el("circle", { cx: p[0], cy: p[1], r: 8, fill: "#d9e8db" }); });
+  el("rect", { x: 0, y: 0, width: 660, height: 620, fill: "#f7f8f6" });
+  el("text", { x: 18, y: 14, "font-size": 9, "font-weight": 700, "letter-spacing": 1.2, fill: "#77818c", "font-family": "Segoe UI, Arial, sans-serif" }).textContent = "SITE LOAD · ILLUSTRATIVE LAYOUT";
   ORDER.forEach(function (key, index) {
     var P = { x: MAP.left + (index % MAP.cols) * (MAP.cellW + MAP.gapX),
       y: MAP.top + Math.floor(index / MAP.cols) * (MAP.cellH + MAP.gapY),
       w: MAP.cellW, h: MAP.cellH };
     var g = el("g", { cursor: "pointer", role: "button", tabindex: "0", "aria-label": "Open " + T.buildings[key].label });
     var townColor = T.buildings[key].town === "elmina" ? "#E88B33" : T.buildings[key].town === "bbr" ? "#2E7D6B" : "#8491A0";
-    var r = el("rect", { x: P.x, y: P.y, width: P.w, height: P.h, rx: 5, fill: "#fff", stroke: "#d0d7e2", "stroke-width": 1.3 }, g);
+    var r = el("rect", { x: P.x, y: P.y, width: P.w, height: P.h, rx: 7, fill: "#fff", stroke: "#d7dde2", "stroke-width": 1.2 }, g);
     el("rect", { x: P.x, y: P.y, width: 4, height: P.h, rx: 2, fill: townColor }, g);
-    var nm = el("text", { x: P.x + P.w / 2, y: P.y + 35, "text-anchor": "middle", "font-size": 11.5, "font-weight": 650, fill: "#1f2937", "font-family": "Segoe UI, Arial, sans-serif" }, g);
-    var kw = el("text", { x: P.x + P.w / 2, y: P.y + 60, "text-anchor": "middle", "font-size": 15, "font-weight": 700, fill: "#14171d", "font-family": "Segoe UI, Arial, sans-serif" }, g);
-    var badge = el("text", { x: P.x + P.w / 2, y: P.y + 86, "text-anchor": "middle", "font-size": 10, fill: "#6b7280", "font-family": "Segoe UI, Arial, sans-serif" }, g);
+    var nm = el("text", { x: P.x + 14, y: P.y + 25, "text-anchor": "start", "font-size": 14, "font-weight": 650, fill: "#1f2937", "font-family": "Segoe UI, Arial, sans-serif" }, g);
+    var kw = el("text", { x: P.x + 14, y: P.y + 52, "text-anchor": "start", "font-size": 19, "font-weight": 700, fill: "#14171d", "font-family": "Segoe UI, Arial, sans-serif" }, g);
+    var badge = el("text", { x: P.x + 14, y: P.y + 73, "text-anchor": "start", "font-size": 11, fill: "#6b7280", "font-family": "Segoe UI, Arial, sans-serif" }, g);
+    loadEls[key] = el("rect", { x: P.x + 14, y: P.y + 84, width: 1, height: 3, rx: 1.5, fill: townColor }, g);
     g.addEventListener("click", function () { select(key); showPage("page-buildings"); });
     g.addEventListener("keydown", function (event) {
       if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(key); showPage("page-buildings"); }
@@ -942,10 +1106,12 @@ function refreshMap() {
     var maxB = Math.max.apply(null, b.dumb.net_kw.concat(b.wattwise.net_kw));
     var now = b[mode].net_kw[step];
     var r = rectEls[key];
-    r.setAttribute("fill", heat(now / maxB));
-    r.setAttribute("stroke", selected === key ? "#e88b33" : "#b9c6d2");
-    r.setAttribute("stroke-width", selected === key ? 3 : 1.5);
+    r.setAttribute("fill", "#fff");
+    r.setAttribute("stroke", selected === key ? "#E88B33" : "#d7dde2");
+    r.setAttribute("stroke-width", selected === key ? 2.2 : 1.2);
     kWTexts[key].textContent = Math.round(now) + " kW";
+    loadEls[key].setAttribute("width", Math.max(2, 172 * Math.min(1, now / maxB)));
+    loadEls[key].setAttribute("fill", heat(now / maxB));
   });
 }
 
@@ -956,30 +1122,37 @@ function mkChart(canvasId, drawFn) {
   // Canvas height is a backing-store attribute and changes when c.height is set.
   // Keep the original display height so repeated redraws never grow the plot.
   if (!c.dataset.chartHeight) c.dataset.chartHeight = c.getAttribute("height") || "180";
-  var W = c.width = c.clientWidth * 2;
-  var H = c.height = parseInt(c.dataset.chartHeight, 10) * 2;
+  var W = c.clientWidth;
+  var H = parseInt(c.dataset.chartHeight, 10);
+  c.width = W * 2; c.height = H * 2;
   var x = c.getContext("2d");
+  x.setTransform(2, 0, 0, 2, 0, 0);
   x.fillStyle = "#fff"; x.fillRect(0, 0, W, H);
   drawFn(x, W, H);
 }
-function axes(x, W, H, maxV, unit) {
+function axes(x, W, H, maxV, unit, windowed) {
+  var left = 64, right = W - 22, top = 26, bottom = H - 44;
   if (PLOT.grid) {
-    x.strokeStyle = "#e7ebf0"; x.lineWidth = 1;
+    x.strokeStyle = "#e9edf2"; x.lineWidth = 1;
     for (var g = 0; g <= 4; g++) {
-      var gy = 30 + (H - 76) * g / 4;
-      x.beginPath(); x.moveTo(52, gy); x.lineTo(W - 20, gy); x.stroke();
+      var gy = top + (bottom - top) * g / 4;
+      x.beginPath(); x.moveTo(left, gy); x.lineTo(right, gy); x.stroke();
     }
   }
-  x.fillStyle = "#6b7280"; x.font = "600 14px Segoe UI"; x.textAlign = "right";
-  var maxLabel = unit === "kW" && maxV >= 1000 ? (maxV / 1000).toFixed(1) + " MW" : Math.round(maxV).toLocaleString() + " " + unit;
-  x.fillText(maxLabel, 50, 44);
-  x.fillText(Math.round(maxV / 2).toLocaleString(), 50, 30 + (H - 76) * 2 / 4 + 5);
-  x.fillText("0", 50, H - 46);
-  x.textAlign = "left";
-  var px = function (i) { return 52 + (W - 72) * i / (N - 1); };
-  x.fillText("00:00", 52, H - 18); x.fillText("06:00", px(12) - 18, H - 18);
-  x.fillText("12:00", px(24) - 18, H - 18); x.fillText("18:00", px(36) - 18, H - 18);
-  x.fillText("24:00", W - 70, H - 18);
+  x.fillStyle = "#6b7280"; x.font = "12px Segoe UI"; x.textAlign = "right";
+  for (var yTick = 0; yTick <= 4; yTick++) {
+    var yValue = maxV * (4 - yTick) / 4;
+    var yText = Math.round(yValue).toLocaleString();
+    x.fillText(yText, left - 10, top + (bottom - top) * yTick / 4 + 4);
+  }
+  x.textAlign = "center";
+  var vStart = windowed ? VIEW.start : 0, vSpan = windowed ? VIEW.span : N - 1;
+  var px = function (i) { return left + (right - left) * (i - vStart) / vSpan; };
+  var labelEvery = vSpan > 36 ? 12 : vSpan > 18 ? 6 : vSpan > 10 ? 4 : 2;
+  var first = Math.ceil(vStart / labelEvery) * labelEvery;
+  for (var tick = first; tick <= Math.min(N - 1, vStart + vSpan); tick += labelEvery) x.fillText(TIMES[tick], px(tick), H - 18);
+  if (vStart + vSpan >= N - 1 && labelEvery >= 6) x.fillText("24:00", right, H - 18);
+  x.textAlign = "left"; x.fillStyle = "#7b8590"; x.font = "10px Segoe UI"; x.fillText(unit, left, 15);
   return px;
 }
 function drawTimeTicks(x, W, H, left, right, bottom) {
@@ -993,8 +1166,9 @@ function dayChart(key) {
   mkChart("chart-day", function (x, W, H) {
     var b = T.buildings[key];
     var maxKw = Math.max.apply(null, b.dumb.net_kw.concat(b.wattwise.net_kw)) * 1.06;
-    var px = axes(x, W, H, maxKw, "kW");
+    var px = axes(x, W, H, maxKw, "kW", true);
     function py(v) { return H - 46 - (H - 76) * v / maxKw; }
+    x.save(); x.beginPath(); x.rect(64, 26, W - 86, H - 70); x.clip();
     if (FLAGS.peak) {
       var t0 = TIMES.indexOf("08:30"), t1 = TIMES.indexOf("10:30");
       x.fillStyle = "rgba(209,52,56,.09)"; x.fillRect(px(t0), 26, px(t1) - px(t0), H - 72);
@@ -1017,6 +1191,7 @@ function dayChart(key) {
     }); x.stroke();
     x.strokeStyle = "#E88B33"; x.lineWidth = 2;
     x.beginPath(); x.moveTo(px(step), 26); x.lineTo(px(step), H - 46); x.stroke();
+    x.restore();
   });
 }
 function zoneChart(key) {
@@ -1055,7 +1230,7 @@ function zoneChart(key) {
 function forecastChart(canvasId, fcArr, actArr, color, unit) {
   mkChart(canvasId, function (x, W, H) {
     var maxV = Math.max.apply(null, actArr.concat(fcArr)) * 1.06;
-    var px = axes(x, W, H, maxV, unit);
+    var px = axes(x, W, H, maxV, unit, false);
     function py(v) { return H - 46 - (H - 76) * v / maxV; }
     if (FLAGS.actual) {
       x.fillStyle = "rgba(107,114,128,.10)";
@@ -1386,7 +1561,7 @@ function renderPlanner() {
   if (!c || !c.clientWidth) return;
   mkChart("plan-chart", function (x, W, H) {
     var maxV = Math.max.apply(null, cooling.concat(grid, solar)) * 1.08 || 1;
-    var px = axes(x, W, H, maxV, "kW");
+    var px = axes(x, W, H, maxV, "kW", false);
     var py = function (v) { return H - 46 - (H - 76) * v / maxV; };
     if (FLAGS.peak) {
       var p0 = TIMES.indexOf("08:30"), p1 = TIMES.indexOf("10:30");
@@ -1751,7 +1926,7 @@ function setTown(town) {
   var planSelectedOption = document.querySelector('#plan-scope option[value="selected"]');
   if (planSelectedOption) planSelectedOption.textContent = "Selected building · " + b.label;
   while (svg.firstChild) svg.removeChild(svg.firstChild);
-  rectEls = {}; kWTexts = {};
+  rectEls = {}; kWTexts = {}; loadEls = {};
   buildMap(); renderRibbon(); refresh();
 }
 function espSetStatus(connected, message) {
@@ -1847,7 +2022,6 @@ fetch("./data/township.json").then(function (r) { return r.json(); }).then(funct
   planDay = T.demo_date || T.weeks[1].monday;
   buildMap();
   renderRibbon();
-  togglePanel("map");
   select(ALL_ORDER[0]);
   initializePlanner();
   showPage("page-buildings");
