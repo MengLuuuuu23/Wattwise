@@ -35,6 +35,7 @@
   .brand-mini b { color: var(--accent); }
   .brand-mini .sq { width: 14px; height: 14px; border-radius: 3px; background: var(--excel); display: inline-block; }
   .rtab {
+    appearance:none; background:transparent; font-family:inherit;
     padding: 4px 16px 5px; font-size: 12px; font-weight: 700; letter-spacing: .6px;
     color: var(--muted); cursor: pointer; border: 1px solid transparent;
     border-bottom: none; border-radius: 5px 5px 0 0; margin-bottom: -1px;
@@ -662,6 +663,7 @@
     object-fit:contain;
   }
   .rtab {
+    appearance:none; background:transparent; font-family:inherit;
     padding:0 18px;
     color:#D7DCE2;
     font-size:14px;
@@ -858,34 +860,58 @@
     }
   }
 
-  .ecosystem-card { margin:0 0 16px; padding:18px 20px 14px; background:#fff; border:1px solid #DDE2E7; border-radius:10px; box-shadow:0 8px 22px #14171d08; }
-  .ecosystem-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; margin-bottom:14px; }
-  .ecosystem-kicker { color:#9A5B18; font-size:10px; font-weight:750; letter-spacing:.75px; text-transform:uppercase; }
-  .ecosystem-heading h2 { margin:4px 0 3px; color:#14171D; font-size:18px; letter-spacing:-.25px; }
-  .ecosystem-heading p { max-width:760px; color:#65707C; font-size:12px; line-height:1.5; }
-  .ecosystem-capacity { flex:none; padding:8px 11px; border:1px solid #F0D2AA; border-radius:8px; background:#FFF8EF; color:#7E4A17; font-size:11px; line-height:1.45; }
-  .ecosystem-capacity b { display:block; color:#14171D; font-size:15px; }
-  .ecosystem-flow { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid #E4E8ED; border-radius:8px; overflow:hidden; }
-  .ecosystem-step { min-width:0; padding:13px 14px 12px; border-right:1px solid #E4E8ED; }
-  .ecosystem-step:last-child { border-right:0; }
-  .ecosystem-step .step-no { color:#9A5B18; font-size:9px; font-weight:750; letter-spacing:.6px; text-transform:uppercase; }
-  .ecosystem-step h3 { margin:5px 0; color:#202832; font-size:13px; }
-  .ecosystem-step p { min-height:54px; color:#66717D; font-size:11px; line-height:1.5; }
-  .ecosystem-step button { margin-top:8px; padding:0; border:0; background:none; color:#8F4F12; font:650 11px "Segoe UI",Arial,sans-serif; cursor:pointer; }
+  .ecosystem-card { position:relative; margin:0 0 16px; padding:21px 22px 15px; overflow:hidden; background:linear-gradient(145deg,#fff 55%,#fbfcfd); border:1px solid #DDE2E7; border-radius:12px; box-shadow:0 8px 24px #14171d09; }
+  .ecosystem-card::before { content:""; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#E88B33 0 24%,#E4E9EE 24% 100%); }
+  .ecosystem-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:15px; }
+  .ecosystem-kicker { display:inline-flex; align-items:center; gap:7px; color:#8F4F12; font-size:10px; font-weight:750; letter-spacing:.75px; text-transform:uppercase; }
+  .ecosystem-kicker::before { content:""; width:7px; height:7px; border-radius:50%; background:#E88B33; box-shadow:0 0 0 3px #FFF1E1; }
+  .ecosystem-heading h2 { margin:5px 0 4px; color:#14171D; font-size:19px; line-height:1.25; letter-spacing:-.35px; }
+  .ecosystem-heading p { max-width:760px; color:#65707C; font-size:12px; line-height:1.55; }
+  .ecosystem-capacity { flex:none; min-width:180px; padding:9px 12px; border:1px solid #F0D2AA; border-radius:9px; background:#FFF8EF; color:#7E4A17; font-size:10px; line-height:1.45; }
+  .ecosystem-capacity b { display:block; color:#14171D; font-size:15px; font-variant-numeric:tabular-nums; }
+  .ecosystem-supply { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin:0 0 12px; }
+  .ecosystem-source { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:4px 12px; min-width:0; padding:10px 12px; border:1px solid #DDE9E3; border-radius:9px; background:#F7FBF8; }
+  .ecosystem-source.context { border-color:#E5E8EB; background:#F7F8FA; }
+  .ecosystem-source .source-kicker { grid-column:1/-1; color:#6D7A73; font-size:8.5px; font-weight:750; letter-spacing:.7px; text-transform:uppercase; }
+  .ecosystem-source.context .source-kicker { color:#78818B; }
+  .ecosystem-source strong { color:#24372D; font-size:11px; }
+  .ecosystem-source.context strong { color:#34404B; }
+  .ecosystem-source p { grid-column:1/-1; color:#68746D; font-size:10px; line-height:1.4; }
+  .ecosystem-source.context p { color:#6D7782; }
+  .source-state { display:inline-flex; align-items:center; gap:6px; justify-self:end; white-space:nowrap; color:#246B51; font-size:9px; font-weight:700; }
+  .source-state::before { content:""; width:6px; height:6px; border-radius:50%; background:#27A36A; }
+  .context .source-state { color:#69727C; }
+  .context .source-state::before { background:#A0A8B1; }
+  .ecosystem-flow { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; overflow:visible; }
+  .ecosystem-step { position:relative; display:flex; flex-direction:column; align-items:flex-start; min-width:0; min-height:162px; padding:13px 14px 12px; border:1px solid #E3E7EB; border-radius:9px; background:#fff; transition:border-color .16s ease,transform .16s ease,box-shadow .16s ease; }
+  .ecosystem-step:not(:last-child)::after { content:""; position:absolute; top:25px; right:-11px; z-index:1; width:10px; border-top:1px solid #C9D0D7; }
+  .ecosystem-step:hover { transform:translateY(-2px); border-color:#D5B48E; box-shadow:0 6px 16px #14171d0b; }
+  .ecosystem-step .step-top { display:flex; align-items:center; gap:8px; width:100%; }
+  .ecosystem-step .step-icon { display:grid; place-items:center; width:27px; height:27px; flex:none; border-radius:7px; background:#FFF4E7; color:#A35A14; }
+  .ecosystem-step .step-icon svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+  .ecosystem-step .step-no { color:#89919A; font-size:9px; font-weight:750; letter-spacing:.6px; text-transform:uppercase; }
+  .ecosystem-step h3 { margin:9px 0 5px; color:#202832; font-size:12px; }
+  .ecosystem-step p { flex:1; min-height:42px; color:#66717D; font-size:10.5px; line-height:1.5; }
+  .ecosystem-step button { margin-top:9px; padding:0; border:0; background:none; color:#8F4F12; font:700 10px "Segoe UI",Arial,sans-serif; cursor:pointer; text-align:left; }
   .ecosystem-step button:hover { text-decoration:underline; }
-  .ecosystem-note { margin-top:10px; color:#69737F; font-size:10px; line-height:1.45; }
+  .ecosystem-step button:focus-visible { outline:2px solid #E88B33; outline-offset:3px; border-radius:2px; }
+  .ecosystem-note { display:flex; align-items:flex-start; gap:7px; margin-top:12px; padding-top:10px; border-top:1px solid #EDF0F2; color:#69737F; font-size:9.5px; line-height:1.45; }
+  .ecosystem-note::before { content:"i"; display:grid; place-items:center; width:14px; height:14px; flex:none; border:1px solid #BAC2CA; border-radius:50%; color:#76808A; font-size:9px; font-weight:700; }
   @media(max-width:900px) {
     .ecosystem-flow { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .ecosystem-step:nth-child(2) { border-right:0; }
-    .ecosystem-step:nth-child(n+3) { border-top:1px solid #E4E8ED; }
+    .ecosystem-step:not(:last-child)::after { display:none; }
     .ecosystem-step p { min-height:0; }
   }
   @media(max-width:600px) {
-    .ecosystem-card { padding:14px 12px 11px; }
+    .ecosystem-card { padding:18px 13px 12px; }
     .ecosystem-heading { flex-direction:column; gap:8px; }
+    .ecosystem-capacity { min-width:0; }
+    .ecosystem-supply { grid-template-columns:1fr; }
+    .ecosystem-source { grid-template-columns:1fr; }
+    .source-state { justify-self:start; }
     .ecosystem-flow { grid-template-columns:1fr; }
-    .ecosystem-step { border-right:0; border-top:1px solid #E4E8ED; }
-    .ecosystem-step:first-child { border-top:0; }
+    .ecosystem-step { min-height:0; }
+    .ecosystem-step p { min-height:0; }
   }
 
 </style>
@@ -896,11 +922,11 @@
 <header>
   <div class="ribbon-tabs" id="ribbon-tabs">
     <div class="brand-mini"><img class="brand-lockup" src="./assets/wattwise-logo.png" alt="WattWise"></div>
-    <div class="rtab on" data-page="page-overview">Dashboard</div>
-    <div class="rtab" data-page="page-buildings">Buildings</div>
-    <div class="rtab" data-page="page-forecast">Forecast</div>
-    <div class="rtab" data-page="page-scheduler">Schedule</div>
-    <div class="rtab" data-page="page-reports">Reports</div>
+    <button class="rtab on" type="button" data-page="page-overview" aria-current="page">Dashboard</button>
+    <button class="rtab" type="button" data-page="page-buildings">Buildings</button>
+    <button class="rtab" type="button" data-page="page-forecast">Forecast</button>
+    <button class="rtab" type="button" data-page="page-scheduler">Schedule</button>
+    <button class="rtab" type="button" data-page="page-reports">Reports</button>
     <div class="spacer"></div>
     <button class="esp-top" id="esp-connect" type="button"><span class="esp-dot" id="esp-dot"></span><span id="esp-connect-label">Connect ESP32</span></button>
   </div>
@@ -975,7 +1001,7 @@
   <!-- central canvas -->
   <section class="content">
     <div class="page on" id="page-overview">
-      <div class="portfolio-head"><div><span class="eyebrow">ENERGY ANALYTICS</span><h1>Dashboard overview</h1><p>Real-time demand, scheduling, ESP32 link status, and compliance signals across the selected sites.</p></div><span class="data-note">Synthetic demo data</span></div>
+      <div class="portfolio-head"><div><span class="eyebrow">ENERGY ANALYTICS</span><h1>Dashboard overview</h1><p>Explore the simulated energy schedule, site forecasts, ESP32 link, and compliance views.</p></div><span class="data-note">SIMULATED REPLAY</span></div>
       <div class="ov-totals kpi-row" id="ov-totals"></div>
 
       <section class="ecosystem-card" aria-labelledby="ecosystem-title">
@@ -985,28 +1011,43 @@
             <h2 id="ecosystem-title">Turn existing energy assets into coordinated operations</h2>
             <p>WattWise connects solar supply, building forecasts, flexible cooling, and portfolio reporting in one 30-minute operating cycle.</p>
           </div>
-          <div class="ecosystem-capacity"><b>603 kWp · 9 assets</b>SDP solar portfolio context</div>
+          <div class="ecosystem-capacity"><b>603 kWp · 9 assets</b>SDP portfolio reference<br>Not selected-site PV capacity</div>
+        </div>
+        <div class="ecosystem-supply" aria-label="Energy supply lanes">
+          <div class="ecosystem-source">
+            <span class="source-kicker">In this operating model · site-metered</span>
+            <strong>On-site rooftop solar</strong>
+            <span class="source-state">Forecast + dispatch input</span>
+            <p>Each modeled site's PV is matched against its own demand. Unused surplus is clipped; no export credit is assumed.</p>
+          </div>
+          <div class="ecosystem-source context">
+            <span class="source-kicker">Township energy context · CREAM</span>
+            <strong>Wheeled residential solar</strong>
+            <span class="source-state">Meter allocation to verify</span>
+            <p>Potential clean supply for nearby commercial sites. WattWise keeps it outside site savings until delivery and settlement are confirmed.</p>
+          </div>
         </div>
         <div class="ecosystem-flow">
           <article class="ecosystem-step">
-            <span class="step-no">01 · Supply</span>
-            <h3>CREAM + rooftop solar</h3>
-            <p>CREAM pools residential solar and wheels it to nearby commercial buildings. This supply typically arrives around midday.</p>
+            <div class="step-top"><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16l2 12H2L4 5Z"/><path d="M7 9h10M6 13h12M9 17l-1 4m7-4 1 4M5 21h14"/></svg></span><span class="step-no">01 · Measure</span></div>
+            <h3>Read each site's energy</h3>
+            <p>Bring together the building meter, local PV, and flexible equipment on one half-hour timeline.</p>
+            <button type="button" data-open-page="page-buildings">Inspect site register →</button>
           </article>
           <article class="ecosystem-step">
-            <span class="step-no">02 · Forecast</span>
+            <div class="step-top"><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17 8 12l4 3 8-9"/><path d="M15 6h5v5"/><path d="M3 21h18"/></svg></span><span class="step-no">02 · Forecast</span></div>
             <h3>WATTWISE-1 looks ahead</h3>
-            <p>Solar generation and building demand forecasts cover 30 minutes to 3 hours on the same half-hour grid.</p>
+            <p>Forecast local solar and building demand from 30 minutes to 3 hours on the same half-hour grid.</p>
             <button type="button" data-open-page="page-forecast">Open solar &amp; demand forecast →</button>
           </article>
           <article class="ecosystem-step">
-            <span class="step-no">03 · Flex</span>
+            <div class="step-top"><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20M4.9 6.1l14.2 11.8M4.9 17.9 19.1 6.1M3 12h18"/><path d="m9 4 3-2 3 2m-6 16 3 2 3-2"/></svg></span><span class="step-no">03 · Dispatch</span></div>
             <h3>WATTWISE-2 shifts cooling</h3>
             <p>Pre-cool before the billed window, coast through the morning peak, then absorb usable midday solar while protecting 24–26 °C comfort.</p>
             <button type="button" data-open-page="page-scheduler">Open dispatch schedule →</button>
           </article>
           <article class="ecosystem-step">
-            <span class="step-no">04 · Prove value</span>
+            <div class="step-top"><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 12h8M8 16h8"/><path d="m8 19 2 2 5-5"/></svg></span><span class="step-no">04 · Report</span></div>
             <h3>One log, more outcomes</h3>
             <p>Use the same operating record for energy reporting, tenant green billing, and EECA compliance workflows.</p>
             <button type="button" data-open-page="page-reports">Open reports →</button>
@@ -1265,7 +1306,7 @@ document.getElementById("ribbon-toolbar").addEventListener("click", function (e)
 /* ================= tabs / pages ================= */
 function showPage(id) {
   ribbonPage = id;
-  document.querySelectorAll(".rtab").forEach(function (t) { t.classList.toggle("on", t.dataset.page === id); });
+  document.querySelectorAll(".rtab").forEach(function (t) { var active = t.dataset.page === id; t.classList.toggle("on", active); if (active) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); });
   document.querySelectorAll(".page").forEach(function (p) { p.classList.toggle("on", p.id === id); });
   renderRibbon();
   updateCrumbs();
