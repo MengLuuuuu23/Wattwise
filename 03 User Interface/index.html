@@ -857,6 +857,37 @@
       max-width:100%;
     }
   }
+
+  .ecosystem-card { margin:0 0 16px; padding:18px 20px 14px; background:#fff; border:1px solid #DDE2E7; border-radius:10px; box-shadow:0 8px 22px #14171d08; }
+  .ecosystem-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; margin-bottom:14px; }
+  .ecosystem-kicker { color:#9A5B18; font-size:10px; font-weight:750; letter-spacing:.75px; text-transform:uppercase; }
+  .ecosystem-heading h2 { margin:4px 0 3px; color:#14171D; font-size:18px; letter-spacing:-.25px; }
+  .ecosystem-heading p { max-width:760px; color:#65707C; font-size:12px; line-height:1.5; }
+  .ecosystem-capacity { flex:none; padding:8px 11px; border:1px solid #F0D2AA; border-radius:8px; background:#FFF8EF; color:#7E4A17; font-size:11px; line-height:1.45; }
+  .ecosystem-capacity b { display:block; color:#14171D; font-size:15px; }
+  .ecosystem-flow { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid #E4E8ED; border-radius:8px; overflow:hidden; }
+  .ecosystem-step { min-width:0; padding:13px 14px 12px; border-right:1px solid #E4E8ED; }
+  .ecosystem-step:last-child { border-right:0; }
+  .ecosystem-step .step-no { color:#9A5B18; font-size:9px; font-weight:750; letter-spacing:.6px; text-transform:uppercase; }
+  .ecosystem-step h3 { margin:5px 0; color:#202832; font-size:13px; }
+  .ecosystem-step p { min-height:54px; color:#66717D; font-size:11px; line-height:1.5; }
+  .ecosystem-step button { margin-top:8px; padding:0; border:0; background:none; color:#8F4F12; font:650 11px "Segoe UI",Arial,sans-serif; cursor:pointer; }
+  .ecosystem-step button:hover { text-decoration:underline; }
+  .ecosystem-note { margin-top:10px; color:#69737F; font-size:10px; line-height:1.45; }
+  @media(max-width:900px) {
+    .ecosystem-flow { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .ecosystem-step:nth-child(2) { border-right:0; }
+    .ecosystem-step:nth-child(n+3) { border-top:1px solid #E4E8ED; }
+    .ecosystem-step p { min-height:0; }
+  }
+  @media(max-width:600px) {
+    .ecosystem-card { padding:14px 12px 11px; }
+    .ecosystem-heading { flex-direction:column; gap:8px; }
+    .ecosystem-flow { grid-template-columns:1fr; }
+    .ecosystem-step { border-right:0; border-top:1px solid #E4E8ED; }
+    .ecosystem-step:first-child { border-top:0; }
+  }
+
 </style>
 </head>
 <body>
@@ -946,6 +977,43 @@
     <div class="page on" id="page-overview">
       <div class="portfolio-head"><div><span class="eyebrow">ENERGY ANALYTICS</span><h1>Dashboard overview</h1><p>Real-time demand, scheduling, ESP32 link status, and compliance signals across the selected sites.</p></div><span class="data-note">Synthetic demo data</span></div>
       <div class="ov-totals kpi-row" id="ov-totals"></div>
+
+      <section class="ecosystem-card" aria-labelledby="ecosystem-title">
+        <div class="ecosystem-heading">
+          <div>
+            <span class="ecosystem-kicker">Sime Darby Property · township energy loop</span>
+            <h2 id="ecosystem-title">Turn existing energy assets into coordinated operations</h2>
+            <p>WattWise connects solar supply, building forecasts, flexible cooling, and portfolio reporting in one 30-minute operating cycle.</p>
+          </div>
+          <div class="ecosystem-capacity"><b>603 kWp · 9 assets</b>SDP solar portfolio context</div>
+        </div>
+        <div class="ecosystem-flow">
+          <article class="ecosystem-step">
+            <span class="step-no">01 · Supply</span>
+            <h3>CREAM + rooftop solar</h3>
+            <p>CREAM pools residential solar and wheels it to nearby commercial buildings. This supply typically arrives around midday.</p>
+          </article>
+          <article class="ecosystem-step">
+            <span class="step-no">02 · Forecast</span>
+            <h3>WATTWISE-1 looks ahead</h3>
+            <p>Solar generation and building demand forecasts cover 30 minutes to 3 hours on the same half-hour grid.</p>
+            <button type="button" data-open-page="page-forecast">Open solar &amp; demand forecast →</button>
+          </article>
+          <article class="ecosystem-step">
+            <span class="step-no">03 · Flex</span>
+            <h3>WATTWISE-2 shifts cooling</h3>
+            <p>Pre-cool before the billed window, coast through the morning peak, then absorb usable midday solar while protecting 24–26 °C comfort.</p>
+            <button type="button" data-open-page="page-scheduler">Open dispatch schedule →</button>
+          </article>
+          <article class="ecosystem-step">
+            <span class="step-no">04 · Prove value</span>
+            <h3>One log, more outcomes</h3>
+            <p>Use the same operating record for energy reporting, tenant green billing, and EECA compliance workflows.</p>
+            <button type="button" data-open-page="page-reports">Open reports →</button>
+          </article>
+        </div>
+        <p class="ecosystem-note">Demo values are based on calibrated synthetic data. CREAM wheeling and demand-charge settlement impacts remain under verification; this dashboard does not count unverified credits as savings.</p>
+      </section>
       <div class="chart-card">
         <div class="ttl">Building register &mdash; click a row to inspect</div>
         <table class="ov-table" id="ov-table"></table>
@@ -1211,6 +1279,10 @@ function showPage(id) {
 document.getElementById("ribbon-tabs").addEventListener("click", function (e) {
   var tab = e.target.closest(".rtab");
   if (tab) showPage(tab.dataset.page);
+});
+document.querySelector(".ecosystem-card").addEventListener("click", function (e) {
+  var button = e.target.closest("[data-open-page]");
+  if (button) showPage(button.dataset.openPage);
 });
 
 function updateCrumbs() {
