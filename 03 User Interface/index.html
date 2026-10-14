@@ -1066,14 +1066,9 @@
       <div class="chart-card">
         <div class="plot-head"><div class="ttl">Demand &mdash; actual and 30-minute forecast</div><div class="plot-controls"><button class="plot-toggle on" data-plot-grid>Grid</button><button class="plot-toggle on" data-series-control="actual">Actual</button><button class="plot-toggle on" data-series-control="forecast">Forecast</button></div></div>
         <canvas id="chart-demand-fc" height="210" aria-label="Demand forecast chart in kilowatts"></canvas>
-        <div class="plot-legend"><span><i class="legend-line grey"></i>Actual</span><span><i class="legend-line orange dashed"></i>WATTWISE-1 forecast</span></div>
+        <div class="plot-legend"><span><i class="legend-line grey"></i>Actual</span><span><i class="legend-line orange dashed"></i>30-minute forecast</span></div>
       </div>
-      <div class="fc-note">
-        Model walk-forward test metrics (held-out final 60 days, never shuffled):
-        solar nRMSE 7.35% / R&sup2; 0.996 &middot; demand MAE 10.2 kW.
-        Published Malaysian rooftop-LSTM benchmark: nRMSE 6.75%, R&sup2; 0.957.
-        Demo runs on calibrated synthetic data; swap in TNB interval data at pilot.
-      </div>
+      <div class="fc-note" id="forecast-provenance"></div>
     </div>
 
     <div class="page" id="page-scheduler">
@@ -1553,7 +1548,7 @@ function forecastChart(canvasId, fcArr, actArr, color, unit) {
       x.fillStyle = "#6b7280"; x.fillText("Actual", 98, 45);
       x.strokeStyle = color; x.lineWidth = 3; x.setLineDash([8, 5]);
       x.beginPath(); x.moveTo(170, 40); x.lineTo(198, 40); x.stroke(); x.setLineDash([]);
-      x.fillStyle = "#6b7280"; x.fillText("WATTWISE-1 forecast (30 min ahead)", 204, 45);
+      x.fillStyle = "#6b7280"; x.fillText("30-minute forecast", 204, 45);
     }
   });
 }
@@ -1633,7 +1628,7 @@ function renderKpis(key) {
 
 function renderForecastKpis() {
   var F = T.forecast;
-  var errs = [], ape = [];
+  var errs = [], ape = [], demandErrs = [];
   // only steps that have actually happened by the clock - the forecast
   // is 30-min-ahead, so stats must never see future actuals
   for (var i = 0; i <= step; i++) {
@@ -1642,9 +1637,14 @@ function renderForecastKpis() {
       errs.push(f - F.solar_actual_kw[i]);
       ape.push(Math.abs(f - F.solar_actual_kw[i]) / F.solar_actual_kw[i]);
     }
+    var demandFc = F.demand_fc_kw[i];
+    if (demandFc != null && F.demand_actual_kw[i] != null) {
+      demandErrs.push(demandFc - F.demand_actual_kw[i]);
+    }
   }
   var mae = errs.length ? errs.reduce(function (a, b) { return a + Math.abs(b); }, 0) / errs.length : null;
   var mape = ape.length ? 100 * ape.reduce(function (a, b) { return a + b; }, 0) / ape.length : null;
+  var demandMae = demandErrs.length ? demandErrs.reduce(function (a, b) { return a + Math.abs(b); }, 0) / demandErrs.length : null;
   var peakSolar = -Infinity;
   for (var j = 0; j <= step; j++) peakSolar = Math.max(peakSolar, F.solar_actual_kw[j]);
   var peakH = peakSolar > -Infinity ? F.times[F.solar_actual_kw.indexOf(peakSolar)] : "&mdash;";
@@ -1655,7 +1655,11 @@ function renderForecastKpis() {
     '<span class="unit">%</span></div><div class="dlt">on meaningful output (&gt;20 kW)</div></div>' +
     '<div class="kpi"><div class="lbl">Peak solar so far</div><div class="val">' + (peakSolar > -Infinity ? Math.round(peakSolar) : "&mdash;") +
     ' <span class="unit">kW</span></div><div class="dlt">at ' + peakH + '</div></div>' +
-    '<div class="kpi"><div class="lbl">Demand MAE</div><div class="val">10.2 <span class="unit">kW</span></div><div class="dlt">walk-forward, held-out 60 days</div></div>';
+    '<div class="kpi"><div class="lbl">Demand MAE</div><div class="val">' + (demandMae == null ? "&mdash;" : demandMae.toFixed(1)) +
+    ' <span class="unit">kW</span></div><div class="dlt">elapsed demo intervals only</div></div>';
+  var source = F.source || "legacy demo payload; regenerate dashboard data to identify its forecast source";
+  document.getElementById("forecast-provenance").textContent =
+    "Forecast source: " + source + ". Error cards show elapsed intervals from this synthetic demo day; they are not walk-forward or field-accuracy claims. CREAM wheeling is not included as a site-meter credit.";
 }
 
 function renderOverview() {

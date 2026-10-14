@@ -237,8 +237,9 @@ def simulate_day(day_df, policy, label, plant=None):
             "solar_forecast_kw": round(float(solar_fc), 1),
             "demand_forecast_kw": round(float(demand_fc), 1),
             "ambient_forecast_c": round(float(ambient_fc), 2),
-            "forecast_source": "WATTWISE-1" if have_forecast
-                               else "observed-value-fallback",
+            "forecast_source": getattr(r, "forecast_source", None)
+                               or ("aligned forecast" if have_forecast
+                                   else "observed-value-fallback"),
             "net_grid_kw": round(net, 1),
             "action": action,
         })
@@ -408,6 +409,7 @@ def main():
     df["solar_forecast_kw"] = forecast["solar"]
     df["demand_forecast_kw"] = forecast["demand"]
     df["ambient_forecast_c"] = df["ambient_c"].shift(1)
+    df["forecast_source"] = TF.forecast_source()
 
     # representative days: 2 weekdays, weekend, a clear + a monsoon day
     picks = [8, 9, 11, 12, 260]
@@ -418,6 +420,8 @@ def main():
         logs["wattwise"].append(simulate_day(day, policy_wattwise, "wattwise"))
 
     results = {k: score(v) for k, v in logs.items()}
+    results["forecast_source"] = TF.forecast_source()
+    results["evaluation_basis"] = "calibrated synthetic data; five representative days"
     sh = (results["dumb"]["billed_peak_kw_mean"]
           - results["wattwise"]["billed_peak_kw_mean"])
     results["peak_shave_pct"] = round(

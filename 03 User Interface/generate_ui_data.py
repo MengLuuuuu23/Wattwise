@@ -142,7 +142,7 @@ def base_forecasts(df):
     sys.path.insert(0, str(HERE.parent / "01 Prediction Module"))
     import train_forecast as TF
     forecast = TF.forecast_h1(df)
-    return forecast["solar"], forecast["demand"]
+    return forecast["solar"], forecast["demand"], TF.forecast_source()
 
 
 def main():
@@ -159,7 +159,7 @@ def main():
     assert df.timestamp.iloc[doy * 48].date() == demo_date
     print(f"demo day {demo_date} ({demo_date.strftime('%A')}), doy={doy}")
 
-    fc_solar, fc_demand = base_forecasts(df)
+    fc_solar, fc_demand, fc_source = base_forecasts(df)
     base_fc_day = fc_solar.iloc[doy * 48:(doy + 1) * 48].tolist()
     base_dm_day = fc_demand.iloc[doy * 48:(doy + 1) * 48].tolist()
 
@@ -197,6 +197,7 @@ def main():
                     fc_demand.iloc[start:end].to_numpy() * a["scale"])
             day["ambient_forecast_c"] = (
                 df["ambient_c"].shift(1).iloc[start:end].to_numpy())
+            day["forecast_source"] = fc_source
             dumb = S.simulate_day(day, S.make_policy_dumb(), "dumb", plant)
             wise = S.simulate_day(day, S.make_policy_wattwise(), "wattwise", plant)
 
@@ -315,6 +316,7 @@ def main():
     act_d = df["building_kw"].iloc[doy * 48:(doy + 1) * 48]
     times = df["timestamp"].iloc[doy * 48:(doy + 1) * 48].dt.strftime("%H:%M")
     out["forecast"] = {
+        "source": fc_source,
         "solar_fc_kw": [round(v, 1) if np.isfinite(v) else None for v in sl],
         "demand_fc_kw": [round(v, 1) if np.isfinite(v) else None for v in dm],
         "solar_actual_kw": [round(v, 1) for v in act_s],

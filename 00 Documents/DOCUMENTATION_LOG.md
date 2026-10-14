@@ -8,7 +8,12 @@
 ### 2026-10-14 — Forecast-to-dispatch integration
 * **WATTWISE-1 → WATTWISE-2:** The +30-minute solar and demand predictions are aligned to the interval they forecast, so dispatch uses values issued one interval earlier. Ambient temperature uses a one-step persistence forecast until a weather forecast is available.
 * **Solar absorption:** The WattWise soak rule estimates local PV surplus after forecast non-flexible demand, then caps chiller draw to that surplus and the plant limit. Comfort remains the hard constraint, and CREAM wheeling credits are not assumed in settlement.
-* **Evidence status:** Source integration is in place. Re-train and regenerate scheduler/UI outputs, then re-score under forecast error before quoting revised savings; existing headline metrics predate this change.
+* **Evidence status:** Source integration is in place. The repository tracks the trained WATTWISE-1 models. Re-score the forecast-informed scheduler with the trained models before quoting updated savings; prior rule-only results predate this change.
+
+### 2026-10-14 — Runnable forecast fallback and honest dashboard diagnostics
+* **Pipeline availability:** Added a transparent persistence fallback for environments without trained artifacts or optional dependencies. Forecast source is carried into scheduler logs, the summary, and the dashboard payload; dependencies are listed in `requirements.txt`.
+* **Dashboard evidence:** Replaced hard-coded held-out demand accuracy with error calculated only over elapsed intervals in the synthetic demo replay. The dashboard discloses the forecast source and excludes CREAM wheeling credits from site-meter savings.
+* **Next evidence gate:** Run the refreshed pipeline against the tracked trained models, then evaluate forecast error and scheduler savings over representative conditions before updating proposal claims.
 
 ### 2026-10-13 — Physical Demo Kit (`esp32/wattwise_demo`)
 * **Hardware Evolution:** Upgraded through version iterations to v4. A physical dial actuator physicalizes the active schedule (sweeping quickly during off-peak hours, moving slowly between 08:30–10:30, and running fast in basic mode).

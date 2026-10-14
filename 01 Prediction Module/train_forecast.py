@@ -22,11 +22,14 @@ Out:  models/*.joblib  +  metrics.json  +  plots/
 """
 
 import json
+import importlib.util
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from joblib import dump, load
-from sklearn.ensemble import HistGradientBoostingRegressor
+try:
+    from joblib import dump, load
+except ImportError:  # forecasting can still use the explicit fallback below
+    dump = load = None
 
 HERE = Path(__file__).parent
 DATA = HERE / "data" / "dataset.csv"
@@ -34,6 +37,8 @@ MODELS = HERE / "models"
 PLOTS = HERE / "plots"
 HORIZONS = [1, 2, 3, 4, 5, 6]  # intervals ahead: 30 min ... 3 h
 TEST_DAYS = 60
+MODEL_SOURCE = "WATTWISE-1 HistGradientBoosting"
+FALLBACK_SOURCE = "one-step persistence fallback"
 
 
 # --- load + feature engineering ---------------------------------------
@@ -84,23 +89,52 @@ def forecast_h1(df: pd.DataFrame) -> dict[str, pd.Series]:
     The first interval has no forecast until a preceding observation exists.
     """
     forecasts = {}
+    use_models = (load is not None and importlib.util.find_spec("sklearn")
+                  is not None and all(
+        (MODELS / f"{label}_h1.joblib").is_file()
+        for label in ("solar", "demand")
+    ))
     for target, label in [("solar_pv_kw", "solar"),
                           ("building_kw", "demand")]:
-        X = make_features(df, target)
-        valid = X.dropna().index.to_numpy(dtype=int)
-        model = load(MODELS / f"{label}_h1.joblib")
-        prediction = np.clip(model.predict(X.loc[valid]), 0, None)
-        target_idx = valid + 1
-        keep = target_idx < len(df)
         aligned = pd.Series(np.nan, index=df.index, dtype=float)
-        aligned.loc[target_idx[keep]] = prediction[keep]
+        if use_models:
+            X = make_features(df, target)
+            valid = X.dropna().index.to_numpy(dtype=int)
+            model = load(MODELS / f"{label}_h1.joblib")
+            prediction = np.clip(model.predict(X.loc[valid]), 0, None)
+            target_idx = valid + 1
+            keep = target_idx < len(df)
+            aligned.loc[target_idx[keep]] = prediction[keep]
+        elif len(df) > 1:
+            # Transparent last-value baseline: the forecast for row t uses
+            # only the observed value at t-1. Never substitute future actuals.
+            aligned.iloc[1:] = np.clip(
+                df[target].iloc[:-1].to_numpy(dtype=float), 0, None)
         forecasts[label] = aligned
     return forecasts
+
+
+def forecast_source() -> str:
+    """Identify which forecast path is available for this run."""
+    if (load is not None and importlib.util.find_spec("sklearn") is not None
+            and all(
+        (MODELS / f"{label}_h1.joblib").is_file()
+        for label in ("solar", "demand")
+    )):
+        return MODEL_SOURCE
+    return FALLBACK_SOURCE
 
 
 # --- training ----------------------------------------------------------
 
 def train_target(df, target, label):
+    try:
+        from sklearn.ensemble import HistGradientBoostingRegressor
+    except ImportError as exc:
+        raise RuntimeError(
+            "Training needs scikit-learn. Install the repository dependencies "
+            "with `python -m pip install -r requirements.txt`."
+        ) from exc
     X = make_features(df, target)
     Y = make_targets(df, target)
 
@@ -142,6 +176,11 @@ def train_target(df, target, label):
 
 
 def main():
+    if dump is None:
+        raise RuntimeError(
+            "Saving trained models needs joblib. Install the repository "
+            "dependencies with `python -m pip install -r requirements.txt`."
+        )
     df = load_frame()
     MODELS.mkdir(exist_ok=True)
     PLOTS.mkdir(exist_ok=True)

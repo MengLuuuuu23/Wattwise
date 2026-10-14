@@ -48,7 +48,10 @@ deployment result. Wheeled CREAM energy is not counted as a site credit.
 
 Run `train_forecast.py` first if the model files are missing, then run
 `scheduler.py` or `generate_ui_data.py` to refresh the results and dashboard
-payload.
+payload. If the optional trained model artifacts or dependencies are absent,
+the pipeline uses a one-step persistence forecast (the previous interval's
+value). Output records and the dashboard label this fallback; its same-day
+diagnostic errors are not walk-forward accuracy metrics.
 
 ## Thermal model (deliberately simple + conservative)
 
@@ -62,7 +65,7 @@ payload.
 - Meter arithmetic strips the dataset's embedded cooling load and adds
   the scheduled chiller draw, so nothing is double-counted
 
-## Results (5 representative days)
+## Previous results (5 representative synthetic days; pre-forecast dispatch)
 
 | Metric | Dumb baseline | WattWise |
 |---|---|---|
@@ -71,12 +74,13 @@ payload.
 | Mean day bill (MD + energy, illustrative) | RM81,728 | **RM70,659** |
 | Comfort violations (>26°C) | 5 | **0** |
 
-**14.5% peak shave with zero comfort violations** — inside the honest
-5-15% band from the red-team critique, achieved by rules alone.
+These figures predate forecast-informed dispatch. The repository tracks all
+12 trained models, but the forecast-informed scheduler has not yet been
+re-scored in this update. Do not treat the fallback diagnostic run as a
+replacement for trained-model results.
 
-These baseline figures predate forecast-informed dispatch. Regenerate
-`results/` and `03 User Interface/data/township.json` before quoting updated
-performance figures.
+Regenerate `results/` and `03 User Interface/data/township.json` using the
+tracked models and installed requirements before quoting updated performance.
 
 Note the mechanism in the traces: WattWise's peak moves to late afternoon
 (16:00-17:00) at a lower level, instead of the dumb baseline stacking its
@@ -93,13 +97,15 @@ chiller + morning load inside the 8:30-10:30 billed window.
    Under C2 ToU (peak 14:00-22:00), the afternoon rebound would bill at
    peak rates — the rule set should be re-tuned per tariff class before
    any real deployment (red team S2).
-3. **Perfect foresight within each step.** v0 reads the actual weather row;
-   the next version should feed WATTWISE-1's *forecasts* in instead, which
-   is the whole point of the two-module architecture.
+3. **Forecast robustness.** Dispatch now receives forecasts aligned to their
+   target interval. The persisted baseline forecast is only a continuity
+   fallback; report forecast-driven savings only after retraining the models
+   and scoring across representative forecast-error conditions.
 
 ## Next steps
 
-- [ ] Drive the scheduler with WATTWISE-1 forecasts instead of actuals
+- [x] Drive the scheduler with aligned WATTWISE-1 forecasts (persistence
+      fallback is explicitly identified when trained artifacts are absent)
 - [ ] Tariff switch: C1 vs C2 mode with different rule tuning
 - [ ] Plots for the deck: overlay day traces (zone temp, chiller kW,
       net grid kW, dumb vs WattWise)

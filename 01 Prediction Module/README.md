@@ -21,6 +21,12 @@ on the 30-minute grid the TNB demand charge is billed on.
 .venv/Scripts/python.exe "01 Prediction Module/train_forecast.py"
 ```
 
+Install the repository dependencies first with
+`python -m pip install -r requirements.txt`. If trained model artifacts are
+not present, the scheduler and dashboard remain runnable with a one-step
+persistence forecast. That fallback is labeled in the dashboard and is not
+the walk-forward model result reported below.
+
 ## Model design
 
 - **Features**: weather (GHI, cloud %, ambient temp, humidity), calendar
