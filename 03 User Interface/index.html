@@ -642,6 +642,221 @@
     footer>span:nth-of-type(n+4) { display:none; }
     #scrub { width:80px; }
   }
+
+  /* Brand alignment pass: logo charcoal, WattWise orange, MATLAB-style analysis surfaces */
+  .ribbon-tabs {
+    height:82px;
+    padding:0 clamp(16px,3vw,36px);
+    background:#14171D;
+    overflow-x:auto;
+    scrollbar-width:thin;
+  }
+  .brand-mini {
+    width:152px;
+    height:78px;
+    padding:0 22px 0 0;
+  }
+  .brand-lockup {
+    width:144px;
+    height:76px;
+    object-fit:contain;
+  }
+  .rtab {
+    padding:0 18px;
+    color:#D7DCE2;
+    font-size:14px;
+    white-space:nowrap;
+  }
+  .rtab.on {
+    color:#FFFFFF;
+    border-bottom:3px solid #E88B33;
+  }
+  .esp-top {
+    border-color:#ffffff2b;
+    background:#ffffff0f;
+  }
+  .esp-top:hover {
+    border-color:#FFBD59;
+    background:#ffffff18;
+  }
+  .ribbon-toolbar {
+    height:auto;
+    min-height:48px;
+    flex-wrap:wrap;
+    overflow:visible;
+    padding:7px clamp(16px,3vw,36px);
+    row-gap:6px;
+  }
+  .rgroup {
+    min-height:32px;
+    flex:0 1 auto;
+  }
+  nav {
+    padding:0 clamp(16px,3vw,36px);
+  }
+  .content {
+    padding:30px clamp(18px,4vw,54px) 38px;
+  }
+  .page {
+    max-width:1260px;
+  }
+  .portfolio-head {
+    margin-bottom:18px;
+    align-items:flex-start;
+  }
+  .portfolio-head h1,
+  .bld-title h1 {
+    color:#14171D;
+    letter-spacing:-.7px;
+  }
+  .portfolio-head p,
+  .fc-intro,
+  .sch-intro {
+    max-width:780px;
+  }
+  .kpi-row {
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:0;
+    background:#FFFFFF;
+    border:1px solid #DDE2E7;
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .kpi {
+    min-height:94px;
+    background:#FFFFFF;
+    border:0;
+    border-right:1px solid #E4E8ED;
+  }
+  .kpi:last-child {
+    border-right:0;
+  }
+  .kpi .lbl {
+    padding:15px 16px 4px;
+    color:#6B7280;
+  }
+  .kpi .val {
+    padding:0 16px;
+    color:#14171D;
+  }
+  .kpi .dlt {
+    padding:3px 16px 13px;
+  }
+  .chart-card,
+  .trend-workspace {
+    border-color:#DDE2E7;
+  }
+  .trend-workspace {
+    box-shadow:0 10px 26px #14171d0a;
+  }
+  .plot-head {
+    min-height:64px;
+    align-items:flex-start;
+  }
+  .plot-controls {
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    max-width:540px;
+    gap:5px;
+    padding:5px;
+    background:#F7F8FA;
+    border:1px solid #E5E9EE;
+    border-radius:8px;
+  }
+  .plot-controls::before {
+    content:"Controls";
+    align-self:center;
+    color:#7A8490;
+    font-size:10px;
+    font-weight:650;
+    letter-spacing:.4px;
+    margin:0 5px 0 2px;
+  }
+  .plot-toggle,
+  .plot-tool {
+    min-height:27px;
+  }
+  .plot-toggle.on {
+    border-color:#F0D2AA;
+    background:#FFF2E2;
+    color:#8F4F12;
+  }
+  .planner-head {
+    align-items:flex-start;
+  }
+  .planner-controls {
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    max-width:720px;
+  }
+  .plan-summary {
+    grid-template-columns:repeat(auto-fit,minmax(185px,1fr));
+  }
+  .solar-summary {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    background:#FFFFFF;
+    border:1px solid #DDE2E7;
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .solar-summary>div {
+    min-width:0;
+    margin:0;
+    padding:14px 18px;
+  }
+  .secondary-detail {
+    background:#FFFFFF;
+    border:1px solid #DDE2E7;
+    border-radius:10px;
+    padding:0 14px;
+  }
+  .ov-table th,
+  .ov-table td {
+    white-space:nowrap;
+  }
+  footer {
+    flex-wrap:wrap;
+    row-gap:6px;
+  }
+  @media(max-width:900px) {
+    .ribbon-tabs {
+      height:auto;
+      min-height:76px;
+      padding:0 12px;
+    }
+    .brand-mini {
+      width:116px;
+      height:72px;
+      padding-right:8px;
+    }
+    .brand-lockup {
+      width:108px;
+      height:70px;
+    }
+    .rtab {
+      min-height:72px;
+      padding:0 10px;
+      font-size:12px;
+    }
+    .ribbon-toolbar {
+      padding:7px 12px;
+      overflow-x:auto;
+    }
+    nav {
+      height:auto;
+      padding:8px 12px;
+    }
+    .plot-head,
+    .planner-head {
+      flex-direction:column;
+    }
+    .plot-controls,
+    .planner-controls {
+      justify-content:flex-start;
+      max-width:100%;
+    }
+  }
 </style>
 </head>
 <body>
@@ -650,10 +865,10 @@
 <header>
   <div class="ribbon-tabs" id="ribbon-tabs">
     <div class="brand-mini"><img class="brand-lockup" src="./assets/wattwise-logo.png" alt="WattWise"></div>
-    <div class="rtab" data-page="page-overview">Portfolio</div>
-    <div class="rtab on" data-page="page-buildings">Buildings</div>
-    <div class="rtab" data-page="page-forecast">Solar &amp; Forecast</div>
-    <div class="rtab" data-page="page-scheduler">Dispatch</div>
+    <div class="rtab on" data-page="page-overview">Dashboard</div>
+    <div class="rtab" data-page="page-buildings">Buildings</div>
+    <div class="rtab" data-page="page-forecast">Forecast</div>
+    <div class="rtab" data-page="page-scheduler">Schedule</div>
     <div class="rtab" data-page="page-reports">Reports</div>
     <div class="spacer"></div>
     <button class="esp-top" id="esp-connect" type="button"><span class="esp-dot" id="esp-dot"></span><span id="esp-connect-label">Connect ESP32</span></button>
@@ -663,7 +878,7 @@
 
 <!-- ============ COMMAND BAR ============ -->
 <nav>
-  <div class="crumbs" id="crumbs"><b>WattWise</b><span class="sep">&rsaquo;</span>Buildings<span class="sep">&rsaquo;</span><b id="crumb-bld">—</b></div>
+  <div class="crumbs" id="crumbs"><b>WattWise</b><span class="sep">&rsaquo;</span>Dashboard<span class="sep">&rsaquo;</span><b id="crumb-bld">—</b></div>
   <label class="scope-control"><span>Scope</span><select id="town-select" aria-label="Choose township scope"><option value="all">All townships</option></select></label>
 </nav>
 
@@ -728,8 +943,8 @@
 
   <!-- central canvas -->
   <section class="content">
-    <div class="page" id="page-overview">
-      <div class="portfolio-head"><div><span class="eyebrow">OPERATIONS</span><h1>Portfolio overview</h1><p>Live modeled demand across the selected sites.</p></div><span class="data-note">Synthetic demo data</span></div>
+    <div class="page on" id="page-overview">
+      <div class="portfolio-head"><div><span class="eyebrow">ENERGY ANALYTICS</span><h1>Dashboard overview</h1><p>Real-time demand, scheduling, ESP32 link status, and compliance signals across the selected sites.</p></div><span class="data-note">Synthetic demo data</span></div>
       <div class="ov-totals kpi-row" id="ov-totals"></div>
       <div class="chart-card">
         <div class="ttl">Building register &mdash; click a row to inspect</div>
@@ -741,7 +956,7 @@
       </div></details>
     </div>
 
-    <div class="page on" id="page-buildings">
+    <div class="page" id="page-buildings">
       <div class="bld-head">
         <button class="bld-nav" id="bld-prev">&#8249;</button>
         <div class="bld-title">
@@ -934,7 +1149,7 @@ var RIBBON = {
   ]
 };
 
-var ribbonPage = "page-buildings";
+var ribbonPage = "page-overview";
 function renderRibbon() {
   var groups = RIBBON[ribbonPage] || [];
   var html = "";
@@ -999,7 +1214,7 @@ document.getElementById("ribbon-tabs").addEventListener("click", function (e) {
 });
 
 function updateCrumbs() {
-  var names = { "page-overview": "Portfolio", "page-buildings": "Buildings", "page-forecast": "Solar & Forecast", "page-scheduler": "Dispatch", "page-reports": "Reports" };
+  var names = { "page-overview": "Dashboard", "page-buildings": "Buildings", "page-forecast": "Forecast", "page-scheduler": "Schedule", "page-reports": "Reports" };
   var scope = townScope === "all" ? "All townships" : T.towns[townScope].label;
   document.getElementById("crumbs").innerHTML = "<b>WattWise</b><span class=\"sep\">&rsaquo;</span>" + scope + "<span class=\"sep\">&rsaquo;</span>" + names[ribbonPage] +
     (selected ? "<span class=\"sep\">&rsaquo;</span><b id=\"crumb-bld\">" + T.buildings[selected].label + "</b>" : "");
@@ -1141,7 +1356,9 @@ function axes(x, W, H, maxV, unit, windowed) {
       x.beginPath(); x.moveTo(left, gy); x.lineTo(right, gy); x.stroke();
     }
   }
-  x.fillStyle = "#6b7280"; x.font = "12px Segoe UI"; x.textAlign = "right";
+  x.strokeStyle = "#aeb7c2"; x.lineWidth = 1.2;
+  x.beginPath(); x.moveTo(left, top); x.lineTo(left, bottom); x.lineTo(right, bottom); x.stroke();
+  x.fillStyle = "#4b5563"; x.font = "12px Segoe UI"; x.textAlign = "right";
   for (var yTick = 0; yTick <= 4; yTick++) {
     var yValue = maxV * (4 - yTick) / 4;
     var yText = Math.round(yValue).toLocaleString();
@@ -1791,6 +2008,10 @@ function runCommand(raw) {
     if (!out) {
       ORDER.forEach(function (k, i) { if (arg === k || arg === String(i + 1) || k.indexOf(arg) === 0) key = k; });
       if (!key) ORDER.forEach(function (k) { if (T.buildings[k].label.toLowerCase().indexOf(arg) >= 0) key = k; });
+      if (!key && townScope !== "all") {
+        ALL_ORDER.forEach(function (k) { if (!key && (arg === k || k.indexOf(arg) === 0 || T.buildings[k].label.toLowerCase().indexOf(arg) >= 0)) key = k; });
+        if (key) setTown(T.buildings[key].town);
+      }
       if (key) {
         select(key);
         if (ribbonPage === "page-scheduler") { document.getElementById("plan-scope").value = "building:" + key; renderPlanner(); }
@@ -1829,7 +2050,7 @@ function runCommand(raw) {
   else if (cmd === "reset") { playing = false; step = 0; refresh(); out = "reset to 00:00"; }
   else if (cmd === "export") { exportCsv(); out = "township CSV exported"; }
   else if ((m = cmd.match(/^tab (.+)/))) {
-    var pages = {overview:"page-overview",home:"page-overview",buildings:"page-buildings",building:"page-buildings",forecast:"page-forecast","solar":"page-forecast",scheduler:"page-scheduler",reports:"page-reports"};
+    var pages = {dashboard:"page-overview",overview:"page-overview",home:"page-overview",buildings:"page-buildings",building:"page-buildings",forecast:"page-forecast","solar":"page-forecast",schedule:"page-scheduler",scheduler:"page-scheduler",dispatch:"page-scheduler",reports:"page-reports"};
     if (pages[m[1]]) { showPage(pages[m[1]]); out = "tab = " + m[1]; }
     else out = "no tab '" + m[1] + "'";
   } else if ((m = cmd.match(/^panel (.+)/))) {
@@ -2026,7 +2247,7 @@ fetch("./data/township.json").then(function (r) { return r.json(); }).then(funct
   renderRibbon();
   select(ALL_ORDER[0]);
   initializePlanner();
-  showPage("page-buildings");
+  showPage("page-overview");
   refresh();
   updateStatusWord();
   requestAnimationFrame(loop);
