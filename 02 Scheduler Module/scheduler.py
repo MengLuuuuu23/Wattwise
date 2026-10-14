@@ -174,8 +174,26 @@ def simulate_day(day_df, policy, label, plant=None):
         h = r.timestamp.hour + r.timestamp.minute / 60.0
         weekday = bool(r.weekday)
 
-        # 1. policy decides the chiller draw for this step
-        chiller_kw, action = policy(h, zone, stored, r, P)
+        # Decisions use inputs available from the prior interval. The
+        # simulated physics and meter still use the actual row below.
+        solar_fc = getattr(r, "solar_forecast_kw", np.nan)
+        demand_fc = getattr(r, "demand_forecast_kw", np.nan)
+        ambient_fc = getattr(r, "ambient_forecast_c", np.nan)
+        have_forecast = not (pd.isna(solar_fc) or pd.isna(demand_fc)
+                             or pd.isna(ambient_fc))
+        if pd.isna(solar_fc):
+            solar_fc = r.solar_pv_kw
+        if pd.isna(demand_fc):
+            demand_fc = r.building_kw
+        if pd.isna(ambient_fc):
+            ambient_fc = r.ambient_c
+        decision_row = r.copy()
+        decision_row["solar_pv_kw"] = solar_fc
+        decision_row["building_kw"] = demand_fc
+        decision_row["ambient_c"] = ambient_fc
+
+        # 1. policy decides the chiller draw using WATTWISE-1 forecasts.
+        chiller_kw, action = policy(h, zone, stored, decision_row, P)
 
         # 2. thermal physics for this step
         cool_c = chiller_kw * 0.5 / P["kwh_per_degc"]       # deg C cooled
@@ -216,6 +234,11 @@ def simulate_day(day_df, policy, label, plant=None):
             "chiller_kw": round(chiller_kw, 1),
             "total_kw": round(total, 1),
             "solar_kw": round(r.solar_pv_kw, 1),
+            "solar_forecast_kw": round(float(solar_fc), 1),
+            "demand_forecast_kw": round(float(demand_fc), 1),
+            "ambient_forecast_c": round(float(ambient_fc), 2),
+            "forecast_source": "WATTWISE-1" if have_forecast
+                               else "observed-value-fallback",
             "net_grid_kw": round(net, 1),
             "action": action,
         })
@@ -291,7 +314,11 @@ def make_policy_wattwise():
     def policy(h, zone, stored, r, plant):
         if plant["essential"]:
             return (plant["chiller_max_kw"], "essential-cooling")
-        solar = r.solar_pv_kw
+        solar = max(0.0, float(r.solar_pv_kw))
+        demand = max(0.0, float(r.building_kw))
+        nonflex_forecast = max(0.0, demand - strip_cooling(
+            r, h, bool(r.weekday), plant))
+        solar_surplus_forecast = max(0.0, solar - nonflex_forecast)
 
         if in_window(h, (PRECOOL_START, CHARGED_WINDOW[0])):
             return (plant["chiller_max_kw"], "precool")
@@ -305,9 +332,14 @@ def make_policy_wattwise():
                      plant["chiller_max_kw"] * 0.5)
             return (kw, "coast")
 
-        if in_window(h, (SOAK_START, SOAK_END)) and solar > 0.6 * plant["chiller_max_kw"]:
-            # midday surplus solar: deliberately overcool to bank cold
-            return (plant["chiller_max_kw"] * 0.9, "soak")
+        if (in_window(h, (SOAK_START, SOAK_END))
+                and solar_surplus_forecast >= plant["chiller_min_kw"]):
+            # Use the demand and PV forecasts to consume expected local
+            # surplus first, capped below full plant. No wheeled-energy
+            # credit is assumed in the meter calculation.
+            soak_kw = min(plant["chiller_max_kw"] * 0.9,
+                          solar_surplus_forecast)
+            return (soak_kw, "soak")
 
         if in_window(h, POST_COAST):
             # gentle recovery: ride back toward 25C over a couple of hours
@@ -366,6 +398,16 @@ def score(logs):
 def main():
     df = pd.read_csv(DATA, parse_dates=["timestamp"])
     df["weekday"] = df.timestamp.dt.dayofweek < 5
+
+    # WATTWISE-1 h1 models issue forecasts for the next half-hour. Align
+    # those predictions to the interval they describe before simulation.
+    import sys
+    sys.path.insert(0, str(HERE.parent / "01 Prediction Module"))
+    import train_forecast as TF
+    forecast = TF.forecast_h1(df)
+    df["solar_forecast_kw"] = forecast["solar"]
+    df["demand_forecast_kw"] = forecast["demand"]
+    df["ambient_forecast_c"] = df["ambient_c"].shift(1)
 
     # representative days: 2 weekdays, weekend, a clear + a monsoon day
     picks = [8, 9, 11, 12, 260]

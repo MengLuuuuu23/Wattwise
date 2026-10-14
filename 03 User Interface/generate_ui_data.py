@@ -138,23 +138,11 @@ def variant_day(df, doy, arch):
 
 
 def base_forecasts(df):
-    """Run the trained WATTWISE-1 models (30-min ahead) on the demo day.
-    Returns (solar_fc, demand_fc) series for the base site."""
-    import joblib
+    """Run WATTWISE-1 h1 models, aligned to the intervals they predict."""
     sys.path.insert(0, str(HERE.parent / "01 Prediction Module"))
     import train_forecast as TF
-
-    out = {}
-    for target, label in [("solar_pv_kw", "solar"), ("building_kw", "demand")]:
-        X = TF.make_features(df, target)
-        valid = X.dropna().index
-        m = joblib.load(HERE.parent / "01 Prediction Module" /
-                        "models" / f"{label}_h1.joblib")
-        pred = np.clip(m.predict(X.loc[valid]), 0, None)
-        full = pd.Series(np.nan, index=df.index)
-        full.loc[valid] = pred
-        out[label] = full
-    return out["solar"], out["demand"]
+    forecast = TF.forecast_h1(df)
+    return forecast["solar"], forecast["demand"]
 
 
 def main():
@@ -199,6 +187,16 @@ def main():
             a = ARCHETYPES[arch]
             plant = build_plant(arch)
             day = variant_day(df, doy, arch)
+            start, end = doy * 48, (doy + 1) * 48
+            day["solar_forecast_kw"] = (
+                fc_solar.iloc[start:end].to_numpy() * a["solar"])
+            if a.get("flat"):
+                day["demand_forecast_kw"] = 700.0
+            else:
+                day["demand_forecast_kw"] = (
+                    fc_demand.iloc[start:end].to_numpy() * a["scale"])
+            day["ambient_forecast_c"] = (
+                df["ambient_c"].shift(1).iloc[start:end].to_numpy())
             dumb = S.simulate_day(day, S.make_policy_dumb(), "dumb", plant)
             wise = S.simulate_day(day, S.make_policy_wattwise(), "wattwise", plant)
 

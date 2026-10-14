@@ -25,7 +25,7 @@ import json
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from joblib import dump
+from joblib import dump, load
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 HERE = Path(__file__).parent
@@ -74,6 +74,28 @@ def make_targets(df: pd.DataFrame, target: str) -> pd.DataFrame:
     for h in HORIZONS:
         out[f"h{h}"] = df[target].shift(-h)
     return out
+
+
+def forecast_h1(df: pd.DataFrame) -> dict[str, pd.Series]:
+    """Load the +30-min WATTWISE-1 models and align predictions to target rows.
+
+    A forecast stored at row t is issued from features at t-30 minutes,
+    so dispatch can use it without reading future weather or meter values.
+    The first interval has no forecast until a preceding observation exists.
+    """
+    forecasts = {}
+    for target, label in [("solar_pv_kw", "solar"),
+                          ("building_kw", "demand")]:
+        X = make_features(df, target)
+        valid = X.dropna().index.to_numpy(dtype=int)
+        model = load(MODELS / f"{label}_h1.joblib")
+        prediction = np.clip(model.predict(X.loc[valid]), 0, None)
+        target_idx = valid + 1
+        keep = target_idx < len(df)
+        aligned = pd.Series(np.nan, index=df.index, dtype=float)
+        aligned.loc[target_idx[keep]] = prediction[keep]
+        forecasts[label] = aligned
+    return forecasts
 
 
 # --- training ----------------------------------------------------------

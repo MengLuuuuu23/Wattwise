@@ -30,6 +30,26 @@ Two policies run on the same synthetic building + weather from
   4. **comfort tracking** (always): proportional response keeps the zone
      inside 24-26°C, day and night — comfort is the hard wall
 
+## Forecast-informed dispatch
+
+`scheduler.py` loads the saved WATTWISE-1 +30-minute solar and demand
+models. Predictions are aligned to the interval they describe, so the
+decision for an interval uses inputs from the previous interval. Ambient
+temperature uses a one-step persistence forecast because WATTWISE-1 does
+not currently forecast weather.
+
+The WattWise policy estimates non-flexible load from the demand forecast,
+then compares it with forecast on-site solar. It enters **soak** only when
+the predicted local surplus can support the minimum chiller load, and caps
+that load below full plant. The baseline and WattWise policy receive the
+same forecast inputs. The simulated thermal state and retrospective meter
+scoring still use actual synthetic rows; this is an evaluation, not a live
+deployment result. Wheeled CREAM energy is not counted as a site credit.
+
+Run `train_forecast.py` first if the model files are missing, then run
+`scheduler.py` or `generate_ui_data.py` to refresh the results and dashboard
+payload.
+
 ## Thermal model (deliberately simple + conservative)
 
 - Zone warms per step: envelope (ambient) + internal (occupancy) gains,
@@ -53,6 +73,10 @@ Two policies run on the same synthetic building + weather from
 
 **14.5% peak shave with zero comfort violations** — inside the honest
 5-15% band from the red-team critique, achieved by rules alone.
+
+These baseline figures predate forecast-informed dispatch. Regenerate
+`results/` and `03 User Interface/data/township.json` before quoting updated
+performance figures.
 
 Note the mechanism in the traces: WattWise's peak moves to late afternoon
 (16:00-17:00) at a lower level, instead of the dumb baseline stacking its

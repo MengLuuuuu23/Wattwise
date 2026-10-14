@@ -5,6 +5,11 @@
 
 ---
 
+### 2026-10-14 — Forecast-to-dispatch integration
+* **WATTWISE-1 → WATTWISE-2:** The +30-minute solar and demand predictions are aligned to the interval they forecast, so dispatch uses values issued one interval earlier. Ambient temperature uses a one-step persistence forecast until a weather forecast is available.
+* **Solar absorption:** The WattWise soak rule estimates local PV surplus after forecast non-flexible demand, then caps chiller draw to that surplus and the plant limit. Comfort remains the hard constraint, and CREAM wheeling credits are not assumed in settlement.
+* **Evidence status:** Source integration is in place. Re-train and regenerate scheduler/UI outputs, then re-score under forecast error before quoting revised savings; existing headline metrics predate this change.
+
 ### 2026-10-13 — Physical Demo Kit (`esp32/wattwise_demo`)
 * **Hardware Evolution:** Upgraded through version iterations to v4. A physical dial actuator physicalizes the active schedule (sweeping quickly during off-peak hours, moving slowly between 08:30–10:30, and running fast in basic mode).
 * **Interface & Controls:** Includes status indicator lights, a 16x2 text display, a power toggle button, and a standalone 5-minute accelerated day cycle.

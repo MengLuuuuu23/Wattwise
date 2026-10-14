@@ -70,4 +70,6 @@ peak building are both far inside the margin a 100 kW shave target needs.
 - [ ] Plot: 3 sample days, actual vs forecast (both targets) for the deck
 - [ ] Peak-hour skill metric: specifically how well the 8:30-10:30am
       morning window is predicted (that is what the scheduler pays for)
+- [ ] Calibrate the forecast-informed WattWise soak policy on the same
+      forecast error scenarios before updating reported savings
 - [ ] Swap in real interval data the moment SDP/the pilot provides it
